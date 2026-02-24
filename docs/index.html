@@ -1,172 +1,633 @@
-<!DOCTYPE html><html class="default" lang="en" data-base="./"><head><meta charset="utf-8"/><link rel="canonical" href="https://docs.karmanivero.us/npm-package-template-ts/"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>@karmaniverous/npm-package-template-ts</title><meta name="description" content="Documentation for @karmaniverous/npm-package-template-ts"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script defer src="assets/main.js"></script><script async src="assets/icons.js" id="tsd-icons-script"></script><script async src="assets/search.js" id="tsd-search-script"></script><script async src="assets/navigation.js" id="tsd-nav-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar"><div class="tsd-toolbar-contents container"><a href="index.html" class="title">@karmaniverous/npm-package-template-ts</a><div id="tsd-toolbar-links"><a href="https://github.com/karmaniverous/npm-package-template-ts">GitHub</a></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/><ul role="listbox" id="tsd-search-results"></ul><div id="tsd-search-status" aria-live="polite" aria-atomic="true"><div>Preparing search index...</div></div></dialog><a href="#" class="tsd-widget menu" id="tsd-toolbar-menu-trigger" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-menu"></use></svg></a></div></header><div class="container container-main"><div class="col-content"><div class="tsd-page-title"><h1>@karmaniverous/npm-package-template-ts</h1></div><div class="tsd-panel tsd-typography"><h1 id="typescript-npm-package-template" class="tsd-anchor-link">TypeScript NPM Package Template<a href="#typescript-npm-package-template" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h1><blockquote>
-<p><em>👇 Some of these badges only activate when you publish your package!</em></p>
-</blockquote>
-<p><a href="https://www.npmjs.com/package/@karmaniverous/npm-package-template-ts" target="_blank" class="external"><img src="https://img.shields.io/npm/v/@karmaniverous/npm-package-template-ts.svg" alt="npm version"></a>
-<img src="https://img.shields.io/node/v/@karmaniverous/npm-package-template-ts" alt="Node Current">
-<a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/LICENSE.md" target="_blank" class="external"><img src="https://img.shields.io/badge/license-BSD--3--Clause-blue.svg" alt="license"></a></p>
-<p><strong>Writing great TypeScript is only half the battle!</strong> You also need to instrument it, format it, lint it, test it, bundle it, document it, and publish it!</p>
-<p>Getting all of these pieces to work gracefully together is not trivial.</p>
-<p>This template puts those pieces together in a way that just WORKS, right out of the box, so you can focus on your code. It includes fully-configured support for:</p>
-<p>✅ <a href="#code-authoring">Code authoring</a> with <a href="https://www.typescriptlang.org/" target="_blank" class="external">TypeScript</a>.<br>
-✅ <a href="#inline-documentation">Inline documentation</a> with <a href="https://tsdoc.org/" target="_blank" class="external">TSDoc</a>.<br>
-✅ <a href="#cli-generation">CLI generation</a> with <a href="https://www.npmjs.com/package/commander" target="_blank" class="external">Commander</a>.<br>
-✅ <a href="#formatting">Code formatting</a> with <a href="https://prettier.io/" target="_blank" class="external">Prettier</a>.<br>
-✅ <a href="#linting">Linting</a> with <a href="https://eslint.org/" target="_blank" class="external">ESLint</a>.<br>
-✅ <a href="#unit-testing">Unit testing</a> with <a href="https://vitest.dev/" target="_blank" class="external">Vitest</a>.<br>
-✅ <a href="#package-pruning">Package pruning</a> with <a href="https://github.com/webpro-nl/knip" target="_blank" class="external">Knip</a>.<br>
-✅ <a href="#bundling">Bundling</a> with <a href="https://rollupjs.org/" target="_blank" class="external">Rollup</a>.<br>
-✅ <a href="#publishing">Publishing</a> with <a href="https://github.com/release-it/release-it" target="_blank" class="external">ReleaseIt</a>.<br>
-✅ <a href="#git-hooks">Git hooks</a> with <a href="https://github.com/evilmartians/lefthook" target="_blank" class="external">Lefthook</a>.<br>
-✅ <a href="#api-documentation">API documentation</a> generated by <a href="https://typedoc.org/" target="_blank" class="external">TypeDoc</a>.<br>
-✅ Recommended extensions &amp; settings wherever appropriate.<br></p>
-<h2 id="getting-started" class="tsd-anchor-link">Getting Started<a href="#getting-started" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>Create a new repo using this template! When you clone it locally, be sure to run:</p>
-<pre><code class="bash"><span class="hl-0">npm</span><span class="hl-1"> </span><span class="hl-2">i</span><span class="hl-1">                 </span><span class="hl-3"># install dependencies</span><br/><span class="hl-0">npx</span><span class="hl-1"> </span><span class="hl-2">lefthook</span><span class="hl-1"> </span><span class="hl-2">install</span><span class="hl-1">  </span><span class="hl-3"># install Git hooks</span>
+<!DOCTYPE html><html class="default" lang="en" data-base="./"><head><meta charset="utf-8"/><link rel="canonical" href="https://docs.karmanivero.us/npm-package-template-ts/"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>@karmaniverous/jeeves-runner</title><meta name="description" content="Documentation for @karmaniverous/jeeves-runner"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script defer src="assets/main.js"></script><script async src="assets/icons.js" id="tsd-icons-script"></script><script async src="assets/search.js" id="tsd-search-script"></script><script async src="assets/navigation.js" id="tsd-nav-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar"><div class="tsd-toolbar-contents container"><a href="index.html" class="title">@karmaniverous/jeeves-runner</a><div id="tsd-toolbar-links"><a href="https://github.com/karmaniverous/npm-package-template-ts">GitHub</a></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/><ul role="listbox" id="tsd-search-results"></ul><div id="tsd-search-status" aria-live="polite" aria-atomic="true"><div>Preparing search index...</div></div></dialog><a href="#" class="tsd-widget menu" id="tsd-toolbar-menu-trigger" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-menu"></use></svg></a></div></header><div class="container container-main"><div class="col-content"><div class="tsd-page-title"><h1>@karmaniverous/jeeves-runner</h1></div><div class="tsd-panel tsd-typography"><h1 id="jeeves-runner" class="tsd-anchor-link">jeeves-runner<a href="#jeeves-runner" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h1>
+<p><a href="https://www.npmjs.com/package/@karmaniverous/jeeves-runner" target="_blank" class="external"><img src="https://img.shields.io/npm/v/@karmaniverous/jeeves-runner.svg" alt="npm version"></a>
+<img src="https://img.shields.io/node/v/@karmaniverous/jeeves-runner" alt="Node Current">
+<a href="https://github.com/karmaniverous/jeeves-runner/tree/main/LICENSE.md" target="_blank" class="external"><img src="https://img.shields.io/badge/license-BSD--3--Clause-blue.svg" alt="license"></a></p>
+<p>Graph-aware job execution engine with SQLite state. Part of the <a href="#the-jeeves-platform">Jeeves platform</a>.</p>
+<h2 id="what-it-does" class="tsd-anchor-link">What It Does<a href="#what-it-does" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>jeeves-runner schedules and executes jobs, tracks their state in SQLite, and exposes status via a REST API. It replaces both n8n and Windows Task Scheduler as the substrate for data flow automation.</p>
+<p><strong>Key properties:</strong></p>
+<ul>
+<li><strong>Domain-agnostic.</strong> The runner knows graph primitives (source, sink, datastore, queue, process, auth), not business concepts. &quot;Email polling&quot; and &quot;meeting extraction&quot; are just jobs with scripts.</li>
+<li><strong>SQLite-native.</strong> Job definitions, run history, cursors, and queues live in a single SQLite file. No external database, no Redis.</li>
+<li><strong>Zero new infrastructure.</strong> One Node.js process, one SQLite file. Runs as a system service via NSSM (Windows) or systemd (Linux).</li>
+<li><strong>Scripts as config.</strong> Job scripts live outside the runner repo at configurable absolute paths. The runner is generic; the scripts are instance-specific.</li>
+</ul>
+<h2 id="architecture" class="tsd-anchor-link">Architecture<a href="#architecture" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<pre><code><span class="hl-0">┌─────────────────────────────────────────────────┐</span><br/><span class="hl-0">│                  </span><span class="hl-1">jeeves</span><span class="hl-0">-</span><span class="hl-1">runner</span><span class="hl-0">                   │</span><br/><span class="hl-0">│                                                  │</span><br/><span class="hl-0">│  ┌───────────┐  ┌──────────┐  ┌──────────────┐  │</span><br/><span class="hl-0">│  │ </span><span class="hl-1">Scheduler</span><span class="hl-0"> │──│ </span><span class="hl-1">Executor</span><span class="hl-0"> │──│  </span><span class="hl-1">Notifier</span><span class="hl-0">    │  │</span><br/><span class="hl-0">│  │  (</span><span class="hl-1">croner</span><span class="hl-0">) │  │ (</span><span class="hl-1">spawn</span><span class="hl-0">)  │  │  (</span><span class="hl-1">Slack</span><span class="hl-0">)     │  │</span><br/><span class="hl-0">│  └───────────┘  └──────────┘  └──────────────┘  │</span><br/><span class="hl-0">│                                                  │</span><br/><span class="hl-0">│  ┌───────────┐  ┌──────────┐  ┌──────────────┐  │</span><br/><span class="hl-0">│  │  </span><span class="hl-1">SQLite</span><span class="hl-0">   │  │ </span><span class="hl-2">REST</span><span class="hl-0"> </span><span class="hl-2">API</span><span class="hl-0"> │  │ </span><span class="hl-1">Maintenance</span><span class="hl-0">  │  │</span><br/><span class="hl-0">│  │   (</span><span class="hl-2">DB</span><span class="hl-0">)    │  │(</span><span class="hl-1">Fastify</span><span class="hl-0">) │  │ (</span><span class="hl-1">pruning</span><span class="hl-0">)    │  │</span><br/><span class="hl-0">│  └───────────┘  └──────────┘  └──────────────┘  │</span><br/><span class="hl-0">└─────────────────────────────────────────────────┘</span><br/><span class="hl-0">         │                │</span><br/><span class="hl-0">         ▼                ▼</span><br/><span class="hl-0">   </span><span class="hl-1">runner</span><span class="hl-0">.</span><span class="hl-1">sqlite</span><span class="hl-0">    </span><span class="hl-3">localhost</span><span class="hl-0">:</span><span class="hl-4">3100</span>
+</code><button>Copy</button></pre>
+
+<h3 id="stack" class="tsd-anchor-link">Stack<a href="#stack" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Technology</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Runtime</td>
+<td>Node.js v24+ (uses built-in <code>node:sqlite</code>)</td>
+</tr>
+<tr>
+<td>Scheduler</td>
+<td><a href="https://www.npmjs.com/package/croner" target="_blank" class="external">croner</a></td>
+</tr>
+<tr>
+<td>Database</td>
+<td>SQLite via <code>node:sqlite</code></td>
+</tr>
+<tr>
+<td>Process isolation</td>
+<td><code>child_process.spawn</code></td>
+</tr>
+<tr>
+<td>HTTP API</td>
+<td><a href="https://fastify.dev/" target="_blank" class="external">Fastify</a></td>
+</tr>
+<tr>
+<td>Logging</td>
+<td><a href="https://getpino.io/" target="_blank" class="external">pino</a></td>
+</tr>
+<tr>
+<td>Config validation</td>
+<td><a href="https://zod.dev/" target="_blank" class="external">Zod</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="installation" class="tsd-anchor-link">Installation<a href="#installation" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<pre><code class="bash"><span class="hl-5">npm</span><span class="hl-0"> </span><span class="hl-6">install</span><span class="hl-0"> </span><span class="hl-6">@karmaniverous/jeeves-runner</span>
 </code><button type="button">Copy</button></pre>
 
-<p>Also, type <code>@recommended</code> into the VSCode Extensions sidebar and install the recommended extensions!</p>
-<p>Change all repository &amp; personal references in <a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/package.json" target="_blank" class="external"><code>package.json</code></a> &amp; <a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/typedoc.json" target="_blank" class="external"><code>typedoc.json</code></a> to reflect your own info.</p>
-<p>Before your first commit, be sure to reset your project's version number (e.g. to <code>0.0.0</code>) in <code>package.json</code>.</p>
-<p>To streamline the release process from your desktop, set up a GitHub <a href="https://github.com/settings/tokens" target="_blank" class="external">Personal Access Token</a> and follow the instructions in <a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/.env.local.template" target="_blank" class="external"><code>.env.local.template</code></a>.</p>
-<h2 id="code-authoring" class="tsd-anchor-link">Code Authoring<a href="#code-authoring" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>You want to write straight TS code without having to jump through weird hoops like adding a <code>.js</code> extension to your TS imports. (<a href="https://stackoverflow.com/questions/75807785/why-do-i-need-to-include-js-extension-in-typescript-import-for-custom-module" target="_blank" class="external">Click here</a> to dive into that hole. 🙄)</p>
-<p>Long story short: you can. Just write your code in the <code>src</code> directory and import it as you would any other module. The <a href="#bundling">bundling process</a> will take care of the rest.</p>
-<h2 id="inline-documentation" class="tsd-anchor-link">Inline Documentation<a href="#inline-documentation" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>This template uses <a href="https://tsdoc.org/" target="_blank" class="external">TSDoc</a> for inline documentation. TSDoc is similar to JSDoc, but is way less verbose as it can take advantage of TypeScript's type system. It also has better support for documenting generics and other TypeScript-specific features.</p>
-<p>TSdoc comments are automatically included in your bundled code, so you can use them to document your code for IntelliSense in JavaScript as well as TypeScript.</p>
-<p>The template also includes linting support for your TSDoc comments to keep you out of trouble. Just run <code>npm run lint</code> to check your comments along with the rest of your code, and be sure to check out the great <a href="https://tsdoc.org/" target="_blank" class="external">TSDoc documentation</a> for more details!</p>
-<p>Also note that this template generates <a href="#api-documentation">API Documentation</a> with <a href="https://typedoc.org/" target="_blank" class="external">TypeDoc</a>. The TypeDoc spec includes a few tags that TSDoc doesn't support. <a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/tsdoc.json" target="_blank" class="external"><code>tsdoc.json</code></a> specifies these extra tags and ensures you can use them in your code without generating ESLint warnings!</p>
-<h2 id="cli-generation" class="tsd-anchor-link">CLI Generation<a href="#cli-generation" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>This template uses <a href="https://www.npmjs.com/package/commander" target="_blank" class="external">Commander</a> to generate a CLI for your package.</p>
-<p>Given that your underlying library is solid, wrapping it into a CLI is fairly straightforward. Just follow these steps:</p>
-<ol>
-<li>
-<p>All of your CLI-specific code should live in the <a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/src/cli/" target="_blank" class="external"><code>src/cli</code></a> directory, but can import code from across your package as required. Each subdirectory here is the root of a CLI command. You can have as many as you want, but this template includes a single example called <a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/src/cli/mycli/" target="_blank" class="external"><code>mycli</code></a>.</p>
-</li>
-<li>
-<p>The <code>index.ts</code> file in each named CLI subdirectory will be picked up by the <a href="#bundling">bundler</a> and compiled into a CLI command with the same name as the subdirectory. So <code>src/cli/mycli/index.ts</code> will be compiled into <code>dist/mycli.cli.mjs</code>.</p>
-</li>
-<li>
-<p>The <code>bin</code> field in <a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/package.json" target="_blank" class="external"><code>package.json</code></a> must specifically reference each of these compiled CLI commands. On installation, you can then execute your CLI command like this:</p>
-</li>
-</ol>
-<pre><code class="bash"><span class="hl-1">&gt; npx mycli      </span><span class="hl-3"># if installed localy</span><br/><br/><span class="hl-1">&gt; mycli          </span><span class="hl-3"># if installed globally</span><br/><br/><span class="hl-3"># this is what you get...</span><br/><br/><span class="hl-0">Usage:</span><span class="hl-1"> </span><span class="hl-2">mycli</span><span class="hl-1"> [options] [command]</span><br/><br/><span class="hl-0">My</span><span class="hl-1"> </span><span class="hl-2">CLI</span><span class="hl-1"> </span><span class="hl-2">tool</span><br/><br/><span class="hl-0">Options:</span><br/><span class="hl-1">  </span><span class="hl-0">-h,</span><span class="hl-1"> </span><span class="hl-4">--help</span><span class="hl-1">      </span><span class="hl-2">display</span><span class="hl-1"> </span><span class="hl-2">help</span><span class="hl-1"> </span><span class="hl-2">for</span><span class="hl-1"> </span><span class="hl-2">command</span><br/><br/><span class="hl-0">Commands:</span><br/><span class="hl-1">  </span><span class="hl-0">foo</span><span class="hl-1"> [options]   Foos your bar.</span><br/><span class="hl-1">  </span><span class="hl-0">help</span><span class="hl-1"> [command]  display help </span><span class="hl-5">for</span><span class="hl-1"> command</span>
+<p>Requires Node.js 24+ for <code>node:sqlite</code> support.</p>
+<h2 id="quick-start" class="tsd-anchor-link">Quick Start<a href="#quick-start" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<h3 id="1-create-a-config-file" class="tsd-anchor-link">1. Create a config file<a href="#1-create-a-config-file" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="json"><span class="hl-0">{</span><br/><span class="hl-0">  </span><span class="hl-7">&quot;port&quot;</span><span class="hl-0">: </span><span class="hl-4">3100</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-7">&quot;dbPath&quot;</span><span class="hl-0">: </span><span class="hl-6">&quot;./data/runner.sqlite&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-7">&quot;maxConcurrency&quot;</span><span class="hl-0">: </span><span class="hl-4">4</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-7">&quot;runRetentionDays&quot;</span><span class="hl-0">: </span><span class="hl-4">30</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-7">&quot;cursorCleanupIntervalMs&quot;</span><span class="hl-0">: </span><span class="hl-4">3600000</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-7">&quot;shutdownGraceMs&quot;</span><span class="hl-0">: </span><span class="hl-4">30000</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-7">&quot;notifications&quot;</span><span class="hl-0">: {</span><br/><span class="hl-0">    </span><span class="hl-7">&quot;slackTokenPath&quot;</span><span class="hl-0">: </span><span class="hl-6">&quot;./credentials/slack-bot-token&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">    </span><span class="hl-7">&quot;defaultOnFailure&quot;</span><span class="hl-0">: </span><span class="hl-6">&quot;YOUR_SLACK_CHANNEL_ID&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">    </span><span class="hl-7">&quot;defaultOnSuccess&quot;</span><span class="hl-0">: </span><span class="hl-8">null</span><br/><span class="hl-0">  },</span><br/><span class="hl-0">  </span><span class="hl-7">&quot;log&quot;</span><span class="hl-0">: {</span><br/><span class="hl-0">    </span><span class="hl-7">&quot;level&quot;</span><span class="hl-0">: </span><span class="hl-6">&quot;info&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">    </span><span class="hl-7">&quot;file&quot;</span><span class="hl-0">: </span><span class="hl-6">&quot;./data/runner.log&quot;</span><br/><span class="hl-0">  }</span><br/><span class="hl-0">}</span>
 </code><button type="button">Copy</button></pre>
 
-<p>Providing a detailed tutorial on Commander is really out of scope for this README, but this repo demonstrates a simple example with a single subcommand abstracted into a separate dependency.</p>
-<p>You can build on this example to create a MUCH more complex CLI! See the <a href="https://www.npmjs.com/package/commander" target="_blank" class="external">Commander documentation</a> for more details.</p>
-<p><strong>If your project requires an extensive, config-driven CLI, you might want to use my <a href="https://github.com/karmaniverous/get-dotenv-child" target="_blank" class="external">get-dotenv-child</a> template instead!</strong></p>
-<h2 id="formatting" class="tsd-anchor-link">Formatting<a href="#formatting" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>Code formatting is provided by <a href="https://prettier.io" target="_blank" class="external">Prettier</a>.</p>
-<p>Just run <code>npm run lint</code> to lint &amp; format your code, or <code>npm run lint:fix</code> to resolve any issues automatically if possible.</p>
-<p>The <a href="https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode" target="_blank" class="external">Prettier extension</a> is included in the template's VSCode <a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/.vscode/extensions.json" target="_blank" class="external">workspace recommendations</a>, and the template contains related <a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/.vscode/settings.json" target="_blank" class="external">workspace settings</a>, so be sure to install recommended extensions when prompted!</p>
-<h2 id="linting" class="tsd-anchor-link">Linting<a href="#linting" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>Linting services are provided by <a href="https://eslint.org" target="_blank" class="external">ESLint</a>.</p>
-<p>Just run <code>npm run lint</code> to lint your code, or <code>npm run lint:fix</code> to resolve any issues automatically if possible. These commands also run Prettier to identify &amp; fix formatting issues.</p>
-<p>The <a href="https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint" target="_blank" class="external">ESLint extension</a> is included in the template's VSCode <a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/.vscode/extensions.json" target="_blank" class="external">workspace recommendations</a>, and the template contains related <a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/.vscode/settings.json" target="_blank" class="external">workspace settings</a>, so be sure to install recommended extensions when prompted!</p>
-<h2 id="unit-testing" class="tsd-anchor-link">Unit Testing<a href="#unit-testing" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>Unit test support is provided by <a href="https://vitest.dev" target="_blank" class="external">Vitest</a>.</p>
-<p>Any file containing <code>.test.</code> in its name (e.g. <a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/src/foo.test.ts" target="_blank" class="external"><code>foo.test.ts</code></a>) will be treated as a test file and executed by Vitest. See <a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/vitest.config.ts" target="_blank" class="external"><code>vitest.config.ts</code></a> for configuration details.</p>
-<p>Just run <code>npm run test</code> to execute your tests.</p>
-<p>Test coverage reporting is provided by <a href="https://vitest.dev/guide/coverage.html" target="_blank" class="external">Vitest</a> and runs every time you execute your tests. If you execute your tests from the command line, you will see a coverage report at the bottom of the run. You can also see a prettier version of this report by opening <code>coverage/lcov-report/index.html</code> in your browser.</p>
-<p>The <a href="https://marketplace.visualstudio.com/items?itemName=ZixuanChen.vitest-explorer" target="_blank" class="external">Vitest extension</a> is a great way to execute &amp; debug your Vitest tests! It's included in the template's VSCode <a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/.vscode/extensions.json" target="_blank" class="external">workspace recommendations</a>, and the template contains related <a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/.vscode/settings.json" target="_blank" class="external">workspace settings</a>, so be sure to install recommended extensions when prompted!</p>
-<h2 id="package-pruning" class="tsd-anchor-link">Package Pruning<a href="#package-pruning" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p><a href="https://github.com/webpro-nl/knip" target="_blank" class="external">Knip</a> is a great command-line tool that finds unused files, dependencies and exports in your TypeScript project. Less code and dependencies lead to improved performance, less maintenance and easier refactorings!</p>
-<p>This template integrates Knip into your build process so you can prune your package at every release. Edit the <a href="https://github.com/karmaniverous/npm-package-template-ts/blob/main/knip.json" target="_blank" class="external">config file</a> to add any new cutouts, and run <code>npm run knip</code> to prune your package on demand!</p>
-<h2 id="bundling" class="tsd-anchor-link">Bundling<a href="#bundling" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>This template uses <a href="https://rollupjs.org" target="_blank" class="external">Rollup</a> to bundle your code. See the <a href="#references">References</a> section for more detailed notes. It creates several kinds of outputs:</p>
-<ul>
-<li>ESM, for import into most TS/JS code.</li>
-<li>IIFE (<a href="https://medium.com/@rabailzaheer/iife-explained-immediately-invoked-function-expressions-fccd8f53123d" target="_blank" class="external">Immediately Invoked Function Expression</a>), for direct browser import.</li>
-<li>CJS, for lulz.</li>
-<li>Type definition files to support TypeScript imports and power IntelliSense in Javascript.</li>
-<li>CLI commands for execution from your command line. See the <a href="#cli-generation">CLI Generation</a> section for details. Don't forget to update the <code>bin</code> field in <a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/package.json" target="_blank" class="external"><code>package.json</code></a>!</li>
-</ul>
-<p>Type declarations are properly bundled and should be available no matter how your package is imported.</p>
-<p>Just run <code>npm run build</code> to bundle your code, and the output will be in the <code>dist</code> directory.</p>
-<p>See <a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/rollup.config.ts" target="_blank" class="external"><code>rollup.config.ts</code></a> for details. If you don't need all of the output types listed above, it should be fairly straightforward to modify this file to suit your needs.</p>
-<h3 id="incremental-build-warning" class="tsd-anchor-link">Incremental Build Warning<a href="#incremental-build-warning" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3><p>Incremental builds are turned on in this template. This will save you some build time, but <a href="https://www.npmjs.com/package/@rollup/plugin-typescript" target="_blank" class="external"><code>@rollup/plugin-typescript</code></a> will emit the following warning at build time:</p>
-<pre><code class="bash"><span class="hl-1">(!) [plugin typescript] </span><span class="hl-0">@rollup/plugin-typescript:</span><span class="hl-1"> </span><span class="hl-2">outputToFilesystem</span><span class="hl-1"> </span><span class="hl-2">option</span><span class="hl-1"> </span><span class="hl-2">is</span><span class="hl-1"> </span><span class="hl-2">defaulting</span><span class="hl-1"> </span><span class="hl-2">to</span><span class="hl-1"> </span><span class="hl-4">true</span><span class="hl-2">.</span>
+<h3 id="2-start-the-runner" class="tsd-anchor-link">2. Start the runner<a href="#2-start-the-runner" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="bash"><span class="hl-5">npx</span><span class="hl-0"> </span><span class="hl-6">jeeves-runner</span><span class="hl-0"> </span><span class="hl-6">start</span><span class="hl-0"> </span><span class="hl-8">--config</span><span class="hl-0"> </span><span class="hl-6">./config.json</span>
 </code><button type="button">Copy</button></pre>
 
-<p>This is a <a href="https://github.com/rollup/plugins/issues/1227" target="_blank" class="external">known issue</a> and should have no negative effect on your build. If you can figure out how to suppress this warning, please <a href="https://github.com/karmaniverous/npm-package-template-ts/issues/11" target="_blank" class="external">submit a PR</a>!</p>
-<h3 id="external-dependencies" class="tsd-anchor-link">External Dependencies<a href="#external-dependencies" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3><p><a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/rollup.config.ts" target="_blank" class="external"><code>rollup.config.ts</code></a> is configured to treat all non-dev and peer dependencies listed in <code>package.json</code> as external dependencies. This means...</p>
-<ul>
-<li>
-<p>These dependencies will not be bundled into your package, but should be installed as a matter of course when you run <code>npm install</code>.</p>
-</li>
-<li>
-<p>Your distribution files will be located in your dist directory as specified in your <code>package.json</code> exports field (e.g. <code>dist/mjs/index.js</code>).</p>
-</li>
-</ul>
-<p>It is possible for external dependencies to creep into your build. For example, let's say you have a dev dependency that you referenced in runtime code, but is actually included as a runtime dependency by some other package. In this case...</p>
-<ul>
-<li>
-<p>the dependency would <em>not</em> be listed as an external dependency by <code>rollup.config.ts</code>, and</p>
-</li>
-<li>
-<p>your distribution files would shift to <code>dist/mjs/src/index.js</code>, breaking your package.</p>
-</li>
-</ul>
-<p>To prevent this, simply list the dependency as a regular dependency in your <code>package.json</code> file... <strong>which is exactly where it belongs anyway!</strong></p>
-<p>This will restore the structure of your build AND ensure proper tree-shaking of your dependencies.</p>
-<h2 id="publishing" class="tsd-anchor-link">Publishing<a href="#publishing" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>This template uses <a href="https://github.com/release-it/release-it" target="_blank" class="external">ReleaseIt</a> to create a release on GitHub and publish your package to NPM.</p>
-<p>Just run <code>npm run release</code> and the following will happen:</p>
-<ul>
-<li>ESLint will lint your code.</li>
-<li>Vitest will execute your tests and assess code coverage. Open <code>coverage/lcov-report/index.html</code> to see the results.</li>
-<li>Rollup will bundle your code.</li>
-<li>TypeDoc will generate &amp; commit your API documentation.</li>
-<li>ReleaseIt will create a release on GitHub and publish your package to NPM.</li>
-</ul>
-<p>To preserve Git Flow integrity, <code>npm run release</code> will only run on the <code>main</code> branch. It is often useful, though, to create a pre-release version from a feature branch. To do this, run <code>npm run release:pre</code> on any branch.</p>
-<p>See the <code>release-it</code> section in <a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/package.json" target="_blank" class="external"><code>package.json</code></a> for details.</p>
-<h2 id="validating-your-package" class="tsd-anchor-link">Validating Your Package<a href="#validating-your-package" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>Use <a href="https://arethetypeswrong.github.io/" target="_blank" class="external">this awesome utility</a> to validate that the types in your package are actually accessible in key target development environments.</p>
-<h2 id="git-hooks" class="tsd-anchor-link">Git Hooks<a href="#git-hooks" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>This template assumes you will be using something like <a href="https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow" target="_blank" class="external">Git Flow</a> with a <a href="https://medium.com/@abhay.pixolo/naming-conventions-for-git-branches-a-cheatsheet-8549feca2534" target="_blank" class="external">strong Git branch naming convention</a>.</p>
-<p>The template uses <a href="https://evilmartians.com/opensource/lefthook" target="_blank" class="external">Lefthook</a> to perform two services:</p>
-<ul>
-<li>
-<p>It will prevent you from committing to a branch with an invalid name. See the <a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/.lefthook/pre-commit/branch-naming-policy" target="_blank" class="external"><code>branch-naming-policy</code></a> script for details.</p>
-</li>
-<li>
-<p>If your branch name begins with a standard-format issue number (e.g. <a href="https://github.com/karmaniverous/npm-package-template-ts/issues/1" target="_blank" class="external">GH-1</a>) it will prefix your commit message with the issue number. This is a great way to keep your commits organized and linked to the issues they address! See the <a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/.lefthook/prepare-commit-msg/add-issue" target="_blank" class="external"><code>add-issue</code></a> script for details.</p>
-</li>
-</ul>
-<p>To activate this functionality, be sure to run <code>npx lefthook install</code> after cloning the repository &amp; installing dependencies!</p>
-<h2 id="api-documentation" class="tsd-anchor-link">API Documentation<a href="#api-documentation" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><p>This is really slick!</p>
-<p>If you've been careful to document your code according to <a href="https://tsdoc.org/" target="_blank" class="external">TSDoc</a> conventions, then when you run <code>npm run docs</code> or <code>npm run build</code>, <a href="https://typedoc.org/" target="_blank" class="external">TypeDoc</a> will generate API documentation, wrap it up with your README file, and publish it in browsable form to the <code>docs</code> directory of your repo.</p>
-<p>You can alter the outcome by editing <a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/typedoc.json" target="_blank" class="external"><code>typedoc.json</code></a>. See the <a href="https://typedoc.org/options/" target="_blank" class="external">TypeDoc options documentation</a> for more info.</p>
-<p>Update your repository's GitHub Pages settings as illustrated below, and this site will be published to <code>&lt;your GitHub username&gt;.github.io/&lt;your repo name&gt;</code>. You can also assign it a custom domain.</p>
-<p><img src="media/github-pages-config.png" alt="GitHub Pages Settings"></p>
-<p>If you already have a custom domain set up for a GitHub Pages site at <code>&lt;your GitHub username&gt;.github.io</code>, this documentation will appear at <code>&lt;your custom domain&gt;/&lt;your repo name&gt;</code>.</p>
-<p>For example, see <a href="https://docs.karmanivero.us/npm-package-template-ts">https://docs.karmanivero.us/npm-package-template-ts</a>.</p>
-<p>Finally, note that this README file contains a link in the header to this documentation site that does NOT appear in the copy of the README on the documentation site's home page.</p>
-<p>This is accomplished with the <a href="https://www.npmjs.com/package/typedoc-plugin-replace-text" target="_blank" class="external"><code>typedoc-plugin-replace-text</code></a> TypeDoc plugin. It's already installed &amp; configured in this template, and using it is really simple. Just enclose any Markdown you'd like to exclude from the documentation site in a pair of special Markdown comment tags like this:</p>
-<pre><code class="md">
+<h3 id="3-add-a-job" class="tsd-anchor-link">3. Add a job<a href="#3-add-a-job" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="bash"><span class="hl-5">npx</span><span class="hl-0"> </span><span class="hl-6">jeeves-runner</span><span class="hl-0"> </span><span class="hl-6">add-job</span><span class="hl-0"> </span><span class="hl-9">\</span><br/><span class="hl-0">  </span><span class="hl-8">--id</span><span class="hl-0"> </span><span class="hl-6">my-job</span><span class="hl-0"> </span><span class="hl-9">\</span><br/><span class="hl-0">  </span><span class="hl-8">--name</span><span class="hl-0"> </span><span class="hl-6">&quot;My Job&quot;</span><span class="hl-0"> </span><span class="hl-9">\</span><br/><span class="hl-0">  </span><span class="hl-8">--schedule</span><span class="hl-0"> </span><span class="hl-6">&quot;*/5 * * * *&quot;</span><span class="hl-0"> </span><span class="hl-9">\</span><br/><span class="hl-0">  </span><span class="hl-8">--script</span><span class="hl-0"> </span><span class="hl-6">/absolute/path/to/script.js</span><span class="hl-0"> </span><span class="hl-9">\</span><br/><span class="hl-0">  </span><span class="hl-8">--config</span><span class="hl-0"> </span><span class="hl-6">./config.json</span>
 </code><button type="button">Copy</button></pre>
 
-<p>Anything between these tags (as well as the tags themselves) will be excluded from the documentation site. Note that you can also use these tags to exclude content from your inline Typescript documenation!</p>
-<p>Some tips:</p>
+<h3 id="4-check-status" class="tsd-anchor-link">4. Check status<a href="#4-check-status" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="bash"><span class="hl-5">npx</span><span class="hl-0"> </span><span class="hl-6">jeeves-runner</span><span class="hl-0"> </span><span class="hl-6">status</span><span class="hl-0"> </span><span class="hl-8">--config</span><span class="hl-0"> </span><span class="hl-6">./config.json</span><br/><span class="hl-5">npx</span><span class="hl-0"> </span><span class="hl-6">jeeves-runner</span><span class="hl-0"> </span><span class="hl-6">list-jobs</span><span class="hl-0"> </span><span class="hl-8">--config</span><span class="hl-0"> </span><span class="hl-6">./config.json</span>
+</code><button type="button">Copy</button></pre>
+
+<h2 id="cli-commands" class="tsd-anchor-link">CLI Commands<a href="#cli-commands" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>start</code></td>
+<td>Start the runner daemon</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>Show runner stats (queries the HTTP API)</td>
+</tr>
+<tr>
+<td><code>list-jobs</code></td>
+<td>List all configured jobs</td>
+</tr>
+<tr>
+<td><code>add-job</code></td>
+<td>Add a new job to the database</td>
+</tr>
+<tr>
+<td><code>trigger</code></td>
+<td>Manually trigger a job run (queries the HTTP API)</td>
+</tr>
+</tbody>
+</table>
+<p>All commands accept <code>--config &lt;path&gt;</code> to specify the config file.</p>
+<h2 id="http-api" class="tsd-anchor-link">HTTP API<a href="#http-api" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>The runner exposes a REST API on <code>localhost</code> (not externally accessible by default).</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Path</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td><code>/health</code></td>
+<td>Health check</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/jobs</code></td>
+<td>List all jobs with last run status</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/jobs/:id</code></td>
+<td>Single job detail</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/jobs/:id/runs</code></td>
+<td>Run history (paginated via <code>?limit=N</code>)</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/jobs/:id/run</code></td>
+<td>Trigger manual run</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/jobs/:id/enable</code></td>
+<td>Enable a job</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td><code>/jobs/:id/disable</code></td>
+<td>Disable a job</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td><code>/stats</code></td>
+<td>Aggregate stats (jobs ok/error/running counts)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="example-response" class="tsd-anchor-link">Example response<a href="#example-response" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="json"><span class="hl-10">// GET /jobs</span><br/><span class="hl-0">{</span><br/><span class="hl-0">  </span><span class="hl-7">&quot;jobs&quot;</span><span class="hl-0">: [</span><br/><span class="hl-0">    {</span><br/><span class="hl-0">      </span><span class="hl-7">&quot;id&quot;</span><span class="hl-0">: </span><span class="hl-6">&quot;email-poll&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">      </span><span class="hl-7">&quot;name&quot;</span><span class="hl-0">: </span><span class="hl-6">&quot;Poll Email&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">      </span><span class="hl-7">&quot;schedule&quot;</span><span class="hl-0">: </span><span class="hl-6">&quot;*/11 * * * *&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">      </span><span class="hl-7">&quot;enabled&quot;</span><span class="hl-0">: </span><span class="hl-4">1</span><span class="hl-0">,</span><br/><span class="hl-0">      </span><span class="hl-7">&quot;last_status&quot;</span><span class="hl-0">: </span><span class="hl-6">&quot;ok&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">      </span><span class="hl-7">&quot;last_run&quot;</span><span class="hl-0">: </span><span class="hl-6">&quot;2026-02-24T10:30:00&quot;</span><br/><span class="hl-0">    }</span><br/><span class="hl-0">  ]</span><br/><span class="hl-0">}</span>
+</code><button type="button">Copy</button></pre>
+
+<h2 id="sqlite-schema" class="tsd-anchor-link">SQLite Schema<a href="#sqlite-schema" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Four tables manage all runner state:</p>
+<h3 id="-job-definitions" class="tsd-anchor-link"><code>jobs</code> — Job Definitions<a href="#-job-definitions" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Each job has an ID, name, cron schedule, script path, and behavioral configuration.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>TEXT PK</td>
+<td>Job identifier (e.g. <code>email-poll</code>)</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>TEXT</td>
+<td>Human-readable name</td>
+</tr>
+<tr>
+<td><code>schedule</code></td>
+<td>TEXT</td>
+<td>Cron expression</td>
+</tr>
+<tr>
+<td><code>script</code></td>
+<td>TEXT</td>
+<td>Absolute path to script</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>TEXT</td>
+<td><code>script</code> or <code>session</code> (LLM dispatcher)</td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>INTEGER</td>
+<td>1 = active, 0 = paused</td>
+</tr>
+<tr>
+<td><code>timeout_ms</code></td>
+<td>INTEGER</td>
+<td>Kill after this duration (null = no limit)</td>
+</tr>
+<tr>
+<td><code>overlap_policy</code></td>
+<td>TEXT</td>
+<td><code>skip</code> (default), <code>queue</code>, or <code>allow</code></td>
+</tr>
+<tr>
+<td><code>on_failure</code></td>
+<td>TEXT</td>
+<td>Slack channel ID for failure alerts</td>
+</tr>
+<tr>
+<td><code>on_success</code></td>
+<td>TEXT</td>
+<td>Slack channel ID for success alerts</td>
+</tr>
+</tbody>
+</table>
+<h3 id="-run-history" class="tsd-anchor-link"><code>runs</code> — Run History<a href="#-run-history" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Every execution is recorded with status, timing, output capture, and optional token tracking.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>INTEGER PK</td>
+<td>Auto-incrementing run ID</td>
+</tr>
+<tr>
+<td><code>job_id</code></td>
+<td>TEXT FK</td>
+<td>References <code>jobs.id</code></td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>TEXT</td>
+<td><code>pending</code>, <code>running</code>, <code>ok</code>, <code>error</code>, <code>timeout</code>, <code>skipped</code></td>
+</tr>
+<tr>
+<td><code>duration_ms</code></td>
+<td>INTEGER</td>
+<td>Wall-clock execution time</td>
+</tr>
+<tr>
+<td><code>exit_code</code></td>
+<td>INTEGER</td>
+<td>Process exit code</td>
+</tr>
+<tr>
+<td><code>tokens</code></td>
+<td>INTEGER</td>
+<td>LLM token count (session jobs only)</td>
+</tr>
+<tr>
+<td><code>result_meta</code></td>
+<td>TEXT</td>
+<td>JSON from <code>JR_RESULT:{json}</code> stdout lines</td>
+</tr>
+<tr>
+<td><code>stdout_tail</code></td>
+<td>TEXT</td>
+<td>Last 100 lines of stdout</td>
+</tr>
+<tr>
+<td><code>stderr_tail</code></td>
+<td>TEXT</td>
+<td>Last 100 lines of stderr</td>
+</tr>
+<tr>
+<td><code>trigger</code></td>
+<td>TEXT</td>
+<td><code>schedule</code>, <code>manual</code>, or <code>retry</code></td>
+</tr>
+</tbody>
+</table>
+<p>Runs older than <code>runRetentionDays</code> are automatically pruned.</p>
+<h3 id="-key-value-state" class="tsd-anchor-link"><code>cursors</code> — Key-Value State<a href="#-key-value-state" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>General-purpose key-value store with optional TTL. Replaces JSONL registry files.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>namespace</code></td>
+<td>TEXT</td>
+<td>Logical grouping (typically job ID)</td>
+</tr>
+<tr>
+<td><code>key</code></td>
+<td>TEXT</td>
+<td>State key</td>
+</tr>
+<tr>
+<td><code>value</code></td>
+<td>TEXT</td>
+<td>State value (string or JSON)</td>
+</tr>
+<tr>
+<td><code>expires_at</code></td>
+<td>TEXT</td>
+<td>Optional TTL (ISO timestamp, auto-cleaned)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="-work-queues" class="tsd-anchor-link"><code>queues</code> — Work Queues<a href="#-work-queues" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Priority-ordered work queues with claim semantics. SQLite's serialized writes prevent double-claims.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>INTEGER PK</td>
+<td>Auto-incrementing item ID</td>
+</tr>
+<tr>
+<td><code>queue</code></td>
+<td>TEXT</td>
+<td>Queue name</td>
+</tr>
+<tr>
+<td><code>payload</code></td>
+<td>TEXT</td>
+<td>JSON blob</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>TEXT</td>
+<td><code>pending</code>, <code>claimed</code>, <code>done</code>, <code>error</code></td>
+</tr>
+<tr>
+<td><code>priority</code></td>
+<td>INTEGER</td>
+<td>Higher = more urgent</td>
+</tr>
+<tr>
+<td><code>attempts</code></td>
+<td>INTEGER</td>
+<td>Delivery attempt count</td>
+</tr>
+<tr>
+<td><code>max_attempts</code></td>
+<td>INTEGER</td>
+<td>Maximum retries</td>
+</tr>
+</tbody>
+</table>
+<h2 id="job-scripts" class="tsd-anchor-link">Job Scripts<a href="#job-scripts" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Jobs are plain Node.js scripts executed as child processes. The runner passes context via environment variables:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>JR_DB_PATH</code></td>
+<td>Path to the runner SQLite database</td>
+</tr>
+<tr>
+<td><code>JR_JOB_ID</code></td>
+<td>ID of the current job</td>
+</tr>
+<tr>
+<td><code>JR_RUN_ID</code></td>
+<td>ID of the current run</td>
+</tr>
+</tbody>
+</table>
+<h3 id="structured-output" class="tsd-anchor-link">Structured output<a href="#structured-output" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Scripts can emit structured results by writing a line to stdout:</p>
+<pre><code><span class="hl-3">JR_RESULT</span><span class="hl-0">:{</span><span class="hl-6">&quot;tokens&quot;</span><span class="hl-0">:</span><span class="hl-4">1500</span><span class="hl-0">,</span><span class="hl-6">&quot;meta&quot;</span><span class="hl-0">:</span><span class="hl-6">&quot;processed 42 items&quot;</span><span class="hl-0">}</span>
+</code><button>Copy</button></pre>
+
+<p>The runner parses this and stores the data in the <code>runs</code> table.</p>
+<h3 id="client-library" class="tsd-anchor-link">Client library<a href="#client-library" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Job scripts can import the runner client for cursor and queue operations:</p>
+<pre><code class="typescript"><span class="hl-11">import</span><span class="hl-0"> { </span><span class="hl-1">createClient</span><span class="hl-0"> } </span><span class="hl-11">from</span><span class="hl-0"> </span><span class="hl-6">&#39;@karmaniverous/jeeves-runner&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-8">const</span><span class="hl-0"> </span><span class="hl-2">jr</span><span class="hl-0"> = </span><span class="hl-5">createClient</span><span class="hl-0">(); </span><span class="hl-10">// reads JR_DB_PATH from env</span><br/><br/><span class="hl-10">// Cursors (key-value state)</span><br/><span class="hl-8">const</span><span class="hl-0"> </span><span class="hl-2">lastId</span><span class="hl-0"> = </span><span class="hl-1">jr</span><span class="hl-0">.</span><span class="hl-5">getCursor</span><span class="hl-0">(</span><span class="hl-6">&#39;email-poll&#39;</span><span class="hl-0">, </span><span class="hl-6">&#39;last_history_id&#39;</span><span class="hl-0">);</span><br/><span class="hl-1">jr</span><span class="hl-0">.</span><span class="hl-5">setCursor</span><span class="hl-0">(</span><span class="hl-6">&#39;email-poll&#39;</span><span class="hl-0">, </span><span class="hl-6">&#39;last_history_id&#39;</span><span class="hl-0">, </span><span class="hl-1">newId</span><span class="hl-0">);</span><br/><span class="hl-1">jr</span><span class="hl-0">.</span><span class="hl-5">setCursor</span><span class="hl-0">(</span><span class="hl-6">&#39;email-poll&#39;</span><span class="hl-0">, </span><span class="hl-6">`seen:</span><span class="hl-8">${</span><span class="hl-1">threadId</span><span class="hl-8">}</span><span class="hl-6">`</span><span class="hl-0">, </span><span class="hl-6">&#39;1&#39;</span><span class="hl-0">, { </span><span class="hl-1">ttl:</span><span class="hl-0"> </span><span class="hl-6">&#39;30d&#39;</span><span class="hl-0"> });</span><br/><span class="hl-1">jr</span><span class="hl-0">.</span><span class="hl-5">deleteCursor</span><span class="hl-0">(</span><span class="hl-6">&#39;email-poll&#39;</span><span class="hl-0">, </span><span class="hl-6">&#39;old_key&#39;</span><span class="hl-0">);</span><br/><br/><span class="hl-10">// Queues</span><br/><span class="hl-1">jr</span><span class="hl-0">.</span><span class="hl-5">enqueue</span><span class="hl-0">(</span><span class="hl-6">&#39;email-updates&#39;</span><span class="hl-0">, { </span><span class="hl-1">threadId</span><span class="hl-0">, </span><span class="hl-1">action:</span><span class="hl-0"> </span><span class="hl-6">&#39;label&#39;</span><span class="hl-0"> });</span><br/><span class="hl-8">const</span><span class="hl-0"> </span><span class="hl-2">items</span><span class="hl-0"> = </span><span class="hl-1">jr</span><span class="hl-0">.</span><span class="hl-5">dequeue</span><span class="hl-0">(</span><span class="hl-6">&#39;email-updates&#39;</span><span class="hl-0">, </span><span class="hl-4">10</span><span class="hl-0">); </span><span class="hl-10">// claim up to 10</span><br/><span class="hl-1">jr</span><span class="hl-0">.</span><span class="hl-5">done</span><span class="hl-0">(</span><span class="hl-1">items</span><span class="hl-0">[</span><span class="hl-4">0</span><span class="hl-0">].</span><span class="hl-1">id</span><span class="hl-0">);</span><br/><span class="hl-1">jr</span><span class="hl-0">.</span><span class="hl-5">fail</span><span class="hl-0">(</span><span class="hl-1">items</span><span class="hl-0">[</span><span class="hl-4">1</span><span class="hl-0">].</span><span class="hl-1">id</span><span class="hl-0">, </span><span class="hl-6">&#39;API error&#39;</span><span class="hl-0">);</span><br/><br/><span class="hl-1">jr</span><span class="hl-0">.</span><span class="hl-5">close</span><span class="hl-0">();</span>
+</code><button type="button">Copy</button></pre>
+
+<h2 id="job-lifecycle" class="tsd-anchor-link">Job Lifecycle<a href="#job-lifecycle" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<pre><code><span class="hl-1">Cron</span><span class="hl-0"> </span><span class="hl-1">fires</span><br/><span class="hl-0">  → </span><span class="hl-1">Check</span><span class="hl-0"> </span><span class="hl-1">overlap</span><span class="hl-0"> </span><span class="hl-5">policy</span><span class="hl-0"> (</span><span class="hl-1">skip</span><span class="hl-0"> </span><span class="hl-1">if</span><span class="hl-0"> </span><span class="hl-1">running</span><span class="hl-0"> &amp; </span><span class="hl-1">policy</span><span class="hl-0"> = </span><span class="hl-6">&#39;skip&#39;</span><span class="hl-0">)</span><br/><span class="hl-0">  → </span><span class="hl-2">INSERT</span><span class="hl-0"> </span><span class="hl-5">run</span><span class="hl-0"> (</span><span class="hl-1">status</span><span class="hl-0"> = </span><span class="hl-6">&#39;running&#39;</span><span class="hl-0">)</span><br/><span class="hl-0">  → </span><span class="hl-5">spawn</span><span class="hl-0">(</span><span class="hl-6">&#39;node&#39;</span><span class="hl-0">, [</span><span class="hl-1">script</span><span class="hl-0">], { </span><span class="hl-1">env:</span><span class="hl-0"> </span><span class="hl-2">JR_</span><span class="hl-0">* })</span><br/><span class="hl-0">  → </span><span class="hl-1">Capture</span><span class="hl-0"> </span><span class="hl-1">stdout</span><span class="hl-0">/</span><span class="hl-5">stderr</span><span class="hl-0"> (</span><span class="hl-1">ring</span><span class="hl-0"> </span><span class="hl-1">buffer</span><span class="hl-0">, </span><span class="hl-1">last</span><span class="hl-0"> </span><span class="hl-4">100</span><span class="hl-0"> </span><span class="hl-1">lines</span><span class="hl-0">)</span><br/><span class="hl-0">  → </span><span class="hl-1">Parse</span><span class="hl-0"> </span><span class="hl-2">JR_RESULT</span><span class="hl-0"> </span><span class="hl-1">lines</span><span class="hl-0"> → </span><span class="hl-1">extract</span><span class="hl-0"> </span><span class="hl-1">tokens</span><span class="hl-0"> + </span><span class="hl-1">result_meta</span><br/><span class="hl-0">  → </span><span class="hl-1">On</span><span class="hl-0"> </span><span class="hl-3">timeout</span><span class="hl-0">: </span><span class="hl-1">kill</span><span class="hl-0"> </span><span class="hl-1">process</span><span class="hl-0">, </span><span class="hl-1">status</span><span class="hl-0"> = </span><span class="hl-6">&#39;timeout&#39;</span><span class="hl-0">, </span><span class="hl-1">notify</span><br/><span class="hl-0">  → </span><span class="hl-1">On</span><span class="hl-0"> </span><span class="hl-1">exit</span><span class="hl-0"> </span><span class="hl-4">0</span><span class="hl-0">: </span><span class="hl-1">status</span><span class="hl-0"> = </span><span class="hl-6">&#39;ok&#39;</span><span class="hl-0">, </span><span class="hl-1">notify</span><span class="hl-0"> </span><span class="hl-11">if</span><span class="hl-0"> </span><span class="hl-1">on_success</span><span class="hl-0"> </span><span class="hl-1">configured</span><br/><span class="hl-0">  → </span><span class="hl-1">On</span><span class="hl-0"> </span><span class="hl-1">exit</span><span class="hl-0"> ≠ </span><span class="hl-4">0</span><span class="hl-0">: </span><span class="hl-1">status</span><span class="hl-0"> = </span><span class="hl-6">&#39;error&#39;</span><span class="hl-0">, </span><span class="hl-1">notify</span><span class="hl-0"> </span><span class="hl-11">if</span><span class="hl-0"> </span><span class="hl-1">on_failure</span><span class="hl-0"> </span><span class="hl-1">configured</span>
+</code><button>Copy</button></pre>
+
+<h3 id="overlap-policies" class="tsd-anchor-link">Overlap policies<a href="#overlap-policies" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<table>
+<thead>
+<tr>
+<th>Policy</th>
+<th>Behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>skip</code></td>
+<td>Don't start if already running (default)</td>
+</tr>
+<tr>
+<td><code>queue</code></td>
+<td>Wait for current run to finish, then start</td>
+</tr>
+<tr>
+<td><code>allow</code></td>
+<td>Run concurrently</td>
+</tr>
+</tbody>
+</table>
+<h3 id="concurrency" class="tsd-anchor-link">Concurrency<a href="#concurrency" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>A global semaphore limits concurrent jobs (default: 4, configurable via <code>maxConcurrency</code>). When the limit is hit, behavior follows the job's overlap policy.</p>
+<h3 id="notifications" class="tsd-anchor-link">Notifications<a href="#notifications" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Slack notifications are sent via direct HTTP POST to <code>chat.postMessage</code> (no SDK dependency):</p>
 <ul>
-<li>When TypeDoc finds a relative link in your README to an asset in your repo, it will copy that asset to the <code>media</code> directory of the documentation site. This is fine for images, but you probably want source code links to continue to point to the source code file in its original location. To accomplish this, just use the full URL to the file instead of a relative link.</li>
+<li><strong>Failure:</strong> <code>⚠️ *Job Name* failed (12.3s): error message</code></li>
+<li><strong>Success:</strong> <code>✅ *Job Name* completed (3.4s)</code></li>
 </ul>
-<blockquote>
-<p>Do you know how to restrict this behavior to certain file extensions? <a href="https://github.com/karmaniverous/npm-package-template-ts/discussions" target="_blank" class="external">Start a discussion</a> and let me know!</p>
-</blockquote>
+<p>Notifications require a Slack bot token (file path in config). Each job can override the default notification channels.</p>
+<h2 id="maintenance" class="tsd-anchor-link">Maintenance<a href="#maintenance" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>The runner automatically performs periodic maintenance:</p>
 <ul>
-<li>
-<p>The organization of your documentation site mostly reflects the organization of your code. So make full use of the <a href="https://typedoc.org/guides/tags/" target="_blank" class="external">tags</a> supported by TypeDoc!</p>
-</li>
-<li>
-<p>I added convenient links in <a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/typedoc.json" target="_blank" class="external"><code>typedoc.json</code></a> to the project GitHub repository and my GitHub profile. You'll want to change these to reflect your own info.</p>
-</li>
+<li><strong>Run pruning:</strong> Deletes run records older than <code>runRetentionDays</code> (default: 30).</li>
+<li><strong>Cursor cleanup:</strong> Deletes expired cursor entries (runs every <code>cursorCleanupIntervalMs</code>, default: 1 hour).</li>
 </ul>
-<p>Also note that this template generates <a href="#api-documentation">API Documentation</a> with <a href="https://typedoc.org/" target="_blank" class="external">TypeDoc</a>. The TypeDoc spec includes a few tags that TSDoc doesn't support. <a href="https://github.com/karmaniverous/npm-package-template-ts/tree/main/tsdoc.json" target="_blank" class="external"><code>tsdoc.json</code></a> specifies these extra tags and ensures you can use them in your code without generating ESLint warnings!</p>
-<h2 id="references" class="tsd-anchor-link">References<a href="#references" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2><ul>
-<li>
-<p><a href="https://blog.logrocket.com/building-typescript-cli-node-js-commander/" target="_blank" class="external">Building a TypeScript CLI with Node.js and Commander</a></p>
-</li>
-<li>
-<p><a href="https://datomarjanidze.medium.com/bundling-typescript-in-different-formats-with-rollup-js-3397b3a84e4e" target="_blank" class="external">Bundling TypeScript in different formats with rollup.js</a></p>
-</li>
-<li>
-<p><a href="https://medium.com/@abhay.pixolo/naming-conventions-for-git-branches-a-cheatsheet-8549feca2534" target="_blank" class="external">Naming conventions for Git Branches — a Cheatsheet</a></p>
-</li>
-<li>
-<p><a href="https://www.kravchyk.com/typescript-npm-package-json-exports/" target="_blank" class="external">TypeScript and NPM package.json exports the 2024 way</a>. Note that <a href="https://www.kravchyk.com/typescript-npm-package-json-exports/#:~:text=the%20types%20may%20need%20to%20be%20.d.cjs" target="_blank" class="external">this snippet</a> is wrong; it should read <em>the types may need to be <code>.d.cts</code></em>. That's how this template is implemented. Also note that we're just using a second (and third) <code>rollup</code> type declarations target instead of employing <a href="https://www.npmjs.com/package/rollup-plugin-copy" target="_blank" class="external">rollup-plugin-copy</a> as suggested in the article.</p>
-</li>
+<p>Both tasks run on startup and at the configured interval.</p>
+<h2 id="programmatic-usage" class="tsd-anchor-link">Programmatic Usage<a href="#programmatic-usage" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<pre><code class="typescript"><span class="hl-11">import</span><span class="hl-0"> { </span><span class="hl-1">createRunner</span><span class="hl-0">, </span><span class="hl-1">runnerConfigSchema</span><span class="hl-0"> } </span><span class="hl-11">from</span><span class="hl-0"> </span><span class="hl-6">&#39;@karmaniverous/jeeves-runner&#39;</span><span class="hl-0">;</span><br/><br/><span class="hl-8">const</span><span class="hl-0"> </span><span class="hl-2">config</span><span class="hl-0"> = </span><span class="hl-1">runnerConfigSchema</span><span class="hl-0">.</span><span class="hl-5">parse</span><span class="hl-0">({</span><br/><span class="hl-0">  </span><span class="hl-1">port:</span><span class="hl-0"> </span><span class="hl-4">3100</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-1">dbPath:</span><span class="hl-0"> </span><span class="hl-6">&#39;./data/runner.sqlite&#39;</span><span class="hl-0">,</span><br/><span class="hl-0">});</span><br/><br/><span class="hl-8">const</span><span class="hl-0"> </span><span class="hl-2">runner</span><span class="hl-0"> = </span><span class="hl-5">createRunner</span><span class="hl-0">(</span><span class="hl-1">config</span><span class="hl-0">);</span><br/><span class="hl-11">await</span><span class="hl-0"> </span><span class="hl-1">runner</span><span class="hl-0">.</span><span class="hl-5">start</span><span class="hl-0">();</span><br/><br/><span class="hl-10">// Graceful shutdown</span><br/><span class="hl-1">process</span><span class="hl-0">.</span><span class="hl-5">on</span><span class="hl-0">(</span><span class="hl-6">&#39;SIGTERM&#39;</span><span class="hl-0">, () </span><span class="hl-8">=&gt;</span><span class="hl-0"> </span><span class="hl-1">runner</span><span class="hl-0">.</span><span class="hl-5">stop</span><span class="hl-0">());</span>
+</code><button type="button">Copy</button></pre>
+
+<h2 id="configuration-reference" class="tsd-anchor-link">Configuration Reference<a href="#configuration-reference" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>port</code></td>
+<td>number</td>
+<td><code>3100</code></td>
+<td>HTTP API port</td>
+</tr>
+<tr>
+<td><code>dbPath</code></td>
+<td>string</td>
+<td><code>./data/runner.sqlite</code></td>
+<td>SQLite database path</td>
+</tr>
+<tr>
+<td><code>maxConcurrency</code></td>
+<td>number</td>
+<td><code>4</code></td>
+<td>Max concurrent jobs</td>
+</tr>
+<tr>
+<td><code>runRetentionDays</code></td>
+<td>number</td>
+<td><code>30</code></td>
+<td>Days to keep run history</td>
+</tr>
+<tr>
+<td><code>cursorCleanupIntervalMs</code></td>
+<td>number</td>
+<td><code>3600000</code></td>
+<td>Cursor cleanup interval (ms)</td>
+</tr>
+<tr>
+<td><code>shutdownGraceMs</code></td>
+<td>number</td>
+<td><code>30000</code></td>
+<td>Grace period for running jobs on shutdown</td>
+</tr>
+<tr>
+<td><code>notifications.slackTokenPath</code></td>
+<td>string</td>
+<td>—</td>
+<td>Path to Slack bot token file</td>
+</tr>
+<tr>
+<td><code>notifications.defaultOnFailure</code></td>
+<td>string | null</td>
+<td><code>null</code></td>
+<td>Default Slack channel for failures</td>
+</tr>
+<tr>
+<td><code>notifications.defaultOnSuccess</code></td>
+<td>string | null</td>
+<td><code>null</code></td>
+<td>Default Slack channel for successes</td>
+</tr>
+<tr>
+<td><code>log.level</code></td>
+<td>string</td>
+<td><code>info</code></td>
+<td>Log level (trace/debug/info/warn/error/fatal)</td>
+</tr>
+<tr>
+<td><code>log.file</code></td>
+<td>string</td>
+<td>—</td>
+<td>Log file path (stdout if omitted)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="the-jeeves-platform" class="tsd-anchor-link">The Jeeves Platform<a href="#the-jeeves-platform" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>jeeves-runner is one component of a four-part platform:</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Role</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>jeeves-runner</strong></td>
+<td>Execute: run processes, move data through the graph</td>
+<td>This package</td>
+</tr>
+<tr>
+<td><strong><a href="https://github.com/karmaniverous/jeeves-watcher" target="_blank" class="external">jeeves-watcher</a></strong></td>
+<td>Index: observe file-backed datastores, embed in Qdrant</td>
+<td>Shipped</td>
+</tr>
+<tr>
+<td><strong>jeeves-server</strong></td>
+<td>Present: UI, API, file serving, search, dashboards</td>
+<td>Shipped</td>
+</tr>
+<tr>
+<td><strong>Jeeves skill</strong></td>
+<td>Converse: configure, operate, and query via chat</td>
+<td>Planned</td>
+</tr>
+</tbody>
+</table>
+<h2 id="project-status" class="tsd-anchor-link">Project Status<a href="#project-status" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p><strong>Phase 1</strong> (current): Replicate existing job scheduling and status reporting. Replace n8n and the Notion Process Dashboard.</p>
+<h3 id="whats-built" class="tsd-anchor-link">What's built<a href="#whats-built" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<ul>
+<li>✅ SQLite schema (jobs, runs, cursors, queues)</li>
+<li>✅ Cron scheduler with overlap policies and concurrency limits</li>
+<li>✅ Job executor with output capture, timeout enforcement, and <code>JR_RESULT</code> parsing</li>
+<li>✅ Client library for cursor/queue operations from job scripts</li>
+<li>✅ Slack notifications for job success/failure</li>
+<li>✅ REST API (Fastify) for job management and monitoring</li>
+<li>✅ CLI for daemon management and job operations</li>
+<li>✅ Maintenance tasks (run pruning, cursor cleanup)</li>
+<li>✅ Zod-validated configuration</li>
+<li>✅ Seed script for 27 existing n8n workflows</li>
+<li>✅ 75 passing tests</li>
 </ul>
-<hr>
-<p>Built for you with ❤️ on Bali! Find more great tools &amp; templates on <a href="https://github.com/karmaniverous" target="_blank" class="external">my GitHub Profile</a>.</p>
-</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#typescript-npm-package-template"><span>Type<wbr/>Script <wbr/>NPM <wbr/>Package <wbr/>Template</span></a><ul><li><a href="#getting-started"><span>Getting <wbr/>Started</span></a></li><li><a href="#code-authoring"><span>Code <wbr/>Authoring</span></a></li><li><a href="#inline-documentation"><span>Inline <wbr/>Documentation</span></a></li><li><a href="#cli-generation"><span>CLI <wbr/>Generation</span></a></li><li><a href="#formatting"><span>Formatting</span></a></li><li><a href="#linting"><span>Linting</span></a></li><li><a href="#unit-testing"><span>Unit <wbr/>Testing</span></a></li><li><a href="#package-pruning"><span>Package <wbr/>Pruning</span></a></li><li><a href="#bundling"><span>Bundling</span></a></li><li><ul><li><a href="#incremental-build-warning"><span>Incremental <wbr/>Build <wbr/>Warning</span></a></li><li><a href="#external-dependencies"><span>External <wbr/>Dependencies</span></a></li></ul></li><li><a href="#publishing"><span>Publishing</span></a></li><li><a href="#validating-your-package"><span>Validating <wbr/>Your <wbr/>Package</span></a></li><li><a href="#git-hooks"><span>Git <wbr/>Hooks</span></a></li><li><a href="#api-documentation"><span>API <wbr/>Documentation</span></a></li><li><a href="#references"><span>References</span></a></li></ul></div></details></div><div class="site-menu"><nav id="tsd-sidebar-links" class="tsd-navigation"><a href="https://github.com/karmaniverous/npm-package-template-ts" class="tsd-nav-link">GitHub</a></nav><nav class="tsd-navigation"><a href="modules.html">@karmaniverous/npm-package-template-ts</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer><p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer><div class="overlay"></div></body></html>
+<h3 id="whats-next-phase-1-remaining" class="tsd-anchor-link">What's next (Phase 1 remaining)<a href="#whats-next-phase-1-remaining" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<ul>
+<li>[ ] NSSM service setup</li>
+<li>[ ] jeeves-server dashboard page (<code>/runner</code>)</li>
+<li>[ ] Migrate jobs from n8n one by one</li>
+<li>[ ] Retire n8n</li>
+</ul>
+<h3 id="future-phases" class="tsd-anchor-link">Future phases<a href="#future-phases" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<table>
+<thead>
+<tr>
+<th>Feature</th>
+<th>Phase</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Graph topology (nodes/edges schema)</td>
+<td>2</td>
+</tr>
+<tr>
+<td>Credential/auth management</td>
+<td>2</td>
+</tr>
+<tr>
+<td>REST API for graph mutations</td>
+<td>2</td>
+</tr>
+<tr>
+<td>OpenClaw plugin &amp; Jeeves skill</td>
+<td>3</td>
+</tr>
+<tr>
+<td>Container packaging</td>
+<td>3</td>
+</tr>
+</tbody>
+</table>
+<h2 id="development" class="tsd-anchor-link">Development<a href="#development" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<pre><code class="bash"><span class="hl-5">npm</span><span class="hl-0"> </span><span class="hl-6">install</span><br/><span class="hl-5">npx</span><span class="hl-0"> </span><span class="hl-6">lefthook</span><span class="hl-0"> </span><span class="hl-6">install</span><br/><br/><span class="hl-5">npm</span><span class="hl-0"> </span><span class="hl-6">run</span><span class="hl-0"> </span><span class="hl-6">lint</span><span class="hl-0">        </span><span class="hl-10"># ESLint + Prettier</span><br/><span class="hl-5">npm</span><span class="hl-0"> </span><span class="hl-6">run</span><span class="hl-0"> </span><span class="hl-6">test</span><span class="hl-0">        </span><span class="hl-10"># Vitest</span><br/><span class="hl-5">npm</span><span class="hl-0"> </span><span class="hl-6">run</span><span class="hl-0"> </span><span class="hl-6">knip</span><span class="hl-0">        </span><span class="hl-10"># Unused code detection</span><br/><span class="hl-5">npm</span><span class="hl-0"> </span><span class="hl-6">run</span><span class="hl-0"> </span><span class="hl-6">build</span><span class="hl-0">       </span><span class="hl-10"># Rollup (ESM + types + CLI)</span><br/><span class="hl-5">npm</span><span class="hl-0"> </span><span class="hl-6">run</span><span class="hl-0"> </span><span class="hl-6">typecheck</span><span class="hl-0">   </span><span class="hl-10"># TypeScript (noEmit)</span>
+</code><button type="button">Copy</button></pre>
+
+<h2 id="license" class="tsd-anchor-link">License<a href="#license" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>BSD-3-Clause</p>
+</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#jeeves-runner"><span>jeeves-<wbr/>runner</span></a><ul><li><a href="#what-it-does"><span>What <wbr/>It <wbr/>Does</span></a></li><li><a href="#architecture"><span>Architecture</span></a></li><li><ul><li><a href="#stack"><span>Stack</span></a></li></ul></li><li><a href="#installation"><span>Installation</span></a></li><li><a href="#quick-start"><span>Quick <wbr/>Start</span></a></li><li><ul><li><a href="#1-create-a-config-file"><span>1. <wbr/>Create a config file</span></a></li><li><a href="#2-start-the-runner"><span>2. <wbr/>Start the runner</span></a></li><li><a href="#3-add-a-job"><span>3. <wbr/>Add a job</span></a></li><li><a href="#4-check-status"><span>4. <wbr/>Check status</span></a></li></ul></li><li><a href="#cli-commands"><span>CLI <wbr/>Commands</span></a></li><li><a href="#http-api"><span>HTTP <wbr/>API</span></a></li><li><ul><li><a href="#example-response"><span>Example response</span></a></li></ul></li><li><a href="#sqlite-schema"><span>SQ<wbr/>Lite <wbr/>Schema</span></a></li><li><ul><li><a href="#-job-definitions"><span> — <wbr/>Job <wbr/>Definitions</span></a></li><li><a href="#-run-history"><span> — <wbr/>Run <wbr/>History</span></a></li><li><a href="#-key-value-state"><span> — <wbr/>Key-<wbr/>Value <wbr/>State</span></a></li><li><a href="#-work-queues"><span> — <wbr/>Work <wbr/>Queues</span></a></li></ul></li><li><a href="#job-scripts"><span>Job <wbr/>Scripts</span></a></li><li><ul><li><a href="#structured-output"><span>Structured output</span></a></li><li><a href="#client-library"><span>Client library</span></a></li></ul></li><li><a href="#job-lifecycle"><span>Job <wbr/>Lifecycle</span></a></li><li><ul><li><a href="#overlap-policies"><span>Overlap policies</span></a></li><li><a href="#concurrency"><span>Concurrency</span></a></li><li><a href="#notifications"><span>Notifications</span></a></li></ul></li><li><a href="#maintenance"><span>Maintenance</span></a></li><li><a href="#programmatic-usage"><span>Programmatic <wbr/>Usage</span></a></li><li><a href="#configuration-reference"><span>Configuration <wbr/>Reference</span></a></li><li><a href="#the-jeeves-platform"><span>The <wbr/>Jeeves <wbr/>Platform</span></a></li><li><a href="#project-status"><span>Project <wbr/>Status</span></a></li><li><ul><li><a href="#whats-built"><span>What&#39;s built</span></a></li><li><a href="#whats-next-phase-1-remaining"><span>What&#39;s next (<wbr/>Phase 1 remaining)</span></a></li><li><a href="#future-phases"><span>Future phases</span></a></li></ul></li><li><a href="#development"><span>Development</span></a></li><li><a href="#license"><span>License</span></a></li></ul></div></details></div><div class="site-menu"><nav id="tsd-sidebar-links" class="tsd-navigation"><a href="https://github.com/karmaniverous/npm-package-template-ts" class="tsd-nav-link">GitHub</a></nav><nav class="tsd-navigation"><a href="modules.html">@karmaniverous/jeeves-runner</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer><p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer><div class="overlay"></div></body></html>

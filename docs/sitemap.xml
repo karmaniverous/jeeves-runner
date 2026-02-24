@@ -2,30 +2,138 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 	<url>
 		<loc>https://docs.karmanivero.us/npm-package-template-ts/index.html</loc>
-		<lastmod>2025-09-21T12:40:16.425Z</lastmod>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/npm-package-template-ts/modules.html</loc>
-		<lastmod>2025-09-21T12:40:16.425Z</lastmod>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/npm-package-template-ts/hierarchy.html</loc>
-		<lastmod>2025-09-21T12:40:16.425Z</lastmod>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/npm-package-template-ts/documents/CHANGELOG.html</loc>
-		<lastmod>2025-09-21T12:40:16.425Z</lastmod>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/npm-package-template-ts/modules/index.html</loc>
-		<lastmod>2025-09-21T12:40:16.425Z</lastmod>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/types/index.FooTarget.html</loc>
-		<lastmod>2025-09-21T12:40:16.425Z</lastmod>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.ExecutionOptions.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/functions/index.foo.html</loc>
-		<lastmod>2025-09-21T12:40:16.425Z</lastmod>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.ExecutionResult.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.Maintenance.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.MaintenanceConfig.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.Notifier.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.NotifyConfig.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.Runner.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.RunnerClient.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.Scheduler.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.SchedulerDeps.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/types/index.Job.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/types/index.Run.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/types/index.RunnerConfig.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/types/index.RunStatus.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/types/index.RunTrigger.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/variables/index.jobSchema.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/variables/index.runnerConfigSchema.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/variables/index.runSchema.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/variables/index.runStatusSchema.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/variables/index.runTriggerSchema.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/functions/index.closeConnection.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/functions/index.createClient.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/functions/index.createConnection.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/functions/index.createMaintenance.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/functions/index.createNotifier.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/functions/index.createRunner.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/functions/index.createScheduler.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/functions/index.executeJob.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/npm-package-template-ts/functions/index.runMigrations.html</loc>
+		<lastmod>2026-02-24T17:52:14.137Z</lastmod>
 	</url>
 </urlset>
