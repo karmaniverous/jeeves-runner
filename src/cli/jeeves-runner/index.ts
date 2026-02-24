@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * CLI entry point for jeeves-runner.
  *
@@ -8,12 +7,36 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { Command } from '@commander-js/extra-typings';
+import { Command } from 'commander';
 
 import { createConnection } from '../../db/connection.js';
 import { runMigrations } from '../../db/migrations.js';
 import { createRunner } from '../../runner.js';
 import { runnerConfigSchema } from '../../schemas/config.js';
+
+/** Options shared by commands that accept --config. */
+interface ConfigOptions {
+  config?: string;
+}
+
+/** Options for the add-job command. */
+interface AddJobOptions extends ConfigOptions {
+  id: string;
+  name: string;
+  schedule: string;
+  script: string;
+  type: string;
+  description?: string;
+  timeout?: string;
+  overlap: string;
+  onFailure?: string;
+  onSuccess?: string;
+}
+
+/** Options for the trigger command. */
+interface TriggerOptions extends ConfigOptions {
+  id: string;
+}
 
 /** Load and validate config from a JSON file path, or return defaults. */
 function loadConfig(configPath?: string) {
@@ -35,28 +58,32 @@ program
   .command('start')
   .description('Start the runner daemon')
   .option('-c, --config <path>', 'Path to config file')
-  .action(async (options) => {
+  .action((options: ConfigOptions) => {
     const config = loadConfig(options.config);
     const runner = createRunner(config);
-    await runner.start();
+    void runner.start();
   });
 
 program
   .command('status')
   .description('Show runner status')
   .option('-c, --config <path>', 'Path to config file')
-  .action(async (options) => {
+  .action((options: ConfigOptions) => {
     const config = loadConfig(options.config);
-    try {
-      const resp = await fetch(`http://127.0.0.1:${String(config.port)}/stats`);
-      const stats = (await resp.json()) as Record<string, unknown>;
-      console.log(JSON.stringify(stats, null, 2));
-    } catch {
-      console.error(
-        `Runner not reachable on port ${String(config.port)}. Is it running?`,
-      );
-      process.exit(1);
-    }
+    void (async () => {
+      try {
+        const resp = await fetch(
+          `http://127.0.0.1:${String(config.port)}/stats`,
+        );
+        const stats = (await resp.json()) as Record<string, unknown>;
+        console.log(JSON.stringify(stats, null, 2));
+      } catch {
+        console.error(
+          `Runner not reachable on port ${String(config.port)}. Is it running?`,
+        );
+        process.exit(1);
+      }
+    })();
   });
 
 program
@@ -73,7 +100,7 @@ program
   .option('--on-failure <channel>', 'Slack channel for failure alerts')
   .option('--on-success <channel>', 'Slack channel for success alerts')
   .option('-c, --config <path>', 'Path to config file')
-  .action((options) => {
+  .action((options: AddJobOptions) => {
     const config = loadConfig(options.config);
     const db = createConnection(config.dbPath);
     runMigrations(db);
@@ -102,7 +129,7 @@ program
   .command('list-jobs')
   .description('List all jobs')
   .option('-c, --config <path>', 'Path to config file')
-  .action((options) => {
+  .action((options: ConfigOptions) => {
     const config = loadConfig(options.config);
     const db = createConnection(config.dbPath);
     runMigrations(db);
@@ -132,21 +159,23 @@ program
   .description('Manually trigger a job')
   .requiredOption('-i, --id <id>', 'Job ID to trigger')
   .option('-c, --config <path>', 'Path to config file')
-  .action(async (options) => {
+  .action((options: TriggerOptions) => {
     const config = loadConfig(options.config);
-    try {
-      const resp = await fetch(
-        `http://127.0.0.1:${String(config.port)}/jobs/${options.id}/run`,
-        { method: 'POST' },
-      );
-      const result = (await resp.json()) as Record<string, unknown>;
-      console.log(JSON.stringify(result, null, 2));
-    } catch {
-      console.error(
-        `Runner not reachable on port ${String(config.port)}. Is it running?`,
-      );
-      process.exit(1);
-    }
+    void (async () => {
+      try {
+        const resp = await fetch(
+          `http://127.0.0.1:${String(config.port)}/jobs/${options.id}/run`,
+          { method: 'POST' },
+        );
+        const result = (await resp.json()) as Record<string, unknown>;
+        console.log(JSON.stringify(result, null, 2));
+      } catch {
+        console.error(
+          `Runner not reachable on port ${String(config.port)}. Is it running?`,
+        );
+        process.exit(1);
+      }
+    })();
   });
 
 program.parse();
