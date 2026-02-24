@@ -17,5 +17,24 @@ export type { Runner } from './runner.js';
 export { createRunner } from './runner.js';
 
 // Client
-export type { CursorClient, QueueClient } from './client/client.js';
-export { createCursorClient, createQueueClient } from './client/client.js';
+export type { RunnerClient } from './client/client.js';
+export { createClient } from './client/client.js';
+
+// Executor
+export type {
+  ExecutionOptions,
+  ExecutionResult,
+} from './scheduler/executor.js';
+export { executeJob } from './scheduler/executor.js';
+
+// Scheduler
+export type { Scheduler, SchedulerDeps } from './scheduler/scheduler.js';
+export { createScheduler } from './scheduler/scheduler.js';
+
+// Notifier
+export type { Notifier, NotifyConfig } from './notify/slack.js';
+export { createNotifier } from './notify/slack.js';
+
+// Database
+export { closeConnection, createConnection } from './db/connection.js';
+export { runMigrations } from './db/migrations.js';
