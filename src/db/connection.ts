@@ -1,21 +1,33 @@
 /**
- * SQLite connection manager using Node.js built-in node:sqlite.
- *
- * @module
+ * SQLite connection manager. Creates DB file with parent directories, enables WAL mode for concurrency.
  */
 
-import type { Database } from 'node:sqlite';
+import { mkdirSync } from 'node:fs';
+import { dirname } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 
-export interface ConnectionOptions {
-  dbPath: string;
+/**
+ * Create and configure a SQLite database connection.
+ * Ensures parent directories exist and enables WAL mode for better concurrency.
+ */
+export function createConnection(dbPath: string): DatabaseSync {
+  // Ensure parent directory exists
+  const dir = dirname(dbPath);
+  mkdirSync(dir, { recursive: true });
+
+  // Open database
+  const db = new DatabaseSync(dbPath);
+
+  // Enable WAL mode for better concurrency
+  db.exec('PRAGMA journal_mode = WAL;');
+  db.exec('PRAGMA foreign_keys = ON;');
+
+  return db;
 }
 
-export const createConnection = (
-  _options: ConnectionOptions,
-): Promise<Database> => {
-  throw new Error('Not implemented');
-};
-
-export const closeConnection = (_db: Database): Promise<void> => {
-  throw new Error('Not implemented');
-};
+/**
+ * Close a database connection cleanly.
+ */
+export function closeConnection(db: DatabaseSync): void {
+  db.close();
+}
