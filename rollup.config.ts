@@ -4,18 +4,15 @@ import aliasPlugin, { type Alias } from '@rollup/plugin-alias';
 import commonjsPlugin from '@rollup/plugin-commonjs';
 import jsonPlugin from '@rollup/plugin-json';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
-import terserPlugin from '@rollup/plugin-terser';
 import typescriptPlugin from '@rollup/plugin-typescript';
 import fs from 'fs-extra';
-import type { InputOptions, OutputOptions, RollupOptions } from 'rollup';
+import type { InputOptions, RollupOptions } from 'rollup';
 import copyPlugin from 'rollup-plugin-copy';
 import dtsPlugin from 'rollup-plugin-dts';
 
 const require = createRequire(import.meta.url);
 type Package = Record<string, Record<string, string> | undefined>;
 const pkg = require('./package.json') as Package;
-
-import { packageName } from './src/util/packageName';
 
 const outputPath = `dist`;
 
@@ -52,7 +49,7 @@ const commonPlugins = [
 const commonAliases: Alias[] = [];
 
 /**
- * Common input options for library builds (ESM + CJS).
+ * Common input options for library builds (ESM only).
  * Externalize runtime dependencies and peers.
  */
 const commonInputOptions: InputOptions = {
@@ -65,15 +62,11 @@ const commonInputOptions: InputOptions = {
   plugins: [aliasPlugin({ entries: commonAliases }), ...commonPlugins],
 };
 
-const iifeCommonOutputOptions: OutputOptions = {
-  name: packageName ?? 'unknown',
-};
-
 /** Discover CLI commands under src/cli. */
 const cliCommands = (await fs.readdir('src/cli').catch(() => [])) as string[];
 
 /**
- * Build the library (ESM + CJS).
+ * Build the library (ESM only).
  */
 export const buildLibrary = (dest: string): RollupOptions => ({
   ...commonInputOptions,
@@ -82,11 +75,6 @@ export const buildLibrary = (dest: string): RollupOptions => ({
       dir: `${dest}/mjs`,
       extend: true,
       format: 'esm',
-    },
-    {
-      dir: `${dest}/cjs`,
-      extend: true,
-      format: 'cjs',
     },
   ],
 });
@@ -100,30 +88,10 @@ export const buildTypes = (dest: string): RollupOptions => ({
   plugins: [dtsPlugin()],
 });
 
-/** Assemble complete config including IIFE and CLI outputs. */
+/** Assemble complete config (ESM library, types, and CLI outputs). */
 const config: RollupOptions[] = [
-  // Library output (ESM + CJS)
+  // Library output (ESM only)
   buildLibrary(outputPath),
-
-  // IIFE output (and minified IIFE)
-  {
-    ...commonInputOptions,
-    output: [
-      {
-        ...iifeCommonOutputOptions,
-        extend: true,
-        file: `${outputPath}/index.iife.js`,
-        format: 'iife',
-      },
-      {
-        ...iifeCommonOutputOptions,
-        extend: true,
-        file: `${outputPath}/index.iife.min.js`,
-        format: 'iife',
-        plugins: [terserPlugin()],
-      },
-    ],
-  },
 
   // Type definitions output (single .d.ts)
   buildTypes(outputPath),
