@@ -44,6 +44,7 @@ export default [
       'diagrams/out/**/*',
       'dist/**/*',
       'docs/**/*',
+      'bin/**/*',
       'node_modules/**/*',
     ],
   },

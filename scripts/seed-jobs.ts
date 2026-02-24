@@ -227,8 +227,8 @@ const db = createConnection(config.dbPath);
 runMigrations(db);
 
 const insertStmt = db.prepare(
-  `INSERT OR IGNORE INTO jobs (id, name, schedule, script, type, description, on_failure)
-   VALUES (?, ?, ?, ?, ?, ?, ?)`,
+  `INSERT OR IGNORE INTO jobs (id, name, schedule, script, type, description, on_failure, enabled)
+   VALUES (?, ?, ?, ?, ?, ?, ?, 0)`,
 );
 
 let inserted = 0;
