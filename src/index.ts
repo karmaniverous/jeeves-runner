@@ -37,4 +37,6 @@ export { createNotifier } from './notify/slack.js';
 
 // Database
 export { closeConnection, createConnection } from './db/connection.js';
+export type { Maintenance, MaintenanceConfig } from './db/maintenance.js';
+export { createMaintenance } from './db/maintenance.js';
 export { runMigrations } from './db/migrations.js';

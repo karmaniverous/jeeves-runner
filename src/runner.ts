@@ -10,6 +10,7 @@ import { pino } from 'pino';
 
 import { createServer } from './api/server.js';
 import { closeConnection, createConnection } from './db/connection.js';
+import { createMaintenance, type Maintenance } from './db/maintenance.js';
 import { runMigrations } from './db/migrations.js';
 import { createNotifier } from './notify/slack.js';
 import { executeJob } from './scheduler/executor.js';
@@ -29,6 +30,7 @@ export function createRunner(config: RunnerConfig): Runner {
   let db: DatabaseSync | null = null;
   let scheduler: Scheduler | null = null;
   let server: FastifyInstance | null = null;
+  let maintenance: Maintenance | null = null;
 
   const logger = pino({
     level: config.log.level,
@@ -56,6 +58,18 @@ export function createRunner(config: RunnerConfig): Runner {
         ? readFileSync(config.notifications.slackTokenPath, 'utf-8').trim()
         : null;
       const notifier = createNotifier({ slackToken });
+
+      // Maintenance (run retention pruning + cursor cleanup)
+      maintenance = createMaintenance(
+        db,
+        {
+          runRetentionDays: config.runRetentionDays,
+          cursorCleanupIntervalMs: config.cursorCleanupIntervalMs,
+        },
+        logger,
+      );
+      maintenance.start();
+      logger.info('Maintenance tasks started');
 
       // Scheduler
       scheduler = createScheduler({
@@ -90,6 +104,11 @@ export function createRunner(config: RunnerConfig): Runner {
 
     async stop(): Promise<void> {
       logger.info('Stopping runner');
+
+      if (maintenance) {
+        maintenance.stop();
+        logger.info('Maintenance stopped');
+      }
 
       if (scheduler) {
         scheduler.stop();
