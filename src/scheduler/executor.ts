@@ -1,12 +1,180 @@
 /**
- * Job executor - spawns jobs, captures output, updates runs.
- *
- * @module
+ * Job executor. Spawns job scripts as child processes, captures output, parses result metadata, enforces timeouts.
  */
 
-import type { Job } from '../schemas/job.js';
-import type { Run } from '../schemas/run.js';
+import { spawn } from 'node:child_process';
 
-export const executeJob = (_job: Job): Promise<Run> => {
-  throw new Error('Not implemented');
-};
+/** Result of a job execution. */
+export interface ExecutionResult {
+  status: 'ok' | 'error' | 'timeout';
+  exitCode: number | null;
+  durationMs: number;
+  tokens: number | null;
+  resultMeta: string | null;
+  stdoutTail: string;
+  stderrTail: string;
+  error: string | null;
+}
+
+/** Options for executing a job script. */
+export interface ExecutionOptions {
+  script: string;
+  dbPath: string;
+  jobId: string;
+  runId: number;
+  timeoutMs?: number;
+}
+
+/** Ring buffer for capturing last N lines of output. */
+class RingBuffer {
+  private lines: string[] = [];
+  constructor(private maxLines: number) {}
+
+  append(line: string): void {
+    this.lines.push(line);
+    if (this.lines.length > this.maxLines) {
+      this.lines.shift();
+    }
+  }
+
+  getAll(): string {
+    return this.lines.join('\n');
+  }
+}
+
+/** Parse JR_RESULT:\{json\} lines from stdout to extract tokens and resultMeta. */
+function parseResultLines(stdout: string): {
+  tokens: number | null;
+  resultMeta: string | null;
+} {
+  const lines = stdout.split('\n');
+  let tokens: number | null = null;
+  let resultMeta: string | null = null;
+
+  for (const line of lines) {
+    const match = /^JR_RESULT:(.+)$/.exec(line.trim());
+    if (match) {
+      try {
+        const data = JSON.parse(match[1]) as {
+          tokens?: number;
+          meta?: string;
+        };
+        if (data.tokens !== undefined) tokens = data.tokens;
+        if (data.meta !== undefined) resultMeta = data.meta;
+      } catch {
+        // Ignore parse errors
+      }
+    }
+  }
+
+  return { tokens, resultMeta };
+}
+
+/**
+ * Execute a job script as a child process. Captures output, parses metadata, enforces timeout.
+ */
+export function executeJob(
+  options: ExecutionOptions,
+): Promise<ExecutionResult> {
+  const { script, dbPath, jobId, runId, timeoutMs } = options;
+  const startTime = Date.now();
+
+  return new Promise((resolve) => {
+    const stdoutBuffer = new RingBuffer(100);
+    const stderrBuffer = new RingBuffer(100);
+
+    const child = spawn('node', [script], {
+      env: {
+        ...process.env,
+        JR_DB_PATH: dbPath,
+        JR_JOB_ID: jobId,
+        JR_RUN_ID: String(runId),
+      },
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    let timedOut = false;
+    let timeoutHandle: NodeJS.Timeout | null = null;
+
+    if (timeoutMs) {
+      timeoutHandle = setTimeout(() => {
+        timedOut = true;
+        child.kill('SIGTERM');
+        setTimeout(() => child.kill('SIGKILL'), 5000); // Force kill after 5s
+      }, timeoutMs);
+    }
+
+    child.stdout.on('data', (chunk: Buffer) => {
+      const lines = chunk.toString().split('\n');
+      for (const line of lines) {
+        if (line.trim()) stdoutBuffer.append(line);
+      }
+    });
+
+    child.stderr.on('data', (chunk: Buffer) => {
+      const lines = chunk.toString().split('\n');
+      for (const line of lines) {
+        if (line.trim()) stderrBuffer.append(line);
+      }
+    });
+
+    child.on('close', (exitCode) => {
+      if (timeoutHandle) clearTimeout(timeoutHandle);
+
+      const durationMs = Date.now() - startTime;
+      const stdoutTail = stdoutBuffer.getAll();
+      const stderrTail = stderrBuffer.getAll();
+      const { tokens, resultMeta } = parseResultLines(stdoutTail);
+
+      if (timedOut) {
+        resolve({
+          status: 'timeout',
+          exitCode: null,
+          durationMs,
+          tokens: null,
+          resultMeta: null,
+          stdoutTail,
+          stderrTail,
+          error: `Job timed out after ${String(timeoutMs)}ms`,
+        });
+      } else if (exitCode === 0) {
+        resolve({
+          status: 'ok',
+          exitCode,
+          durationMs,
+          tokens,
+          resultMeta,
+          stdoutTail,
+          stderrTail,
+          error: null,
+        });
+      } else {
+        resolve({
+          status: 'error',
+          exitCode,
+          durationMs,
+          tokens,
+          resultMeta,
+          stdoutTail,
+          stderrTail,
+          error: stderrTail || `Exit code ${String(exitCode)}`,
+        });
+      }
+    });
+
+    child.on('error', (err) => {
+      if (timeoutHandle) clearTimeout(timeoutHandle);
+      const durationMs = Date.now() - startTime;
+      resolve({
+        status: 'error',
+        exitCode: null,
+        durationMs,
+        tokens: null,
+        resultMeta: null,
+        stdoutTail: stdoutBuffer.getAll(),
+        stderrTail: stderrBuffer.getAll(),
+        error: err.message,
+      });
+    });
+  });
+}
