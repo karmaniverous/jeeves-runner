@@ -1,7 +1,7 @@
 {
   "author": "Jason Williscroft",
   "bin": {
-    "mycli": "./dist/cli/mycli/index.js"
+    "jeeves-runner": "./dist/cli/jeeves-runner/index.js"
   },
   "auto-changelog": {
     "output": "CHANGELOG.md",
@@ -10,12 +10,16 @@
     "hideCredit": true
   },
   "bugs": {
-    "url": "https://github.com/karmaniverous/npm-package-template-ts/issues"
+    "url": "https://github.com/karmaniverous/jeeves-runner/issues"
   },
   "dependencies": {
-    "commander": "^14.0.2"
+    "commander": "^14.0.2",
+    "croner": "^9.0.0",
+    "fastify": "^5.2.2",
+    "pino": "^10.0.2",
+    "zod": "^3.24.1"
   },
-  "description": "A feature-rich NPM package template for TypeScript projects.",
+  "description": "Graph-aware job execution engine with SQLite state. Part of the Jeeves platform.",
   "devDependencies": {
     "@commander-js/extra-typings": "^14.0.0",
     "@dotenvx/dotenvx": "^1.51.4",
@@ -45,6 +49,7 @@
     "release-it": "^19.2.2",
     "rimraf": "^6.1.2",
     "rollup": "^4.54.0",
+    "rollup-plugin-copy": "^3.5.0",
     "rollup-plugin-dts": "^6.3.0",
     "tslib": "^2.8.1",
     "typedoc": "^0.28.15",
@@ -72,21 +77,22 @@
   "files": [
     "dist"
   ],
-  "homepage": "https://github.com/karmaniverous/npm-package-template-ts#readme",
+  "homepage": "https://github.com/karmaniverous/jeeves-runner#readme",
   "keywords": [
-    "eslint",
-    "lefthook",
-    "npm",
-    "prettier",
-    "rollup",
-    "template",
-    "typescript",
-    "vitest"
+    "jeeves",
+    "job-scheduler",
+    "cron",
+    "sqlite",
+    "workflow",
+    "automation",
+    "graph",
+    "fastify",
+    "typescript"
   ],
   "license": "BSD-3-Clause",
   "main": "dist/cjs/index.js",
   "module": "dist/mjs/index.js",
-  "name": "@karmaniverous/npm-package-template-ts",
+  "name": "@karmaniverous/jeeves-runner",
   "publishConfig": {
     "access": "public"
   },
@@ -123,7 +129,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/karmaniverous/npm-package-template-ts.git"
+    "url": "git+https://github.com/karmaniverous/jeeves-runner.git"
   },
   "scripts": {
     "build": "rimraf dist && cross-env NO_COLOR=1 rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",

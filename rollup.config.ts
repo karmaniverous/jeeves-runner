@@ -8,6 +8,7 @@ import terserPlugin from '@rollup/plugin-terser';
 import typescriptPlugin from '@rollup/plugin-typescript';
 import fs from 'fs-extra';
 import type { InputOptions, OutputOptions, RollupOptions } from 'rollup';
+import copyPlugin from 'rollup-plugin-copy';
 import dtsPlugin from 'rollup-plugin-dts';
 
 const require = createRequire(import.meta.url);
@@ -43,6 +44,9 @@ const commonPlugins = [
   jsonPlugin(),
   nodeResolve(),
   typescript,
+  copyPlugin({
+    targets: [{ src: 'src/db/migrations/*.sql', dest: 'dist/db/migrations' }],
+  }),
 ];
 
 const commonAliases: Alias[] = [];
