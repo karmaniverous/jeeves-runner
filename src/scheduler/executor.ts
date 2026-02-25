@@ -3,6 +3,7 @@
  */
 
 import { spawn } from 'node:child_process';
+import { extname } from 'node:path';
 
 /** Result of a job execution. */
 export interface ExecutionResult {
@@ -70,6 +71,24 @@ function parseResultLines(stdout: string): {
   return { tokens, resultMeta };
 }
 
+/** Resolve the command and arguments for a script based on its file extension. */
+function resolveCommand(script: string): { command: string; args: string[] } {
+  const ext = extname(script).toLowerCase();
+  switch (ext) {
+    case '.ps1':
+      return {
+        command: 'powershell.exe',
+        args: ['-NoProfile', '-File', script],
+      };
+    case '.cmd':
+    case '.bat':
+      return { command: 'cmd.exe', args: ['/c', script] };
+    default:
+      // .js, .mjs, .cjs, or anything else: run with node
+      return { command: 'node', args: [script] };
+  }
+}
+
 /**
  * Execute a job script as a child process. Captures output, parses metadata, enforces timeout.
  */
@@ -83,7 +102,8 @@ export function executeJob(
     const stdoutBuffer = new RingBuffer(100);
     const stderrBuffer = new RingBuffer(100);
 
-    const child = spawn('node', [script], {
+    const { command, args } = resolveCommand(script);
+    const child = spawn(command, args, {
       env: {
         ...process.env,
         JR_DB_PATH: dbPath,
