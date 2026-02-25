@@ -105,6 +105,38 @@ describe('executeJob', () => {
     expect(parsed.JR_RUN_ID).toBe('99');
   });
 
+  it('should execute a .cmd script', async () => {
+    const script = join(testDir, 'test.cmd');
+    writeFileSync(script, '@echo off\r\necho cmd-output\r\nexit /b 0\r\n');
+
+    const result = await executeJob({
+      script,
+      dbPath: ':memory:',
+      jobId: 'test',
+      runId: 1,
+    });
+
+    expect(result.status).toBe('ok');
+    expect(result.exitCode).toBe(0);
+    expect(result.stdoutTail).toContain('cmd-output');
+  });
+
+  it('should execute a .ps1 script', async () => {
+    const script = join(testDir, 'test.ps1');
+    writeFileSync(script, 'Write-Output "ps1-output"\nexit 0\n');
+
+    const result = await executeJob({
+      script,
+      dbPath: ':memory:',
+      jobId: 'test',
+      runId: 1,
+    });
+
+    expect(result.status).toBe('ok');
+    expect(result.exitCode).toBe(0);
+    expect(result.stdoutTail).toContain('ps1-output');
+  });
+
   it('should timeout long-running scripts', async () => {
     const script = join(testDir, 'slow.js');
     writeFileSync(script, 'setTimeout(() => { console.log("done"); }, 30000);');
