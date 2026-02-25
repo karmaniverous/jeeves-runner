@@ -2,9 +2,17 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.1.2](https://github.com/karmaniverous/jeeves-runner/compare/0.1.1...0.1.2)
+
+- fix: re-read job from DB on each scheduled run [`#3`](https://github.com/karmaniverous/jeeves-runner/pull/3)
+- fix: re-read job from DB on each scheduled run [`#2`](https://github.com/karmaniverous/jeeves-runner/issues/2)
+
 #### [0.1.1](https://github.com/karmaniverous/jeeves-runner/compare/0.1.0...0.1.1)
 
+> 25 February 2026
+
 - feat: detect script type by extension in executor (.ps1, .cmd, .bat) [`#1`](https://github.com/karmaniverous/jeeves-runner/pull/1)
+- chore: release v0.1.1 [`f77a4fb`](https://github.com/karmaniverous/jeeves-runner/commit/f77a4fb994fcf3c1f18e5e0dfc99a6897784f0b5)
 
 #### 0.1.0
 
