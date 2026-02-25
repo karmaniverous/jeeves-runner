@@ -168,8 +168,22 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
 
       for (const job of jobs) {
         try {
+          const jobId = job.id;
           const cron = new Cron(job.schedule, () => {
-            void onScheduledRun(job);
+            // Re-read job from DB to get current configuration
+            const currentJob = db
+              .prepare('SELECT * FROM jobs WHERE id = ? AND enabled = 1')
+              .get(jobId) as JobRow | undefined;
+
+            if (!currentJob) {
+              logger.warn(
+                { jobId },
+                'Job no longer exists or disabled, skipping',
+              );
+              return;
+            }
+
+            void onScheduledRun(currentJob);
           });
           crons.set(job.id, cron);
           logger.info(
