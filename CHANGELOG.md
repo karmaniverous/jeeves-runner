@@ -2,9 +2,16 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.1.1](https://github.com/karmaniverous/jeeves-runner/compare/0.1.0...0.1.1)
+
+- feat: detect script type by extension in executor (.ps1, .cmd, .bat) [`#1`](https://github.com/karmaniverous/jeeves-runner/pull/1)
+
 #### 0.1.0
 
+> 25 February 2026
+
 - Initial commit [`4721cc3`](https://github.com/karmaniverous/jeeves-runner/commit/4721cc3dad396c91496643f672328d99456e7cbc)
+- chore: release v0.1.0 [`ac0747a`](https://github.com/karmaniverous/jeeves-runner/commit/ac0747a55a176b8d297db918e9722dbac69804f7)
 - feat: initial jeeves-runner scaffolding with schemas, db migration, and API structure [`f26fc80`](https://github.com/karmaniverous/jeeves-runner/commit/f26fc8080e6d478893114d5e3236ea5ff1f5b7af)
 - chore: set version 0.0.0, ESM-only build, update all deps [`b7378cd`](https://github.com/karmaniverous/jeeves-runner/commit/b7378cd295b1badbc40107a87463732b25bb1aa5)
 - feat: implement scheduler, notifier, API, and runner [`eed11f6`](https://github.com/karmaniverous/jeeves-runner/commit/eed11f65e80ce2a95223a92e095d698c95ce14cd)
