@@ -12,6 +12,7 @@ import { createServer } from './api/server.js';
 import { closeConnection, createConnection } from './db/connection.js';
 import { createMaintenance, type Maintenance } from './db/maintenance.js';
 import { runMigrations } from './db/migrations.js';
+import { createGatewayClient } from './gateway/client.js';
 import { createNotifier } from './notify/slack.js';
 import { executeJob } from './scheduler/executor.js';
 import { createScheduler, type Scheduler } from './scheduler/scheduler.js';
@@ -61,6 +62,21 @@ export function createRunner(config: RunnerConfig): Runner {
         : null;
       const notifier = createNotifier({ slackToken });
 
+      // Gateway client (optional, for session-type jobs)
+      const gatewayToken = config.gateway.tokenPath
+        ? readFileSync(config.gateway.tokenPath, 'utf-8').trim()
+        : (process.env.OPENCLAW_GATEWAY_TOKEN ?? null);
+      const gatewayClient =
+        gatewayToken && config.gateway.url
+          ? createGatewayClient({
+              url: config.gateway.url,
+              token: gatewayToken,
+            })
+          : undefined;
+      if (gatewayClient) {
+        logger.info('Gateway client initialized');
+      }
+
       // Maintenance (run retention pruning + cursor cleanup)
       maintenance = createMaintenance(
         db,
@@ -80,6 +96,7 @@ export function createRunner(config: RunnerConfig): Runner {
         notifier,
         config,
         logger,
+        gatewayClient,
       });
       scheduler.start();
       logger.info('Scheduler started');
