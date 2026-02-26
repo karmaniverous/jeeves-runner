@@ -372,5 +372,44 @@ describe('RunnerClient', () => {
 
       client.close();
     });
+
+    it('should use transaction for atomic dequeue', () => {
+      const client = createClient(dbPath);
+      const db = createConnection(dbPath);
+
+      // Enqueue two items
+      client.enqueue('test-queue', { id: 1 });
+      client.enqueue('test-queue', { id: 2 });
+
+      // Verify both are pending before dequeue
+      const pendingBefore = db
+        .prepare(
+          `SELECT COUNT(*) as count FROM queue_items WHERE queue_id = 'test-queue' AND status = 'pending'`,
+        )
+        .get() as { count: number };
+      expect(pendingBefore.count).toBe(2);
+
+      // Dequeue one item
+      const items = client.dequeue('test-queue', 1);
+      expect(items).toHaveLength(1);
+
+      // Verify exactly one is now processing and one is still pending
+      const processingAfter = db
+        .prepare(
+          `SELECT COUNT(*) as count FROM queue_items WHERE queue_id = 'test-queue' AND status = 'processing'`,
+        )
+        .get() as { count: number };
+      const pendingAfter = db
+        .prepare(
+          `SELECT COUNT(*) as count FROM queue_items WHERE queue_id = 'test-queue' AND status = 'pending'`,
+        )
+        .get() as { count: number };
+
+      expect(processingAfter.count).toBe(1);
+      expect(pendingAfter.count).toBe(1);
+
+      closeConnection(db);
+      client.close();
+    });
   });
 });

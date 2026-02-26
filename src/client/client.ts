@@ -165,31 +165,41 @@ export function createClient(dbPath?: string): RunnerClient {
     },
 
     dequeue(queue: string, count = 1): QueueItem[] {
-      // First, SELECT the items to claim (with correct ordering)
-      const rows = db
-        .prepare(
-          `SELECT id, payload FROM queue_items 
-           WHERE queue_id = ? AND status = 'pending' 
-           ORDER BY priority DESC, created_at 
-           LIMIT ?`,
-        )
-        .all(queue, count) as Array<{ id: number; payload: string }>;
+      // Wrap SELECT + UPDATE in a transaction for atomicity
+      db.exec('BEGIN');
 
-      // Then UPDATE each one to claim it
-      const updateStmt = db.prepare(
-        `UPDATE queue_items 
-         SET status = 'processing', claimed_at = datetime('now'), attempts = attempts + 1
-         WHERE id = ?`,
-      );
+      try {
+        // First, SELECT the items to claim (with correct ordering)
+        const rows = db
+          .prepare(
+            `SELECT id, payload FROM queue_items 
+             WHERE queue_id = ? AND status = 'pending' 
+             ORDER BY priority DESC, created_at 
+             LIMIT ?`,
+          )
+          .all(queue, count) as Array<{ id: number; payload: string }>;
 
-      for (const row of rows) {
-        updateStmt.run(row.id);
+        // Then UPDATE each one to claim it
+        const updateStmt = db.prepare(
+          `UPDATE queue_items 
+           SET status = 'processing', claimed_at = datetime('now'), attempts = attempts + 1
+           WHERE id = ?`,
+        );
+
+        for (const row of rows) {
+          updateStmt.run(row.id);
+        }
+
+        db.exec('COMMIT');
+
+        return rows.map((row) => ({
+          id: row.id,
+          payload: JSON.parse(row.payload) as unknown,
+        }));
+      } catch (err) {
+        db.exec('ROLLBACK');
+        throw err;
       }
-
-      return rows.map((row) => ({
-        id: row.id,
-        payload: JSON.parse(row.payload) as unknown,
-      }));
     },
 
     done(queueItemId: number): void {
