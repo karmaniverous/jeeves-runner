@@ -50,6 +50,14 @@ export interface RunnerClient {
   deleteItem(namespace: string, key: string, itemKey: string): void;
   /** Count state items in a collection. */
   countItems(namespace: string, key: string): number;
+  /** Delete oldest items keeping only keepCount newest (by updated_at). Returns number deleted. */
+  pruneItems(namespace: string, key: string, keepCount: number): number;
+  /** List item_key values ordered by updated_at. Default order is desc. */
+  listItemKeys(
+    namespace: string,
+    key: string,
+    options?: { limit?: number; order?: 'asc' | 'desc' },
+  ): string[];
   /** Add an item to a queue with optional priority and max attempts. Returns the queue item ID, or -1 if skipped due to deduplication. */
   enqueue(
     queue: string,

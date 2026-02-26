@@ -197,6 +197,94 @@ describe('RunnerClient', () => {
     });
   });
 
+  describe('pruneItems', () => {
+    it('should prune to keepCount newest items', () => {
+      const client = createClient(dbPath);
+      const db = createConnection(dbPath);
+
+      // Insert 10 items with distinct updated_at
+      for (let i = 0; i < 10; i++) {
+        const ts = `2026-01-01T00:00:${String(i).padStart(2, '0')}`;
+        db.prepare(
+          `INSERT OR IGNORE INTO state (namespace, key, value) VALUES ('test', 'prune-key', NULL)`,
+        ).run();
+        db.prepare(
+          `INSERT INTO state_items (namespace, key, item_key, value, updated_at) VALUES (?, ?, ?, ?, ?)`,
+        ).run('test', 'prune-key', `item-${i}`, `val-${i}`, ts);
+      }
+
+      const deleted = client.pruneItems('test', 'prune-key', 5);
+      expect(deleted).toBe(5);
+      expect(client.countItems('test', 'prune-key')).toBe(5);
+
+      // Verify the 5 newest remain (items 5-9)
+      for (let i = 5; i < 10; i++) {
+        expect(client.hasItem('test', 'prune-key', `item-${i}`)).toBe(true);
+      }
+      for (let i = 0; i < 5; i++) {
+        expect(client.hasItem('test', 'prune-key', `item-${i}`)).toBe(false);
+      }
+
+      closeConnection(db);
+      client.close();
+    });
+
+    it('should not delete when keepCount >= actual count', () => {
+      const client = createClient(dbPath);
+      client.setItem('test', 'prune-key', 'item-0', 'val');
+      client.setItem('test', 'prune-key', 'item-1', 'val');
+
+      const deleted = client.pruneItems('test', 'prune-key', 10);
+      expect(deleted).toBe(0);
+      expect(client.countItems('test', 'prune-key')).toBe(2);
+      client.close();
+    });
+  });
+
+  describe('listItemKeys', () => {
+    it('should return keys in desc order by default', () => {
+      const client = createClient(dbPath);
+      const db = createConnection(dbPath);
+
+      db.prepare(
+        `INSERT OR IGNORE INTO state (namespace, key, value) VALUES ('test', 'list-key', NULL)`,
+      ).run();
+      for (let i = 0; i < 3; i++) {
+        const ts = `2026-01-01T00:00:${String(i).padStart(2, '0')}`;
+        db.prepare(
+          `INSERT INTO state_items (namespace, key, item_key, value, updated_at) VALUES (?, ?, ?, ?, ?)`,
+        ).run('test', 'list-key', `item-${i}`, null, ts);
+      }
+
+      const keys = client.listItemKeys('test', 'list-key');
+      expect(keys).toEqual(['item-2', 'item-1', 'item-0']);
+
+      closeConnection(db);
+      client.close();
+    });
+
+    it('should respect limit option', () => {
+      const client = createClient(dbPath);
+      const db = createConnection(dbPath);
+
+      db.prepare(
+        `INSERT OR IGNORE INTO state (namespace, key, value) VALUES ('test', 'list-key2', NULL)`,
+      ).run();
+      for (let i = 0; i < 5; i++) {
+        const ts = `2026-01-01T00:00:${String(i).padStart(2, '0')}`;
+        db.prepare(
+          `INSERT INTO state_items (namespace, key, item_key, value, updated_at) VALUES (?, ?, ?, ?, ?)`,
+        ).run('test', 'list-key2', `item-${i}`, null, ts);
+      }
+
+      const keys = client.listItemKeys('test', 'list-key2', { limit: 2 });
+      expect(keys).toEqual(['item-4', 'item-3']);
+
+      closeConnection(db);
+      client.close();
+    });
+  });
+
   describe('Queues', () => {
     it('should enqueue and dequeue items', () => {
       const client = createClient(dbPath);
