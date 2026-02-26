@@ -5,36 +5,24 @@
 import type { DatabaseSync } from 'node:sqlite';
 
 import Fastify, { type FastifyInstance } from 'fastify';
+import type { Logger } from 'pino';
 
 import type { Scheduler } from '../scheduler/scheduler.js';
-import type { RunnerConfig } from '../schemas/config.js';
 import { registerRoutes } from './routes.js';
 
 /** Server dependencies. */
 interface ServerDeps {
   db: DatabaseSync;
   scheduler: Scheduler;
+  logger: Logger;
 }
 
 /**
  * Create and configure the Fastify server. Routes are registered but server is not started.
  */
-export function createServer(
-  config: RunnerConfig,
-  deps: ServerDeps,
-): FastifyInstance {
+export function createServer(deps: ServerDeps): FastifyInstance {
   const app = Fastify({
-    logger: {
-      level: config.log.level,
-      ...(config.log.file
-        ? {
-            transport: {
-              target: 'pino/file',
-              options: { destination: config.log.file },
-            },
-          }
-        : {}),
-    },
+    logger: deps.logger,
   });
 
   registerRoutes(app, deps);
