@@ -168,6 +168,22 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
   async function onScheduledRun(job: JobRow): Promise<void> {
     const { id, overlap_policy } = job;
 
+    // Validate overlap_policy
+    if (
+      overlap_policy !== 'skip' &&
+      overlap_policy !== 'allow' &&
+      overlap_policy !== null &&
+      overlap_policy !== undefined
+    ) {
+      logger.error(
+        { jobId: id, overlap_policy },
+        'Invalid overlap_policy (supported: skip, allow)',
+      );
+      throw new Error(
+        `Unsupported overlap_policy '${overlap_policy}' for job ${id}`,
+      );
+    }
+
     // Check overlap policy
     if (runningJobs.has(id)) {
       if (overlap_policy === 'skip') {
@@ -175,13 +191,6 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
           { jobId: id },
           'Job already running, skipping (overlap_policy=skip)',
         );
-        return;
-      } else if (overlap_policy === 'queue') {
-        logger.info(
-          { jobId: id },
-          'Job already running, queueing (overlap_policy=queue)',
-        );
-        // In a real implementation, we'd queue this. For now, just skip.
         return;
       }
       // 'allow' policy: proceed
