@@ -133,5 +133,108 @@ describe('RunnerClient', () => {
       expect(items).toHaveLength(0);
       client.close();
     });
+
+    it('should deduplicate items with dedup_expr (pending scope)', () => {
+      const client = createClient(dbPath);
+      // email-pending queue has dedup_expr = '$.threadId' and scope = 'pending'
+      const id1 = client.enqueue('email-pending', {
+        threadId: 'thread-123',
+        message: 'First',
+      });
+      expect(id1).toBeGreaterThan(0);
+
+      // Second enqueue with same threadId should be skipped
+      const id2 = client.enqueue('email-pending', {
+        threadId: 'thread-123',
+        message: 'Second',
+      });
+      expect(id2).toBe(-1);
+
+      // After marking first as done, should be able to enqueue again
+      const items = client.dequeue('email-pending', 1);
+      client.done(items[0].id);
+
+      const id3 = client.enqueue('email-pending', {
+        threadId: 'thread-123',
+        message: 'Third',
+      });
+      expect(id3).toBeGreaterThan(0);
+
+      client.close();
+    });
+
+    it('should deduplicate items with dedup_expr (all scope)', () => {
+      const client = createClient(dbPath);
+      const db = createConnection(dbPath);
+
+      // Create a test queue with 'all' scope
+      db.prepare(
+        `INSERT INTO queues (id, name, dedup_expr, dedup_scope, max_attempts, retention_days) 
+         VALUES ('test-all-scope', 'Test All Scope', '$.id', 'all', 1, 7)`,
+      ).run();
+
+      const id1 = client.enqueue('test-all-scope', { id: 'item-1' });
+      expect(id1).toBeGreaterThan(0);
+
+      // Mark as done
+      const items = client.dequeue('test-all-scope', 1);
+      client.done(items[0].id);
+
+      // Should still be deduplicated because scope is 'all'
+      const id2 = client.enqueue('test-all-scope', { id: 'item-1' });
+      expect(id2).toBe(-1);
+
+      closeConnection(db);
+      client.close();
+    });
+
+    it('should retry failed items under max_attempts', () => {
+      const client = createClient(dbPath);
+      const db = createConnection(dbPath);
+
+      // Create a test queue with max_attempts = 3
+      db.prepare(
+        `INSERT INTO queues (id, name, max_attempts, retention_days) 
+         VALUES ('test-retry', 'Test Retry', 3, 7)`,
+      ).run();
+
+      const id = client.enqueue('test-retry', { foo: 'bar' });
+      expect(id).toBeGreaterThan(0);
+
+      // First attempt: dequeue and fail
+      let items = client.dequeue('test-retry', 1);
+      expect(items).toHaveLength(1);
+      client.fail(items[0].id, 'First failure');
+
+      // Should be back in pending (retry)
+      items = client.dequeue('test-retry', 1);
+      expect(items).toHaveLength(1);
+      client.fail(items[0].id, 'Second failure');
+
+      // Should still be pending (retry)
+      items = client.dequeue('test-retry', 1);
+      expect(items).toHaveLength(1);
+      client.fail(items[0].id, 'Third failure');
+
+      // Now at max_attempts, should be dead-lettered (no more retries)
+      items = client.dequeue('test-retry', 1);
+      expect(items).toHaveLength(0);
+
+      closeConnection(db);
+      client.close();
+    });
+
+    it('should support backward compat: enqueue to undefined queue', () => {
+      const client = createClient(dbPath);
+      // Queue not defined in queues table, should still work
+      const id = client.enqueue('undefined-queue', { test: 'data' });
+      expect(id).toBeGreaterThan(0);
+
+      const items = client.dequeue('undefined-queue', 1);
+      expect(items).toHaveLength(1);
+      expect(items[0]?.payload).toEqual({ test: 'data' });
+
+      client.close();
+    });
   });
 });

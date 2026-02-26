@@ -48,6 +48,24 @@ function cleanExpiredCursors(db: DatabaseSync, logger: Logger): void {
   }
 }
 
+/** Prune old queue items based on per-queue retention settings. */
+function pruneOldQueueItems(db: DatabaseSync, logger: Logger): void {
+  const result = db
+    .prepare(
+      `DELETE FROM queue_items 
+       WHERE status IN ('done', 'failed') 
+       AND finished_at < datetime('now', '-' || 
+         COALESCE(
+           (SELECT retention_days FROM queues WHERE queues.id = queue_items.queue_id),
+           7
+         ) || ' days')`,
+    )
+    .run();
+  if (result.changes > 0) {
+    logger.info({ deleted: result.changes }, 'Pruned old queue items');
+  }
+}
+
 /**
  * Create the maintenance controller. Runs cleanup tasks on startup and at configured intervals.
  */
@@ -61,6 +79,7 @@ export function createMaintenance(
   function runAll(): void {
     pruneOldRuns(db, config.runRetentionDays, logger);
     cleanExpiredCursors(db, logger);
+    pruneOldQueueItems(db, logger);
   }
 
   return {

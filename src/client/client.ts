@@ -4,6 +4,8 @@
 
 import type { DatabaseSync } from 'node:sqlite';
 
+import { JSONPath } from 'jsonpath-plus';
+
 import { closeConnection, createConnection } from '../db/connection.js';
 
 /** Queue item returned from dequeue operation. */
@@ -27,7 +29,7 @@ export interface RunnerClient {
   ): void;
   /** Delete a cursor by namespace and key. */
   deleteCursor(namespace: string, key: string): void;
-  /** Add an item to a queue with optional priority and max attempts. Returns the queue item ID. */
+  /** Add an item to a queue with optional priority and max attempts. Returns the queue item ID, or -1 if skipped due to deduplication. */
   enqueue(
     queue: string,
     payload: unknown,
@@ -41,7 +43,7 @@ export interface RunnerClient {
   dequeue(queue: string, count?: number): QueueItem[];
   /** Mark a queue item as successfully completed. */
   done(queueItemId: number): void;
-  /** Mark a queue item as failed with optional error message. */
+  /** Mark a queue item as failed with optional error message. Retries if under max_attempts, else dead-letters. */
   fail(queueItemId: number, error?: string): void;
   /** Close the database connection. */
   close(): void;
@@ -128,13 +130,67 @@ export function createClient(dbPath?: string): RunnerClient {
       options?: { priority?: number; maxAttempts?: number },
     ): number {
       const priority = options?.priority ?? 0;
-      const maxAttempts = options?.maxAttempts ?? 1;
       const payloadJson = JSON.stringify(payload);
+
+      // Look up queue definition
+      const queueDef = db
+        .prepare(
+          'SELECT dedup_expr, dedup_scope, max_attempts FROM queues WHERE id = ?',
+        )
+        .get(queue) as
+        | {
+            dedup_expr: string | null;
+            dedup_scope: string;
+            max_attempts: number;
+          }
+        | undefined;
+
+      let dedupKey: string | null = null;
+      const maxAttempts = options?.maxAttempts ?? queueDef?.max_attempts ?? 1;
+
+      // Handle deduplication if queue definition exists and has dedup_expr
+      if (queueDef?.dedup_expr) {
+        try {
+          const result: unknown = JSONPath({
+            path: queueDef.dedup_expr,
+            json: payload as object,
+          });
+          if (Array.isArray(result) && result.length > 0) {
+            dedupKey = String(result[0]);
+          }
+        } catch {
+          // If JSONPath evaluation fails, proceed without dedup
+          dedupKey = null;
+        }
+
+        // Check for duplicates
+        if (dedupKey) {
+          const dedupScope = queueDef.dedup_scope || 'pending';
+          const statusFilter =
+            dedupScope === 'pending'
+              ? "status IN ('pending', 'processing')"
+              : "status IN ('pending', 'processing', 'done')";
+
+          const existing = db
+            .prepare(
+              `SELECT id FROM queue_items 
+               WHERE queue_id = ? AND dedup_key = ? AND ${statusFilter}
+               LIMIT 1`,
+            )
+            .get(queue, dedupKey) as { id: number } | undefined;
+
+          if (existing) {
+            return -1; // Duplicate found, skip enqueue
+          }
+        }
+      }
+
+      // Insert the item
       const result = db
         .prepare(
-          'INSERT INTO queues (queue, payload, priority, max_attempts) VALUES (?, ?, ?, ?)',
+          'INSERT INTO queue_items (queue_id, payload, priority, max_attempts, dedup_key) VALUES (?, ?, ?, ?, ?)',
         )
-        .run(queue, payloadJson, priority, maxAttempts);
+        .run(queue, payloadJson, priority, maxAttempts, dedupKey);
       return result.lastInsertRowid;
     },
 
@@ -142,8 +198,8 @@ export function createClient(dbPath?: string): RunnerClient {
       // First, SELECT the items to claim (with correct ordering)
       const rows = db
         .prepare(
-          `SELECT id, payload FROM queues 
-           WHERE queue = ? AND status = 'pending' 
+          `SELECT id, payload FROM queue_items 
+           WHERE queue_id = ? AND status = 'pending' 
            ORDER BY priority DESC, created_at 
            LIMIT ?`,
         )
@@ -151,7 +207,7 @@ export function createClient(dbPath?: string): RunnerClient {
 
       // Then UPDATE each one to claim it
       const updateStmt = db.prepare(
-        `UPDATE queues 
+        `UPDATE queue_items 
          SET status = 'processing', claimed_at = datetime('now'), attempts = attempts + 1
          WHERE id = ?`,
       );
@@ -168,14 +224,30 @@ export function createClient(dbPath?: string): RunnerClient {
 
     done(queueItemId: number): void {
       db.prepare(
-        `UPDATE queues SET status = 'done', finished_at = datetime('now') WHERE id = ?`,
+        `UPDATE queue_items SET status = 'done', finished_at = datetime('now') WHERE id = ?`,
       ).run(queueItemId);
     },
 
     fail(queueItemId: number, error?: string): void {
-      db.prepare(
-        `UPDATE queues SET status = 'failed', finished_at = datetime('now'), error = ? WHERE id = ?`,
-      ).run(error ?? null, queueItemId);
+      // Get current item state
+      const item = db
+        .prepare('SELECT attempts, max_attempts FROM queue_items WHERE id = ?')
+        .get(queueItemId) as
+        | { attempts: number; max_attempts: number }
+        | undefined;
+
+      if (!item) return;
+
+      // If under max attempts, retry (reset to pending); else dead-letter (mark failed)
+      if (item.attempts < item.max_attempts) {
+        db.prepare(
+          `UPDATE queue_items SET status = 'pending', error = ? WHERE id = ?`,
+        ).run(error ?? null, queueItemId);
+      } else {
+        db.prepare(
+          `UPDATE queue_items SET status = 'failed', finished_at = datetime('now'), error = ? WHERE id = ?`,
+        ).run(error ?? null, queueItemId);
+      }
     },
 
     close(): void {
