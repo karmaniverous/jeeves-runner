@@ -22,7 +22,11 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
 
   /** GET /health — Health check. */
   app.get('/health', () => {
-    return { ok: true, uptime: process.uptime() };
+    return {
+      ok: true,
+      uptime: process.uptime(),
+      failedRegistrations: scheduler.getFailedRegistrations().length,
+    };
   });
 
   /** GET /jobs — List all jobs with last run status. */
@@ -87,6 +91,7 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
       reply.code(404);
       return { error: 'Job not found' };
     }
+    scheduler.reconcileNow();
     return { ok: true };
   });
 
@@ -101,6 +106,7 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
         reply.code(404);
         return { error: 'Job not found' };
       }
+      scheduler.reconcileNow();
       return { ok: true };
     },
   );
@@ -111,6 +117,7 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
       .prepare('SELECT COUNT(*) as count FROM jobs')
       .get() as { count: number };
     const runningCount = scheduler.getRunningJobs().length;
+    const failedCount = scheduler.getFailedRegistrations().length;
     const okLastHour = db
       .prepare(
         `SELECT COUNT(*) as count FROM runs 
@@ -127,6 +134,7 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
     return {
       totalJobs: totalJobs.count,
       running: runningCount,
+      failedRegistrations: failedCount,
       okLastHour: okLastHour.count,
       errorsLastHour: errorsLastHour.count,
     };

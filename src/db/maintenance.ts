@@ -8,13 +8,17 @@ import type { Logger } from 'pino';
 
 /** Configuration for maintenance tasks. */
 export interface MaintenanceConfig {
+  /** Number of days to retain completed run records before pruning. */
   runRetentionDays: number;
+  /** Interval in milliseconds between maintenance task runs. */
   cursorCleanupIntervalMs: number;
 }
 
 /** Maintenance controller with start/stop lifecycle. */
 export interface Maintenance {
+  /** Start maintenance tasks (runs immediately, then on interval). */
   start(): void;
+  /** Stop maintenance task interval. */
   stop(): void;
   /** Run all maintenance tasks immediately (useful for testing and startup). */
   runNow(): void;
@@ -22,25 +26,44 @@ export interface Maintenance {
 
 /** Delete runs older than the configured retention period. */
 function pruneOldRuns(db: DatabaseSync, days: number, logger: Logger): void {
+  const cutoffDate = new Date(
+    Date.now() - days * 24 * 60 * 60 * 1000,
+  ).toISOString();
   const result = db
-    .prepare(
-      `DELETE FROM runs WHERE started_at < datetime('now', '-${String(days)} days')`,
-    )
-    .run();
+    .prepare(`DELETE FROM runs WHERE started_at < ?`)
+    .run(cutoffDate);
   if (result.changes > 0) {
     logger.info({ deleted: result.changes }, 'Pruned old runs');
   }
 }
 
-/** Delete expired cursor entries. */
+/** Delete expired state entries. */
 function cleanExpiredCursors(db: DatabaseSync, logger: Logger): void {
   const result = db
     .prepare(
-      `DELETE FROM cursors WHERE expires_at IS NOT NULL AND expires_at < datetime('now')`,
+      `DELETE FROM state WHERE expires_at IS NOT NULL AND expires_at < datetime('now')`,
     )
     .run();
   if (result.changes > 0) {
-    logger.info({ deleted: result.changes }, 'Cleaned expired cursors');
+    logger.info({ deleted: result.changes }, 'Cleaned expired state entries');
+  }
+}
+
+/** Prune old queue items based on per-queue retention settings. */
+function pruneOldQueueItems(db: DatabaseSync, logger: Logger): void {
+  const result = db
+    .prepare(
+      `DELETE FROM queue_items 
+       WHERE status IN ('done', 'failed') 
+       AND finished_at < datetime('now', '-' || 
+         COALESCE(
+           (SELECT retention_days FROM queues WHERE queues.id = queue_items.queue_id),
+           7
+         ) || ' days')`,
+    )
+    .run();
+  if (result.changes > 0) {
+    logger.info({ deleted: result.changes }, 'Pruned old queue items');
   }
 }
 
@@ -57,6 +80,7 @@ export function createMaintenance(
   function runAll(): void {
     pruneOldRuns(db, config.runRetentionDays, logger);
     cleanExpiredCursors(db, logger);
+    pruneOldQueueItems(db, logger);
   }
 
   return {

@@ -8,6 +8,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { Command } from 'commander';
+import { CronPattern } from 'croner';
 
 import { createConnection } from '../../db/connection.js';
 import { runMigrations } from '../../db/migrations.js';
@@ -96,12 +97,39 @@ program
   .option('-t, --type <type>', 'Job type (script|session)', 'script')
   .option('-d, --description <desc>', 'Job description')
   .option('--timeout <ms>', 'Timeout in ms')
-  .option('--overlap <policy>', 'Overlap policy (skip|queue|allow)', 'skip')
+  .option('--overlap <policy>', 'Overlap policy (skip|allow)', 'skip')
   .option('--on-failure <channel>', 'Slack channel for failure alerts')
   .option('--on-success <channel>', 'Slack channel for success alerts')
   .option('-c, --config <path>', 'Path to config file')
   .action((options: AddJobOptions) => {
     const config = loadConfig(options.config);
+
+    // Validate schedule expression before inserting
+    try {
+      new CronPattern(options.schedule);
+    } catch (err) {
+      console.error(
+        `Invalid schedule expression: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      process.exit(1);
+    }
+
+    // Validate overlap_policy
+    if (!['skip', 'allow'].includes(options.overlap)) {
+      console.error(
+        `Invalid overlap policy '${options.overlap}'. Supported values: skip, allow`,
+      );
+      process.exit(1);
+    }
+
+    // Validate job type
+    if (!['script', 'session'].includes(options.type)) {
+      console.error(
+        `Invalid job type '${options.type}'. Supported values: script, session`,
+      );
+      process.exit(1);
+    }
+
     const db = createConnection(config.dbPath);
     runMigrations(db);
 

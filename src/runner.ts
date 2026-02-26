@@ -6,43 +6,55 @@ import { readFileSync } from 'node:fs';
 import type { DatabaseSync } from 'node:sqlite';
 
 import type { FastifyInstance } from 'fastify';
+import type { Logger } from 'pino';
 import { pino } from 'pino';
 
 import { createServer } from './api/server.js';
 import { closeConnection, createConnection } from './db/connection.js';
 import { createMaintenance, type Maintenance } from './db/maintenance.js';
 import { runMigrations } from './db/migrations.js';
+import { createGatewayClient } from './gateway/client.js';
 import { createNotifier } from './notify/slack.js';
 import { executeJob } from './scheduler/executor.js';
 import { createScheduler, type Scheduler } from './scheduler/scheduler.js';
 import type { RunnerConfig } from './schemas/config.js';
 
-/** Runner interface. */
+/** Runner interface for managing the runner lifecycle. */
 export interface Runner {
+  /** Initialize and start all runner components (database, scheduler, API server). */
   start(): Promise<void>;
+  /** Gracefully stop all runner components and clean up resources. */
   stop(): Promise<void>;
+}
+
+/** Optional dependencies for test injection. */
+export interface RunnerDeps {
+  /** Optional custom logger instance. */
+  logger?: Logger;
 }
 
 /**
  * Create the runner. Initializes database, scheduler, API server, and sets up graceful shutdown.
  */
-export function createRunner(config: RunnerConfig): Runner {
+export function createRunner(config: RunnerConfig, deps?: RunnerDeps): Runner {
   let db: DatabaseSync | null = null;
   let scheduler: Scheduler | null = null;
   let server: FastifyInstance | null = null;
   let maintenance: Maintenance | null = null;
 
-  const logger = pino({
-    level: config.log.level,
-    ...(config.log.file
-      ? {
-          transport: {
-            target: 'pino/file',
-            options: { destination: config.log.file },
-          },
-        }
-      : {}),
-  });
+  const logger =
+    deps?.logger ??
+    pino({
+      level: config.log.level,
+      ...(config.log.file
+        ? {
+            transport: {
+              target: 'pino/file',
+              options: { destination: config.log.file },
+            },
+          }
+        : {}),
+    });
 
   return {
     async start(): Promise<void> {
@@ -58,6 +70,21 @@ export function createRunner(config: RunnerConfig): Runner {
         ? readFileSync(config.notifications.slackTokenPath, 'utf-8').trim()
         : null;
       const notifier = createNotifier({ slackToken });
+
+      // Gateway client (optional, for session-type jobs)
+      const gatewayToken = config.gateway.tokenPath
+        ? readFileSync(config.gateway.tokenPath, 'utf-8').trim()
+        : (process.env.OPENCLAW_GATEWAY_TOKEN ?? null);
+      const gatewayClient =
+        gatewayToken && config.gateway.url
+          ? createGatewayClient({
+              url: config.gateway.url,
+              token: gatewayToken,
+            })
+          : undefined;
+      if (gatewayClient) {
+        logger.info('Gateway client initialized');
+      }
 
       // Maintenance (run retention pruning + cursor cleanup)
       maintenance = createMaintenance(
@@ -78,12 +105,17 @@ export function createRunner(config: RunnerConfig): Runner {
         notifier,
         config,
         logger,
+        gatewayClient,
       });
       scheduler.start();
       logger.info('Scheduler started');
 
       // API server
-      server = createServer(config, { db, scheduler });
+      server = createServer({
+        db,
+        scheduler,
+        loggerConfig: { level: config.log.level, file: config.log.file },
+      });
       await server.listen({ port: config.port, host: '127.0.0.1' });
       logger.info({ port: config.port }, 'API server listening');
 
@@ -111,7 +143,7 @@ export function createRunner(config: RunnerConfig): Runner {
       }
 
       if (scheduler) {
-        scheduler.stop();
+        await scheduler.stop();
         logger.info('Scheduler stopped');
       }
 

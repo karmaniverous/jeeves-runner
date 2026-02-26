@@ -5,58 +5,77 @@
 import type { DatabaseSync } from 'node:sqlite';
 
 import { closeConnection, createConnection } from '../db/connection.js';
+import type { QueueItem } from './queue-ops.js';
+import { createQueueOps } from './queue-ops.js';
+import { createCollectionOps, createStateOps } from './state-ops.js';
+
+export type { QueueItem };
 
 /** Client interface for job scripts to interact with runner state and queues. */
 export interface RunnerClient {
+  /** Retrieve a cursor value by namespace and key. Returns null if not found or expired. */
   getCursor(namespace: string, key: string): string | null;
+  /** Set or update a cursor value with optional TTL (e.g., '30d', '24h', '60m'). */
   setCursor(
     namespace: string,
     key: string,
     value: string,
     options?: { ttl?: string },
   ): void;
+  /** Delete a cursor by namespace and key. */
   deleteCursor(namespace: string, key: string): void;
+  /** Retrieve a state value by namespace and key (alias for getCursor). Returns null if not found or expired. */
+  getState(namespace: string, key: string): string | null;
+  /** Set or update a state value with optional TTL (alias for setCursor). */
+  setState(
+    namespace: string,
+    key: string,
+    value: string,
+    options?: { ttl?: string },
+  ): void;
+  /** Delete a state value by namespace and key (alias for deleteCursor). */
+  deleteState(namespace: string, key: string): void;
+  /** Check if a state item exists in a collection. */
+  hasItem(namespace: string, key: string, itemKey: string): boolean;
+  /** Retrieve a state item value from a collection. Returns null if not found. */
+  getItem(namespace: string, key: string, itemKey: string): string | null;
+  /** Set or update a state item in a collection. Value is optional (for existence-only tracking). Auto-creates parent state row if needed. */
+  setItem(
+    namespace: string,
+    key: string,
+    itemKey: string,
+    value?: string,
+  ): void;
+  /** Delete a state item from a collection. */
+  deleteItem(namespace: string, key: string, itemKey: string): void;
+  /** Count state items in a collection. */
+  countItems(namespace: string, key: string): number;
+  /** Delete oldest items keeping only keepCount newest (by updated_at). Returns number deleted. */
+  pruneItems(namespace: string, key: string, keepCount: number): number;
+  /** List item_key values ordered by updated_at. Default order is desc. */
+  listItemKeys(
+    namespace: string,
+    key: string,
+    options?: { limit?: number; order?: 'asc' | 'desc' },
+  ): string[];
+  /** Add an item to a queue with optional priority and max attempts. Returns the queue item ID, or -1 if skipped due to deduplication. */
   enqueue(
     queue: string,
     payload: unknown,
     options?: { priority?: number; maxAttempts?: number },
   ): number;
-  dequeue(
-    queue: string,
-    count?: number,
-  ): Array<{ id: number; payload: unknown }>;
+  /**
+   * Claim and retrieve items from a queue for processing. Returns array of queue items with id and payload.
+   * @param queue - Queue name
+   * @param count - Number of items to dequeue (default 1)
+   */
+  dequeue(queue: string, count?: number): QueueItem[];
+  /** Mark a queue item as successfully completed. */
   done(queueItemId: number): void;
+  /** Mark a queue item as failed with optional error message. Retries if under max_attempts, else dead-letters. */
   fail(queueItemId: number, error?: string): void;
+  /** Close the database connection. */
   close(): void;
-}
-
-/** Parse TTL string (e.g., '30d', '24h', '60m') into ISO datetime offset from now. */
-function parseTtl(ttl: string): string {
-  const match = /^(\d+)([dhm])$/.exec(ttl);
-  if (!match) throw new Error(`Invalid TTL format: ${ttl}`);
-
-  const amount = match[1];
-  const unit = match[2];
-  if (!amount || !unit) throw new Error(`Invalid TTL format: ${ttl}`);
-
-  const num = parseInt(amount, 10);
-
-  let modifier: string;
-  switch (unit) {
-    case 'd':
-      modifier = `+${String(num)} days`;
-      break;
-    case 'h':
-      modifier = `+${String(num)} hours`;
-      break;
-    case 'm':
-      modifier = `+${String(num)} minutes`;
-      break;
-    default:
-      throw new Error(`Unknown TTL unit: ${unit}`);
-  }
-
-  return `datetime('now', '${modifier}')`;
 }
 
 /**
@@ -70,96 +89,14 @@ export function createClient(dbPath?: string): RunnerClient {
     );
 
   const db: DatabaseSync = createConnection(path);
+  const stateOps = createStateOps(db);
+  const collectionOps = createCollectionOps(db);
+  const queueOps = createQueueOps(db);
 
   return {
-    getCursor(namespace: string, key: string): string | null {
-      const row = db
-        .prepare(
-          `SELECT value FROM cursors 
-           WHERE namespace = ? AND key = ? 
-           AND (expires_at IS NULL OR expires_at > datetime('now'))`,
-        )
-        .get(namespace, key) as { value: string } | undefined;
-      return row?.value ?? null;
-    },
-
-    setCursor(
-      namespace: string,
-      key: string,
-      value: string,
-      options?: { ttl?: string },
-    ): void {
-      const expiresAt = options?.ttl ? parseTtl(options.ttl) : null;
-      const sql = expiresAt
-        ? `INSERT INTO cursors (namespace, key, value, expires_at) VALUES (?, ?, ?, ${expiresAt})
-           ON CONFLICT(namespace, key) DO UPDATE SET value = excluded.value, expires_at = excluded.expires_at, updated_at = datetime('now')`
-        : `INSERT INTO cursors (namespace, key, value) VALUES (?, ?, ?)
-           ON CONFLICT(namespace, key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')`;
-      db.prepare(sql).run(namespace, key, value);
-    },
-
-    deleteCursor(namespace: string, key: string): void {
-      db.prepare('DELETE FROM cursors WHERE namespace = ? AND key = ?').run(
-        namespace,
-        key,
-      );
-    },
-
-    enqueue(
-      queue: string,
-      payload: unknown,
-      options?: { priority?: number; maxAttempts?: number },
-    ): number {
-      const priority = options?.priority ?? 0;
-      const maxAttempts = options?.maxAttempts ?? 1;
-      const payloadJson = JSON.stringify(payload);
-      const result = db
-        .prepare(
-          'INSERT INTO queues (queue, payload, priority, max_attempts) VALUES (?, ?, ?, ?)',
-        )
-        .run(queue, payloadJson, priority, maxAttempts);
-      return result.lastInsertRowid;
-    },
-
-    dequeue(queue: string, count = 1): Array<{ id: number; payload: unknown }> {
-      // First, SELECT the items to claim (with correct ordering)
-      const rows = db
-        .prepare(
-          `SELECT id, payload FROM queues 
-           WHERE queue = ? AND status = 'pending' 
-           ORDER BY priority DESC, created_at 
-           LIMIT ?`,
-        )
-        .all(queue, count) as Array<{ id: number; payload: string }>;
-
-      // Then UPDATE each one to claim it
-      const updateStmt = db.prepare(
-        `UPDATE queues 
-         SET status = 'processing', claimed_at = datetime('now'), attempts = attempts + 1
-         WHERE id = ?`,
-      );
-
-      for (const row of rows) {
-        updateStmt.run(row.id);
-      }
-
-      return rows.map((row) => ({
-        id: row.id,
-        payload: JSON.parse(row.payload) as unknown,
-      }));
-    },
-
-    done(queueItemId: number): void {
-      db.prepare(
-        `UPDATE queues SET status = 'done', finished_at = datetime('now') WHERE id = ?`,
-      ).run(queueItemId);
-    },
-
-    fail(queueItemId: number, error?: string): void {
-      db.prepare(
-        `UPDATE queues SET status = 'failed', finished_at = datetime('now'), error = ? WHERE id = ?`,
-      ).run(error ?? null, queueItemId);
-    },
+    ...stateOps,
+    ...collectionOps,
+    ...queueOps,
 
     close(): void {
       closeConnection(db);
