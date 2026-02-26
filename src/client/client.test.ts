@@ -210,7 +210,7 @@ describe('RunnerClient', () => {
         ).run();
         db.prepare(
           `INSERT INTO state_items (namespace, key, item_key, value, updated_at) VALUES (?, ?, ?, ?, ?)`,
-        ).run('test', 'prune-key', `item-${i}`, `val-${i}`, ts);
+        ).run('test', 'prune-key', `item-${String(i)}`, `val-${String(i)}`, ts);
       }
 
       const deleted = client.pruneItems('test', 'prune-key', 5);
@@ -219,10 +219,14 @@ describe('RunnerClient', () => {
 
       // Verify the 5 newest remain (items 5-9)
       for (let i = 5; i < 10; i++) {
-        expect(client.hasItem('test', 'prune-key', `item-${i}`)).toBe(true);
+        expect(client.hasItem('test', 'prune-key', `item-${String(i)}`)).toBe(
+          true,
+        );
       }
       for (let i = 0; i < 5; i++) {
-        expect(client.hasItem('test', 'prune-key', `item-${i}`)).toBe(false);
+        expect(client.hasItem('test', 'prune-key', `item-${String(i)}`)).toBe(
+          false,
+        );
       }
 
       closeConnection(db);
@@ -253,7 +257,7 @@ describe('RunnerClient', () => {
         const ts = `2026-01-01T00:00:${String(i).padStart(2, '0')}`;
         db.prepare(
           `INSERT INTO state_items (namespace, key, item_key, value, updated_at) VALUES (?, ?, ?, ?, ?)`,
-        ).run('test', 'list-key', `item-${i}`, null, ts);
+        ).run('test', 'list-key', `item-${String(i)}`, null, ts);
       }
 
       const keys = client.listItemKeys('test', 'list-key');
@@ -274,7 +278,7 @@ describe('RunnerClient', () => {
         const ts = `2026-01-01T00:00:${String(i).padStart(2, '0')}`;
         db.prepare(
           `INSERT INTO state_items (namespace, key, item_key, value, updated_at) VALUES (?, ?, ?, ?, ?)`,
-        ).run('test', 'list-key2', `item-${i}`, null, ts);
+        ).run('test', 'list-key2', `item-${String(i)}`, null, ts);
       }
 
       const keys = client.listItemKeys('test', 'list-key2', { limit: 2 });
