@@ -15,22 +15,22 @@ export function parseTtl(ttl: string): string {
 
   const num = parseInt(amount, 10);
 
-  let modifier: string;
+  let ms: number;
   switch (unit) {
     case 'd':
-      modifier = `+${String(num)} days`;
+      ms = num * 24 * 60 * 60 * 1000;
       break;
     case 'h':
-      modifier = `+${String(num)} hours`;
+      ms = num * 60 * 60 * 1000;
       break;
     case 'm':
-      modifier = `+${String(num)} minutes`;
+      ms = num * 60 * 1000;
       break;
     default:
       throw new Error(`Unknown TTL unit: ${unit}`);
   }
 
-  return `datetime('now', '${modifier}')`;
+  return new Date(Date.now() + ms).toISOString();
 }
 
 /** State operations for scalar key-value state. */
@@ -88,12 +88,17 @@ export function createStateOps(db: DatabaseSync): StateOps {
       options?: { ttl?: string },
     ): void {
       const expiresAt = options?.ttl ? parseTtl(options.ttl) : null;
-      const sql = expiresAt
-        ? `INSERT INTO state (namespace, key, value, expires_at) VALUES (?, ?, ?, ${expiresAt})
-           ON CONFLICT(namespace, key) DO UPDATE SET value = excluded.value, expires_at = excluded.expires_at, updated_at = datetime('now')`
-        : `INSERT INTO state (namespace, key, value) VALUES (?, ?, ?)
-           ON CONFLICT(namespace, key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')`;
-      db.prepare(sql).run(namespace, key, value);
+      if (expiresAt) {
+        db.prepare(
+          `INSERT INTO state (namespace, key, value, expires_at) VALUES (?, ?, ?, ?)
+           ON CONFLICT(namespace, key) DO UPDATE SET value = excluded.value, expires_at = excluded.expires_at, updated_at = datetime('now')`,
+        ).run(namespace, key, value, expiresAt);
+      } else {
+        db.prepare(
+          `INSERT INTO state (namespace, key, value) VALUES (?, ?, ?)
+           ON CONFLICT(namespace, key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')`,
+        ).run(namespace, key, value);
+      }
     },
 
     deleteCursor(namespace: string, key: string): void {
