@@ -74,7 +74,7 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
          VALUES (?, 'running', datetime('now'), ?)`,
       )
       .run(jobId, trigger);
-    return result.lastInsertRowid;
+    return Number(result.lastInsertRowid);
   }
 
   /** Update run record with completion data. */
