@@ -36,15 +36,15 @@ function pruneOldRuns(db: DatabaseSync, days: number, logger: Logger): void {
   }
 }
 
-/** Delete expired cursor entries. */
+/** Delete expired state entries. */
 function cleanExpiredCursors(db: DatabaseSync, logger: Logger): void {
   const result = db
     .prepare(
-      `DELETE FROM cursors WHERE expires_at IS NOT NULL AND expires_at < datetime('now')`,
+      `DELETE FROM state WHERE expires_at IS NOT NULL AND expires_at < datetime('now')`,
     )
     .run();
   if (result.changes > 0) {
-    logger.info({ deleted: result.changes }, 'Cleaned expired cursors');
+    logger.info({ deleted: result.changes }, 'Cleaned expired state entries');
   }
 }
 
