@@ -65,6 +65,12 @@ export interface CollectionOps {
   ): void;
   deleteItem(namespace: string, key: string, itemKey: string): void;
   countItems(namespace: string, key: string): number;
+  pruneItems(namespace: string, key: string, keepCount: number): number;
+  listItemKeys(
+    namespace: string,
+    key: string,
+    options?: { limit?: number; order?: 'asc' | 'desc' },
+  ): string[];
 }
 
 /** Create state operations for the given database connection. */
@@ -177,6 +183,30 @@ export function createCollectionOps(db: DatabaseSync): CollectionOps {
         )
         .get(namespace, key) as { count: number } | undefined;
       return row?.count ?? 0;
+    },
+
+    pruneItems(namespace: string, key: string, keepCount: number): number {
+      const result = db
+        .prepare(
+          `DELETE FROM state_items WHERE namespace = ? AND key = ? AND rowid NOT IN (SELECT rowid FROM state_items WHERE namespace = ? AND key = ? ORDER BY updated_at DESC LIMIT ?)`,
+        )
+        .run(namespace, key, namespace, key, keepCount);
+      return result.changes;
+    },
+
+    listItemKeys(
+      namespace: string,
+      key: string,
+      options?: { limit?: number; order?: 'asc' | 'desc' },
+    ): string[] {
+      const order = options?.order === 'asc' ? 'ASC' : 'DESC';
+      const limitClause = options?.limit ? ` LIMIT ${options.limit}` : '';
+      const rows = db
+        .prepare(
+          `SELECT item_key FROM state_items WHERE namespace = ? AND key = ? ORDER BY updated_at ${order}${limitClause}`,
+        )
+        .all(namespace, key) as Array<{ item_key: string }>;
+      return rows.map((r) => r.item_key);
     },
   };
 }
