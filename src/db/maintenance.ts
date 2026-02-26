@@ -8,13 +8,17 @@ import type { Logger } from 'pino';
 
 /** Configuration for maintenance tasks. */
 export interface MaintenanceConfig {
+  /** Number of days to retain completed run records before pruning. */
   runRetentionDays: number;
+  /** Interval in milliseconds between maintenance task runs. */
   cursorCleanupIntervalMs: number;
 }
 
 /** Maintenance controller with start/stop lifecycle. */
 export interface Maintenance {
+  /** Start maintenance tasks (runs immediately, then on interval). */
   start(): void;
+  /** Stop maintenance task interval. */
   stop(): void;
   /** Run all maintenance tasks immediately (useful for testing and startup). */
   runNow(): void;

@@ -15,20 +15,31 @@ import type { executeJob } from './executor.js';
 
 /** Scheduler dependencies. */
 export interface SchedulerDeps {
+  /** SQLite database connection. */
   db: DatabaseSync;
+  /** Job executor function. */
   executor: typeof executeJob;
+  /** Notification service for job completion events. */
   notifier: Notifier;
+  /** Runner configuration. */
   config: RunnerConfig;
+  /** Logger instance. */
   logger: Logger;
 }
 
-/** Scheduler interface. */
+/** Scheduler interface for managing job schedules and execution. */
 export interface Scheduler {
+  /** Initialize and start the scheduler, loading all enabled jobs. */
   start(): void;
+  /** Stop the scheduler and gracefully wait for running jobs to complete. */
   stop(): void;
+  /** Manually trigger a job by ID, bypassing the schedule. */
   triggerJob(jobId: string): Promise<ExecutionResult>;
+  /** Force an immediate reconciliation of job schedules with the database. */
   reconcileNow(): void;
+  /** Get list of currently running job IDs. */
   getRunningJobs(): string[];
+  /** Get list of job IDs that failed to register cron schedules. */
   getFailedRegistrations(): string[];
 }
 
