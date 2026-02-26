@@ -104,7 +104,7 @@ export function createQueueOps(db: DatabaseSync): QueueOps {
           'INSERT INTO queue_items (queue_id, payload, priority, max_attempts, dedup_key) VALUES (?, ?, ?, ?, ?)',
         )
         .run(queue, payloadJson, priority, maxAttempts, dedupKey);
-      return Number(result.lastInsertRowid);
+      return result.lastInsertRowid;
     },
 
     dequeue(queue: string, count = 1): QueueItem[] {

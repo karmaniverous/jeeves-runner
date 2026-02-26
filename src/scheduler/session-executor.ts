@@ -18,6 +18,8 @@ export interface SessionExecutionOptions {
   timeoutMs?: number;
   /** Gateway client instance. */
   gatewayClient: GatewayClient;
+  /** Initial poll interval in milliseconds (default 5000). Exposed for testing. */
+  pollIntervalMs?: number;
 }
 
 /** File extensions that indicate a script rather than a prompt. */
@@ -49,9 +51,10 @@ async function pollCompletion(
   gatewayClient: GatewayClient,
   sessionKey: string,
   timeoutMs: number,
+  initialIntervalMs = 5000,
 ): Promise<void> {
   const startTime = Date.now();
-  let interval = 5000; // Start at 5s
+  let interval = initialIntervalMs;
   const maxInterval = 15000;
 
   while (Date.now() - startTime < timeoutMs) {
@@ -71,7 +74,13 @@ async function pollCompletion(
 export async function executeSession(
   options: SessionExecutionOptions,
 ): Promise<ExecutionResult> {
-  const { script, jobId, timeoutMs = 300000, gatewayClient } = options;
+  const {
+    script,
+    jobId,
+    timeoutMs = 300000,
+    gatewayClient,
+    pollIntervalMs,
+  } = options;
   const startTime = Date.now();
 
   try {
@@ -91,7 +100,7 @@ export async function executeSession(
     });
 
     // Poll for completion
-    await pollCompletion(gatewayClient, sessionKey, timeoutMs);
+    await pollCompletion(gatewayClient, sessionKey, timeoutMs, pollIntervalMs);
 
     // Fetch session info for token count
     const sessionInfo = await gatewayClient.getSessionInfo(sessionKey);

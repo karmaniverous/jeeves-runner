@@ -3,7 +3,7 @@
  */
 
 import { execSync } from 'node:child_process';
-import { writeFileSync } from 'node:fs';
+import { unlinkSync, writeFileSync } from 'node:fs';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -29,7 +29,7 @@ describe('CLI', () => {
   afterEach(() => {
     testDb.cleanup();
     try {
-      require('node:fs').unlinkSync(configPath);
+      unlinkSync(configPath);
     } catch {
       // Ignore
     }
@@ -51,9 +51,10 @@ describe('CLI', () => {
     expect(result).toContain("Job 'test-job' added");
 
     // Verify job was added
-    const jobs = testDb.db
-      .prepare('SELECT id, name FROM jobs')
-      .all() as Array<{ id: string; name: string }>;
+    const jobs = testDb.db.prepare('SELECT id, name FROM jobs').all() as Array<{
+      id: string;
+      name: string;
+    }>;
     expect(jobs).toHaveLength(1);
     expect(jobs[0]?.id).toBe('test-job');
   });
@@ -62,7 +63,7 @@ describe('CLI', () => {
     expect(() => {
       execSync(
         `node dist/cli/jeeves-runner/index.js add-job --config "${configPath}" --id test-job --name "Test" --schedule "invalid" --script "echo test"`,
-        { encoding: 'utf-8' },
+        { encoding: 'utf-8', stdio: 'pipe' },
       );
     }).toThrow();
   });
@@ -71,7 +72,7 @@ describe('CLI', () => {
     expect(() => {
       execSync(
         `node dist/cli/jeeves-runner/index.js add-job --config "${configPath}" --id test-job --name "Test" --schedule "0 0 * * *" --script "echo test" --overlap queue`,
-        { encoding: 'utf-8' },
+        { encoding: 'utf-8', stdio: 'pipe' },
       );
     }).toThrow();
   });
@@ -80,7 +81,7 @@ describe('CLI', () => {
     expect(() => {
       execSync(
         `node dist/cli/jeeves-runner/index.js add-job --config "${configPath}" --id test-job --name "Test" --schedule "0 0 * * *" --script "echo test" --type invalid`,
-        { encoding: 'utf-8' },
+        { encoding: 'utf-8', stdio: 'pipe' },
       );
     }).toThrow();
   });

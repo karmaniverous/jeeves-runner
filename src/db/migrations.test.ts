@@ -80,14 +80,17 @@ describe('Migrations', () => {
 
   it('should create default queues', () => {
     // Check if default queues are created
-    const queues = testDb.db
-      .prepare(`SELECT id FROM queues`)
-      .all() as Array<{ id: string }>;
+    const queues = testDb.db.prepare(`SELECT id FROM queues`).all() as Array<{
+      id: string;
+    }>;
 
-    // Assuming there are default queues (email-pending, email-all)
-    // based on the schema
-    expect(queues.some((q) => q.id === 'email-pending')).toBe(true);
-    expect(queues.some((q) => q.id === 'email-all')).toBe(true);
+    const queueIds = queues.map((q) => q.id).sort();
+    expect(queueIds).toEqual([
+      'email-pending',
+      'email-updates',
+      'gh-collabs',
+      'x-posts',
+    ]);
   });
 
   it('should preserve existing data when running migrations again', () => {

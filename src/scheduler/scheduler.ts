@@ -137,22 +137,6 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
   async function onScheduledRun(job: JobRow): Promise<void> {
     const { id, overlap_policy } = job;
 
-    // Validate overlap_policy
-    if (
-      overlap_policy !== 'skip' &&
-      overlap_policy !== 'allow' &&
-      overlap_policy !== null &&
-      overlap_policy !== undefined
-    ) {
-      logger.error(
-        { jobId: id, overlap_policy },
-        'Invalid overlap_policy (supported: skip, allow)',
-      );
-      throw new Error(
-        `Unsupported overlap_policy '${overlap_policy}' for job ${id}`,
-      );
-    }
-
     // Check overlap policy
     if (runningJobs.has(id)) {
       if (overlap_policy === 'skip') {

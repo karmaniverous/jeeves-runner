@@ -38,9 +38,7 @@ export function httpPost(
         res.on('end', () => {
           if (res.statusCode !== 200) {
             reject(
-              new Error(
-                `HTTP ${String(res.statusCode)}: ${responseBody}`,
-              ),
+              new Error(`HTTP ${String(res.statusCode)}: ${responseBody}`),
             );
             return;
           }

@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 import type { DatabaseSync } from 'node:sqlite';
 
 import type { FastifyInstance } from 'fastify';
+import type { Logger } from 'pino';
 import { pino } from 'pino';
 
 import { createServer } from './api/server.js';
@@ -35,10 +36,7 @@ export interface RunnerDeps {
 /**
  * Create the runner. Initializes database, scheduler, API server, and sets up graceful shutdown.
  */
-export function createRunner(
-  config: RunnerConfig,
-  deps?: RunnerDeps,
-): Runner {
+export function createRunner(config: RunnerConfig, deps?: RunnerDeps): Runner {
   let db: DatabaseSync | null = null;
   let scheduler: Scheduler | null = null;
   let server: FastifyInstance | null = null;
@@ -113,7 +111,11 @@ export function createRunner(
       logger.info('Scheduler started');
 
       // API server
-      server = createServer({ db, scheduler, logger });
+      server = createServer({
+        db,
+        scheduler,
+        loggerConfig: { level: config.log.level, file: config.log.file },
+      });
       await server.listen({ port: config.port, host: '127.0.0.1' });
       logger.info({ port: config.port }, 'API server listening');
 

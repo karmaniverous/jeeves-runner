@@ -2,8 +2,7 @@
  * Tests for API routes using fastify.inject().
  */
 
-import Fastify from 'fastify';
-import { pino } from 'pino';
+import Fastify, { type FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { Scheduler } from '../scheduler/scheduler.js';
@@ -13,36 +12,46 @@ import { registerRoutes } from './routes.js';
 
 describe('API routes', () => {
   let testDb: TestDb;
-  let app: ReturnType<typeof Fastify>;
+  let app: FastifyInstance;
   let mockScheduler: Scheduler;
+  let triggerJobMock: Scheduler['triggerJob'];
+  let reconcileNowMock: Scheduler['reconcileNow'];
 
-  beforeEach(() => {
+  beforeEach(async () => {
     testDb = createTestDb();
 
-    // Create mock scheduler
-    mockScheduler = {
-      start: vi.fn(),
-      stop: vi.fn(async () => {}),
-      triggerJob: vi.fn(async () => ({
-        status: 'ok',
+    // Create mock functions
+    triggerJobMock = vi.fn(() =>
+      Promise.resolve({
+        status: 'ok' as const,
         durationMs: 100,
         exitCode: 0,
         tokens: null,
         resultMeta: null,
         error: null,
-        stdoutTail: null,
-        stderrTail: null,
-      })),
-      reconcileNow: vi.fn(),
+        stdoutTail: '',
+        stderrTail: '',
+      }),
+    );
+    reconcileNowMock = vi.fn();
+
+    // Create mock scheduler
+    mockScheduler = {
+      start: vi.fn(),
+      stop: vi.fn(() => Promise.resolve()),
+      triggerJob: triggerJobMock,
+      reconcileNow: reconcileNowMock,
       getRunningJobs: vi.fn(() => []),
       getFailedRegistrations: vi.fn(() => []),
     };
 
-    app = Fastify({ logger: pino({ level: 'silent' }) });
+    app = Fastify({ logger: false });
     registerRoutes(app, { db: testDb.db, scheduler: mockScheduler });
+    await app.ready();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    await app.close();
     testDb.cleanup();
   });
 
@@ -53,8 +62,8 @@ describe('API routes', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    const body = JSON.parse(response.body) as { status: string };
-    expect(body.status).toBe('ok');
+    const body = JSON.parse(response.body) as { ok: boolean };
+    expect(body.ok).toBe(true);
   });
 
   it('GET /jobs should return empty list', async () => {
@@ -131,10 +140,15 @@ describe('API routes', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(mockScheduler.triggerJob).toHaveBeenCalledWith('test-job');
+    expect(triggerJobMock).toHaveBeenCalledWith('test-job');
   });
 
   it('POST /jobs/:id/run should return 404 for missing job', async () => {
+    triggerJobMock = vi.fn(() =>
+      Promise.reject(new Error('Job not found: nonexistent')),
+    );
+    mockScheduler.triggerJob = triggerJobMock;
+
     const response = await app.inject({
       method: 'POST',
       url: '/jobs/nonexistent/run',
@@ -152,12 +166,12 @@ describe('API routes', () => {
     expect(response.statusCode).toBe(200);
     const body = JSON.parse(response.body) as {
       totalJobs: number;
-      enabledJobs: number;
-      runningJobs: number;
+      running: number;
+      failedRegistrations: number;
     };
     expect(body).toHaveProperty('totalJobs');
-    expect(body).toHaveProperty('enabledJobs');
-    expect(body).toHaveProperty('runningJobs');
+    expect(body).toHaveProperty('running');
+    expect(body).toHaveProperty('failedRegistrations');
   });
 
   it('PUT /jobs/:id/enable should enable job', async () => {
@@ -168,12 +182,12 @@ describe('API routes', () => {
       .run('test-job', 'Test Job', '0 0 * * *', 'echo test', 0);
 
     const response = await app.inject({
-      method: 'PUT',
+      method: 'POST',
       url: '/jobs/test-job/enable',
     });
 
     expect(response.statusCode).toBe(200);
-    expect(mockScheduler.reconcileNow).toHaveBeenCalled();
+    expect(reconcileNowMock).toHaveBeenCalled();
 
     // Verify job is enabled
     const job = testDb.db
@@ -190,12 +204,12 @@ describe('API routes', () => {
       .run('test-job', 'Test Job', '0 0 * * *', 'echo test', 1);
 
     const response = await app.inject({
-      method: 'PUT',
+      method: 'POST',
       url: '/jobs/test-job/disable',
     });
 
     expect(response.statusCode).toBe(200);
-    expect(mockScheduler.reconcileNow).toHaveBeenCalled();
+    expect(reconcileNowMock).toHaveBeenCalled();
 
     // Verify job is disabled
     const job = testDb.db
@@ -206,7 +220,7 @@ describe('API routes', () => {
 
   it('PUT /jobs/:id/enable should return 404 for missing job', async () => {
     const response = await app.inject({
-      method: 'PUT',
+      method: 'POST',
       url: '/jobs/nonexistent/enable',
     });
 
@@ -215,7 +229,7 @@ describe('API routes', () => {
 
   it('PUT /jobs/:id/disable should return 404 for missing job', async () => {
     const response = await app.inject({
-      method: 'PUT',
+      method: 'POST',
       url: '/jobs/nonexistent/disable',
     });
 

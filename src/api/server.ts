@@ -5,7 +5,6 @@
 import type { DatabaseSync } from 'node:sqlite';
 
 import Fastify, { type FastifyInstance } from 'fastify';
-import type { Logger } from 'pino';
 
 import type { Scheduler } from '../scheduler/scheduler.js';
 import { registerRoutes } from './routes.js';
@@ -14,7 +13,8 @@ import { registerRoutes } from './routes.js';
 interface ServerDeps {
   db: DatabaseSync;
   scheduler: Scheduler;
-  logger: Logger;
+  /** Pino logger config or false to disable. */
+  loggerConfig?: { level: string; file?: string };
 }
 
 /**
@@ -22,7 +22,19 @@ interface ServerDeps {
  */
 export function createServer(deps: ServerDeps): FastifyInstance {
   const app = Fastify({
-    logger: deps.logger,
+    logger: deps.loggerConfig
+      ? {
+          level: deps.loggerConfig.level,
+          ...(deps.loggerConfig.file
+            ? {
+                transport: {
+                  target: 'pino/file',
+                  options: { destination: deps.loggerConfig.file },
+                },
+              }
+            : {}),
+        }
+      : false,
   });
 
   registerRoutes(app, deps);

@@ -40,6 +40,15 @@ describe('Gateway client', () => {
 
             // Mock responses based on tool
             if (parsedBody.tool === 'sessions_spawn') {
+              // Simulate error when task contains 'spawn_error'
+              if (
+                typeof parsedBody.args.task === 'string' &&
+                parsedBody.args.task.includes('spawn_error')
+              ) {
+                res.writeHead(500, { 'Content-Type': 'application/json' });
+                res.end(JSON.stringify({ ok: false, error: 'spawn failed' }));
+                return;
+              }
               res.writeHead(200, { 'Content-Type': 'application/json' });
               res.end(
                 JSON.stringify({
@@ -59,7 +68,11 @@ describe('Gateway client', () => {
                   ok: true,
                   result: [
                     { role: 'user', content: 'Hello' },
-                    { role: 'assistant', content: 'Hi', stopReason: 'end_turn' },
+                    {
+                      role: 'assistant',
+                      content: 'Hi',
+                      stopReason: 'end_turn',
+                    },
                   ],
                 }),
               );
@@ -222,7 +235,7 @@ describe('Gateway client', () => {
   });
 
   it('should handle timeout', async () => {
-    const client = createGatewayClient({
+    const _client = createGatewayClient({
       url: `http://127.0.0.1:${String(port)}`,
       token: 'test-token',
       timeoutMs: 100,

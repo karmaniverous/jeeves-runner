@@ -189,7 +189,7 @@ describe('createScheduler', () => {
       );
     });
 
-    scheduler.stop();
+    void scheduler.stop();
     db.close();
   });
 
@@ -226,7 +226,7 @@ describe('createScheduler', () => {
 
     expect(executorMock).not.toHaveBeenCalled();
 
-    scheduler.stop();
+    void scheduler.stop();
     db.close();
   });
 
@@ -276,7 +276,7 @@ describe('createScheduler', () => {
       '#test-alerts',
     );
 
-    scheduler.stop();
+    void scheduler.stop();
     db.close();
   });
 
@@ -307,7 +307,7 @@ describe('createScheduler', () => {
     expect(failed).toHaveLength(0);
     expect(notifyFailureMock).not.toHaveBeenCalled();
 
-    scheduler.stop();
+    void scheduler.stop();
     db.close();
   });
 
@@ -340,7 +340,7 @@ describe('createScheduler', () => {
     expect(capturedCrons).toHaveLength(1);
     expect(capturedCrons[0]?.schedule).toBe('*/5 * * * *');
 
-    scheduler.stop();
+    void scheduler.stop();
     db.close();
   });
 
@@ -374,7 +374,7 @@ describe('createScheduler', () => {
 
     expect(capturedCrons[0]?.stopped.value).toBe(true);
 
-    scheduler.stop();
+    void scheduler.stop();
     db.close();
   });
 
@@ -414,11 +414,12 @@ describe('createScheduler', () => {
     expect(capturedCrons).toHaveLength(2);
     expect(capturedCrons[1]?.schedule).toBe('*/10 * * * *');
 
-    scheduler.stop();
+    void scheduler.stop();
     db.close();
   });
 
   it('should skip job when already running (overlap_policy=skip)', async () => {
+    capturedCrons.length = 0;
     const db = new DatabaseSync(':memory:');
     db.exec(`
       CREATE TABLE jobs (
@@ -467,8 +468,8 @@ describe('createScheduler', () => {
           tokens: null,
           resultMeta: null,
           error: null,
-          stdoutTail: null,
-          stderrTail: null,
+          stdoutTail: '',
+          stderrTail: '',
         };
       },
     );
@@ -492,13 +493,12 @@ describe('createScheduler', () => {
       shutdownGraceMs: 5000,
       runRetentionDays: 30,
       cursorCleanupIntervalMs: 3600000,
-      log: { level: 'info', file: null },
+      log: { level: 'info' },
       notifications: {
-        slackTokenPath: null,
         defaultOnSuccess: null,
         defaultOnFailure: null,
       },
-      gateway: { url: null, tokenPath: null },
+      gateway: { url: 'http://127.0.0.1:18789' },
     };
 
     const scheduler = createScheduler({
@@ -514,10 +514,8 @@ describe('createScheduler', () => {
 
     // Fire the job twice in rapid succession
     const cron = capturedCrons[0];
-    if (cron) {
-      cron.callback(); // First fire
-      cron.callback(); // Second fire (should be skipped)
-    }
+    cron.callback(); // First fire
+    cron.callback(); // Second fire (should be skipped)
 
     // Wait for first execution to complete
     await new Promise((resolve) => setTimeout(resolve, 150));
@@ -534,6 +532,7 @@ describe('createScheduler', () => {
   });
 
   it('should allow concurrent runs (overlap_policy=allow)', async () => {
+    capturedCrons.length = 0;
     const db = new DatabaseSync(':memory:');
     db.exec(`
       CREATE TABLE jobs (
@@ -582,8 +581,8 @@ describe('createScheduler', () => {
           tokens: null,
           resultMeta: null,
           error: null,
-          stdoutTail: null,
-          stderrTail: null,
+          stdoutTail: '',
+          stderrTail: '',
         };
       },
     );
@@ -607,13 +606,12 @@ describe('createScheduler', () => {
       shutdownGraceMs: 5000,
       runRetentionDays: 30,
       cursorCleanupIntervalMs: 3600000,
-      log: { level: 'info', file: null },
+      log: { level: 'info' },
       notifications: {
-        slackTokenPath: null,
         defaultOnSuccess: null,
         defaultOnFailure: null,
       },
-      gateway: { url: null, tokenPath: null },
+      gateway: { url: 'http://127.0.0.1:18789' },
     };
 
     const scheduler = createScheduler({
@@ -629,11 +627,9 @@ describe('createScheduler', () => {
 
     // Fire the job twice in rapid succession
     const cron = capturedCrons[0];
-    if (cron) {
-      cron.callback(); // First fire
-      await new Promise((resolve) => setTimeout(resolve, 10)); // Small delay
-      cron.callback(); // Second fire (should also execute)
-    }
+    cron.callback(); // First fire
+    await new Promise((resolve) => setTimeout(resolve, 10)); // Small delay
+    cron.callback(); // Second fire (should also execute)
 
     // Wait for both executions to complete
     await new Promise((resolve) => setTimeout(resolve, 250));

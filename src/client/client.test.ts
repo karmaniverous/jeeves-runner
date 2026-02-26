@@ -4,7 +4,7 @@
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { createConnection } from '../db/connection.js';
+import { closeConnection, createConnection } from '../db/connection.js';
 import type { TestDb } from '../test-utils/db.js';
 import { createTestDb } from '../test-utils/db.js';
 import { createClient } from './client.js';

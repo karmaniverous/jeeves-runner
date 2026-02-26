@@ -11,7 +11,7 @@ import { createNotifier } from './slack.js';
 
 describe('Slack notifier', () => {
   let server: ReturnType<typeof createServer>;
-  let port: number;
+  let _port: number;
   let requestLog: Array<{
     url: string;
     headers: Record<string, unknown>;
@@ -43,7 +43,9 @@ describe('Slack notifier', () => {
 
             if (parsedBody.channel === 'error-channel') {
               res.writeHead(500, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ ok: false, error: 'channel_not_found' }));
+              res.end(
+                JSON.stringify({ ok: false, error: 'channel_not_found' }),
+              );
             } else {
               res.writeHead(200, { 'Content-Type': 'application/json' });
               res.end(JSON.stringify({ ok: true }));
@@ -52,7 +54,7 @@ describe('Slack notifier', () => {
         });
 
         server.listen(0, () => {
-          port = (server.address() as AddressInfo).port;
+          _port = (server.address() as AddressInfo).port;
           resolve();
         });
       }),
@@ -72,7 +74,7 @@ describe('Slack notifier', () => {
   });
 
   it('should send success notification', async () => {
-    const notifier = createNotifier({ slackToken: 'test-token' });
+    const _notifier = createNotifier({ slackToken: 'test-token' });
 
     // Note: This will fail in tests because we can't mock the actual HTTPS module easily
     // In practice, we'd need to either:
@@ -118,9 +120,7 @@ describe('Slack notifier', () => {
 
     await notifier.notifySuccess('Test Job', 1234, 'test-channel');
 
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Test Job'),
-    );
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Test Job'));
 
     warnSpy.mockRestore();
   });
@@ -136,9 +136,7 @@ describe('Slack notifier', () => {
       'test-channel',
     );
 
-    expect(warnSpy).toHaveBeenCalledWith(
-      expect.stringContaining('Test Job'),
-    );
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('Test Job'));
 
     warnSpy.mockRestore();
   });
