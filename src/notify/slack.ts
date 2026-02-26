@@ -2,7 +2,7 @@
  * Slack notification module. Sends job completion/failure messages via Slack Web API (chat.postMessage). Falls back gracefully if no token.
  */
 
-import { request } from 'node:https';
+import { httpPost } from '../lib/http.js';
 
 /** Notification configuration. */
 export interface NotifyConfig {
@@ -28,47 +28,20 @@ export interface Notifier {
 }
 
 /** Post a message to Slack via chat.postMessage API. */
-function postToSlack(
+async function postToSlack(
   token: string,
   channel: string,
   text: string,
 ): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const payload = JSON.stringify({ channel, text });
-
-    const req = request(
-      'https://slack.com/api/chat.postMessage',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-          'Content-Length': Buffer.byteLength(payload),
-        },
-      },
-      (res) => {
-        let body = '';
-        res.on('data', (chunk: Buffer) => {
-          body += chunk.toString();
-        });
-        res.on('end', () => {
-          if (res.statusCode === 200) {
-            resolve();
-          } else {
-            reject(
-              new Error(
-                `Slack API returned ${String(res.statusCode)}: ${body}`,
-              ),
-            );
-          }
-        });
-      },
-    );
-
-    req.on('error', reject);
-    req.write(payload);
-    req.end();
-  });
+  const payload = JSON.stringify({ channel, text });
+  await httpPost(
+    'https://slack.com/api/chat.postMessage',
+    {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    payload,
+  );
 }
 
 /**
