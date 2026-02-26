@@ -200,7 +200,9 @@ export function createCollectionOps(db: DatabaseSync): CollectionOps {
       options?: { limit?: number; order?: 'asc' | 'desc' },
     ): string[] {
       const order = options?.order === 'asc' ? 'ASC' : 'DESC';
-      const limitClause = options?.limit ? ` LIMIT ${options.limit}` : '';
+      const limitClause = options?.limit
+        ? ` LIMIT ${String(options.limit)}`
+        : '';
       const rows = db
         .prepare(
           `SELECT item_key FROM state_items WHERE namespace = ? AND key = ? ORDER BY updated_at ${order}${limitClause}`,
