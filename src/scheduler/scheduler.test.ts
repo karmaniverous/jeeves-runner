@@ -417,4 +417,231 @@ describe('createScheduler', () => {
     scheduler.stop();
     db.close();
   });
+
+  it('should skip job when already running (overlap_policy=skip)', async () => {
+    const db = new DatabaseSync(':memory:');
+    db.exec(`
+      CREATE TABLE jobs (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        schedule TEXT NOT NULL,
+        script TEXT NOT NULL,
+        type TEXT DEFAULT 'script',
+        enabled INTEGER NOT NULL DEFAULT 1,
+        timeout_ms INTEGER,
+        overlap_policy TEXT NOT NULL DEFAULT 'skip',
+        on_success TEXT,
+        on_failure TEXT
+      );
+      CREATE TABLE runs (
+        id INTEGER PRIMARY KEY,
+        job_id TEXT NOT NULL,
+        status TEXT NOT NULL,
+        started_at TEXT,
+        finished_at TEXT,
+        duration_ms INTEGER,
+        exit_code INTEGER,
+        tokens INTEGER,
+        result_meta TEXT,
+        error TEXT,
+        stdout_tail TEXT,
+        stderr_tail TEXT,
+        trigger TEXT
+      );
+    `);
+
+    db.prepare(
+      `INSERT INTO jobs (id, name, schedule, script, overlap_policy) VALUES (?, ?, ?, ?, ?)`,
+    ).run('overlap-test', 'Overlap Test', '* * * * *', 'echo test', 'skip');
+
+    const executionLog: string[] = [];
+    const mockExecutor = vi.fn(
+      async (options: ExecutionOptions): Promise<ExecutionResult> => {
+        executionLog.push(`start-${options.jobId}`);
+        await new Promise((resolve) => setTimeout(resolve, 100)); // Simulate slow execution
+        executionLog.push(`end-${options.jobId}`);
+        return {
+          status: 'ok',
+          durationMs: 100,
+          exitCode: 0,
+          tokens: null,
+          resultMeta: null,
+          error: null,
+          stdoutTail: null,
+          stderrTail: null,
+        };
+      },
+    );
+
+    const mockNotifier: Notifier = {
+      notifySuccess: vi.fn(async () => {}),
+      notifyFailure: vi.fn(async () => {}),
+    };
+
+    const mockLogger = {
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    } as unknown as Logger;
+
+    const mockConfig: RunnerConfig = {
+      dbPath: ':memory:',
+      port: 18780,
+      maxConcurrency: 10,
+      reconcileIntervalMs: 0,
+      shutdownGraceMs: 5000,
+      runRetentionDays: 30,
+      cursorCleanupIntervalMs: 3600000,
+      log: { level: 'info', file: null },
+      notifications: {
+        slackTokenPath: null,
+        defaultOnSuccess: null,
+        defaultOnFailure: null,
+      },
+      gateway: { url: null, tokenPath: null },
+    };
+
+    const scheduler = createScheduler({
+      db,
+      executor: mockExecutor,
+      notifier: mockNotifier,
+      config: mockConfig,
+      logger: mockLogger,
+    });
+
+    scheduler.start();
+    expect(capturedCrons).toHaveLength(1);
+
+    // Fire the job twice in rapid succession
+    const cron = capturedCrons[0];
+    if (cron) {
+      cron.callback(); // First fire
+      cron.callback(); // Second fire (should be skipped)
+    }
+
+    // Wait for first execution to complete
+    await new Promise((resolve) => setTimeout(resolve, 150));
+
+    // Should only execute once
+    expect(executionLog.filter((l) => l.startsWith('start-'))).toHaveLength(1);
+    expect(mockLogger.info).toHaveBeenCalledWith(
+      expect.objectContaining({ jobId: 'overlap-test' }),
+      expect.stringContaining('already running'),
+    );
+
+    await scheduler.stop();
+    db.close();
+  });
+
+  it('should allow concurrent runs (overlap_policy=allow)', async () => {
+    const db = new DatabaseSync(':memory:');
+    db.exec(`
+      CREATE TABLE jobs (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        schedule TEXT NOT NULL,
+        script TEXT NOT NULL,
+        type TEXT DEFAULT 'script',
+        enabled INTEGER NOT NULL DEFAULT 1,
+        timeout_ms INTEGER,
+        overlap_policy TEXT NOT NULL DEFAULT 'skip',
+        on_success TEXT,
+        on_failure TEXT
+      );
+      CREATE TABLE runs (
+        id INTEGER PRIMARY KEY,
+        job_id TEXT NOT NULL,
+        status TEXT NOT NULL,
+        started_at TEXT,
+        finished_at TEXT,
+        duration_ms INTEGER,
+        exit_code INTEGER,
+        tokens INTEGER,
+        result_meta TEXT,
+        error TEXT,
+        stdout_tail TEXT,
+        stderr_tail TEXT,
+        trigger TEXT
+      );
+    `);
+
+    db.prepare(
+      `INSERT INTO jobs (id, name, schedule, script, overlap_policy) VALUES (?, ?, ?, ?, ?)`,
+    ).run('allow-test', 'Allow Test', '* * * * *', 'echo test', 'allow');
+
+    const executionLog: string[] = [];
+    const mockExecutor = vi.fn(
+      async (options: ExecutionOptions): Promise<ExecutionResult> => {
+        executionLog.push(`start-${options.jobId}`);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        executionLog.push(`end-${options.jobId}`);
+        return {
+          status: 'ok',
+          durationMs: 100,
+          exitCode: 0,
+          tokens: null,
+          resultMeta: null,
+          error: null,
+          stdoutTail: null,
+          stderrTail: null,
+        };
+      },
+    );
+
+    const mockNotifier: Notifier = {
+      notifySuccess: vi.fn(async () => {}),
+      notifyFailure: vi.fn(async () => {}),
+    };
+
+    const mockLogger = {
+      info: vi.fn(),
+      warn: vi.fn(),
+      error: vi.fn(),
+    } as unknown as Logger;
+
+    const mockConfig: RunnerConfig = {
+      dbPath: ':memory:',
+      port: 18780,
+      maxConcurrency: 10,
+      reconcileIntervalMs: 0,
+      shutdownGraceMs: 5000,
+      runRetentionDays: 30,
+      cursorCleanupIntervalMs: 3600000,
+      log: { level: 'info', file: null },
+      notifications: {
+        slackTokenPath: null,
+        defaultOnSuccess: null,
+        defaultOnFailure: null,
+      },
+      gateway: { url: null, tokenPath: null },
+    };
+
+    const scheduler = createScheduler({
+      db,
+      executor: mockExecutor,
+      notifier: mockNotifier,
+      config: mockConfig,
+      logger: mockLogger,
+    });
+
+    scheduler.start();
+    expect(capturedCrons).toHaveLength(1);
+
+    // Fire the job twice in rapid succession
+    const cron = capturedCrons[0];
+    if (cron) {
+      cron.callback(); // First fire
+      await new Promise((resolve) => setTimeout(resolve, 10)); // Small delay
+      cron.callback(); // Second fire (should also execute)
+    }
+
+    // Wait for both executions to complete
+    await new Promise((resolve) => setTimeout(resolve, 250));
+
+    // Should execute both times
+    expect(executionLog.filter((l) => l.startsWith('start-'))).toHaveLength(2);
+
+    await scheduler.stop();
+    db.close();
+  });
 });

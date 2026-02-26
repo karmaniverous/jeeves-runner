@@ -25,6 +25,14 @@ export interface ExecutionResult {
   error: string | null;
 }
 
+/** Command resolution result. */
+export interface ResolvedCommand {
+  /** Command to execute. */
+  command: string;
+  /** Arguments to pass to the command. */
+  args: string[];
+}
+
 /** Options for executing a job script. */
 export interface ExecutionOptions {
   /** Path to the script file to execute. */
@@ -37,6 +45,8 @@ export interface ExecutionOptions {
   runId: number;
   /** Optional execution timeout in milliseconds. */
   timeoutMs?: number;
+  /** Optional custom command resolver (for extensibility). */
+  commandResolver?: (script: string) => ResolvedCommand;
 }
 
 /** Ring buffer for capturing last N lines of output. */
@@ -85,7 +95,7 @@ function parseResultLines(stdout: string): {
 }
 
 /** Resolve the command and arguments for a script based on its file extension. */
-function resolveCommand(script: string): { command: string; args: string[] } {
+function resolveCommand(script: string): ResolvedCommand {
   const ext = extname(script).toLowerCase();
   switch (ext) {
     case '.ps1':
@@ -108,14 +118,16 @@ function resolveCommand(script: string): { command: string; args: string[] } {
 export function executeJob(
   options: ExecutionOptions,
 ): Promise<ExecutionResult> {
-  const { script, dbPath, jobId, runId, timeoutMs } = options;
+  const { script, dbPath, jobId, runId, timeoutMs, commandResolver } = options;
   const startTime = Date.now();
 
   return new Promise((resolve) => {
     const stdoutBuffer = new RingBuffer(100);
     const stderrBuffer = new RingBuffer(100);
 
-    const { command, args } = resolveCommand(script);
+    const { command, args } = commandResolver
+      ? commandResolver(script)
+      : resolveCommand(script);
     const child = spawn(command, args, {
       env: {
         ...process.env,

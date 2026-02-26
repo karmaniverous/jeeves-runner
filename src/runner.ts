@@ -29,7 +29,7 @@ export interface Runner {
 /** Optional dependencies for test injection. */
 export interface RunnerDeps {
   /** Optional custom logger instance. */
-  logger?: pino.Logger;
+  logger?: Logger;
 }
 
 /**

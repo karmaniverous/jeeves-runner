@@ -145,11 +145,14 @@ export function createGatewayClient(
     },
 
     async getSessionInfo(sessionKey: string): Promise<SessionInfo | null> {
+      // Note: sessions_list doesn't support filtering by key, so we fetch recent sessions
+      // and search client-side. Consider using sessions_history with limit 1 as alternative,
+      // or request a sessions_get tool from Gateway for more efficient single-session lookup.
       const response = (await invokeGateway(
         url,
         token,
         'sessions_list',
-        { activeMinutes: 120, limit: 100 },
+        { activeMinutes: 120, limit: 500 }, // Increased from 100 to reduce false negatives
         timeoutMs,
       )) as {
         ok: boolean;
