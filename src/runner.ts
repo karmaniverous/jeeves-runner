@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 import type { DatabaseSync } from 'node:sqlite';
 
 import type { FastifyInstance } from 'fastify';
+import type { Logger } from 'pino';
 import { pino } from 'pino';
 
 import { createServer } from './api/server.js';
@@ -26,26 +27,34 @@ export interface Runner {
   stop(): Promise<void>;
 }
 
+/** Optional dependencies for test injection. */
+export interface RunnerDeps {
+  /** Optional custom logger instance. */
+  logger?: Logger;
+}
+
 /**
  * Create the runner. Initializes database, scheduler, API server, and sets up graceful shutdown.
  */
-export function createRunner(config: RunnerConfig): Runner {
+export function createRunner(config: RunnerConfig, deps?: RunnerDeps): Runner {
   let db: DatabaseSync | null = null;
   let scheduler: Scheduler | null = null;
   let server: FastifyInstance | null = null;
   let maintenance: Maintenance | null = null;
 
-  const logger = pino({
-    level: config.log.level,
-    ...(config.log.file
-      ? {
-          transport: {
-            target: 'pino/file',
-            options: { destination: config.log.file },
-          },
-        }
-      : {}),
-  });
+  const logger =
+    deps?.logger ??
+    pino({
+      level: config.log.level,
+      ...(config.log.file
+        ? {
+            transport: {
+              target: 'pino/file',
+              options: { destination: config.log.file },
+            },
+          }
+        : {}),
+    });
 
   return {
     async start(): Promise<void> {
@@ -102,7 +111,11 @@ export function createRunner(config: RunnerConfig): Runner {
       logger.info('Scheduler started');
 
       // API server
-      server = createServer(config, { db, scheduler });
+      server = createServer({
+        db,
+        scheduler,
+        loggerConfig: { level: config.log.level, file: config.log.file },
+      });
       await server.listen({ port: config.port, host: '127.0.0.1' });
       logger.info({ port: config.port }, 'API server listening');
 
@@ -130,7 +143,7 @@ export function createRunner(config: RunnerConfig): Runner {
       }
 
       if (scheduler) {
-        scheduler.stop();
+        await scheduler.stop();
         logger.info('Scheduler stopped');
       }
 

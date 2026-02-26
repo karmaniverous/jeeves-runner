@@ -26,11 +26,12 @@ export interface Maintenance {
 
 /** Delete runs older than the configured retention period. */
 function pruneOldRuns(db: DatabaseSync, days: number, logger: Logger): void {
+  const cutoffDate = new Date(
+    Date.now() - days * 24 * 60 * 60 * 1000,
+  ).toISOString();
   const result = db
-    .prepare(
-      `DELETE FROM runs WHERE started_at < datetime('now', '-${String(days)} days')`,
-    )
-    .run();
+    .prepare(`DELETE FROM runs WHERE started_at < ?`)
+    .run(cutoffDate);
   if (result.changes > 0) {
     logger.info({ deleted: result.changes }, 'Pruned old runs');
   }

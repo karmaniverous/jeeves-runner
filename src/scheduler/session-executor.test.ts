@@ -30,6 +30,7 @@ describe('Session executor', () => {
       script: 'Generate a daily digest',
       jobId: 'digest-job',
       timeoutMs: 60000,
+      pollIntervalMs: 50,
       gatewayClient: mockGateway,
     });
 
@@ -51,6 +52,7 @@ describe('Session executor', () => {
       script: '/path/to/script.js',
       jobId: 'legacy-job',
       timeoutMs: 60000,
+      pollIntervalMs: 50,
       gatewayClient: mockGateway,
     });
 
@@ -59,7 +61,7 @@ describe('Session executor', () => {
     // Note: spawnSession not-called verification omitted due to ESLint unbound-method rule
   });
 
-  it('handles timeout', { timeout: 10000 }, async () => {
+  it('handles timeout', async () => {
     const mockGateway: GatewayClient = {
       spawnSession: vi.fn().mockResolvedValue({
         sessionKey: 'test-key',
@@ -73,7 +75,8 @@ describe('Session executor', () => {
     const result = await executeSession({
       script: 'Long running task',
       jobId: 'timeout-job',
-      timeoutMs: 100, // Very short timeout
+      timeoutMs: 100,
+      pollIntervalMs: 10, // Very short timeout
       gatewayClient: mockGateway,
     });
 
@@ -95,6 +98,7 @@ describe('Session executor', () => {
       script: 'Test task',
       jobId: 'error-job',
       timeoutMs: 60000,
+      pollIntervalMs: 50,
       gatewayClient: mockGateway,
     });
 
@@ -102,7 +106,7 @@ describe('Session executor', () => {
     expect(result.error).toContain('Gateway connection refused');
   });
 
-  it('polls with exponential backoff', { timeout: 30000 }, async () => {
+  it('polls with exponential backoff', async () => {
     let callCount = 0;
     const mockGateway: GatewayClient = {
       spawnSession: vi.fn().mockResolvedValue({
@@ -124,6 +128,7 @@ describe('Session executor', () => {
       script: 'Multi-step task',
       jobId: 'polling-job',
       timeoutMs: 60000,
+      pollIntervalMs: 50,
       gatewayClient: mockGateway,
     });
 
@@ -146,6 +151,7 @@ describe('Session executor', () => {
       script: 'Ephemeral session',
       jobId: 'no-info-job',
       timeoutMs: 60000,
+      pollIntervalMs: 50,
       gatewayClient: mockGateway,
     });
 

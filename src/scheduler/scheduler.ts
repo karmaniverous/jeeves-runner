@@ -13,6 +13,8 @@ import type { JobRow } from './cron-registry.js';
 import { createCronRegistry } from './cron-registry.js';
 import type { ExecutionResult } from './executor.js';
 import type { executeJob } from './executor.js';
+import { dispatchNotification } from './notification-helper.js';
+import { createRunRepository } from './run-repository.js';
 import { executeSession } from './session-executor.js';
 
 /** Scheduler dependencies. */
@@ -36,7 +38,7 @@ export interface Scheduler {
   /** Initialize and start the scheduler, loading all enabled jobs. */
   start(): void;
   /** Stop the scheduler and gracefully wait for running jobs to complete. */
-  stop(): void;
+  stop(): Promise<void>;
   /** Manually trigger a job by ID, bypassing the schedule. */
   triggerJob(jobId: string): Promise<ExecutionResult>;
   /** Force an immediate reconciliation of job schedules with the database. */
@@ -64,37 +66,9 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
     },
   });
 
+  const runRepository = createRunRepository(db);
+
   let reconcileInterval: NodeJS.Timeout | null = null;
-
-  /** Insert a run record and return its ID. */
-  function createRun(jobId: string, trigger: string): number {
-    const result = db
-      .prepare(
-        `INSERT INTO runs (job_id, status, started_at, trigger) 
-         VALUES (?, 'running', datetime('now'), ?)`,
-      )
-      .run(jobId, trigger);
-    return result.lastInsertRowid;
-  }
-
-  /** Update run record with completion data. */
-  function finishRun(runId: number, execResult: ExecutionResult): void {
-    db.prepare(
-      `UPDATE runs SET status = ?, finished_at = datetime('now'), duration_ms = ?, 
-       exit_code = ?, tokens = ?, result_meta = ?, error = ?, stdout_tail = ?, stderr_tail = ?
-       WHERE id = ?`,
-    ).run(
-      execResult.status,
-      execResult.durationMs,
-      execResult.exitCode,
-      execResult.tokens,
-      execResult.resultMeta,
-      execResult.error,
-      execResult.stdoutTail,
-      execResult.stderrTail,
-      runId,
-    );
-  }
 
   /** Execute a job: create run record, run script, update record, send notifications. */
   async function runJob(
@@ -110,7 +84,7 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
     }
 
     runningJobs.add(id);
-    const runId = createRun(id, trigger);
+    const runId = runRepository.createRun(id, trigger);
     logger.info({ jobId: id, runId, trigger, type }, 'Starting job');
 
     try {
@@ -140,23 +114,18 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
         });
       }
 
-      finishRun(runId, result);
+      runRepository.finishRun(runId, result);
       logger.info({ jobId: id, runId, status: result.status }, 'Job finished');
 
       // Send notifications
-      if (result.status === 'ok' && on_success) {
-        await notifier
-          .notifySuccess(name, result.durationMs, on_success)
-          .catch((err: unknown) => {
-            logger.error({ jobId: id, err }, 'Notification failed');
-          });
-      } else if (result.status !== 'ok' && on_failure) {
-        await notifier
-          .notifyFailure(name, result.durationMs, result.error, on_failure)
-          .catch((err: unknown) => {
-            logger.error({ jobId: id, err }, 'Notification failed');
-          });
-      }
+      await dispatchNotification(
+        result,
+        name,
+        on_success,
+        on_failure,
+        notifier,
+        logger,
+      );
 
       return result;
     } finally {
@@ -175,13 +144,6 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
           { jobId: id },
           'Job already running, skipping (overlap_policy=skip)',
         );
-        return;
-      } else if (overlap_policy === 'queue') {
-        logger.info(
-          { jobId: id },
-          'Job already running, queueing (overlap_policy=queue)',
-        );
-        // In a real implementation, we'd queue this. For now, just skip.
         return;
       }
       // 'allow' policy: proceed
@@ -224,7 +186,7 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
       }
     },
 
-    stop(): void {
+    async stop(): Promise<void> {
       logger.info('Stopping scheduler');
 
       if (reconcileInterval) {
@@ -235,19 +197,18 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
       // Stop all crons
       cronRegistry.stopAll();
 
-      // Wait for running jobs (simple poll with timeout)
+      // Wait for running jobs (with timeout)
       const deadline = Date.now() + config.shutdownGraceMs;
-      const checkInterval = setInterval(() => {
-        if (runningJobs.size === 0 || Date.now() > deadline) {
-          clearInterval(checkInterval);
-          if (runningJobs.size > 0) {
-            logger.warn(
-              { count: runningJobs.size },
-              'Forced shutdown with running jobs',
-            );
-          }
-        }
-      }, 100);
+      while (runningJobs.size > 0 && Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
+      if (runningJobs.size > 0) {
+        logger.warn(
+          { count: runningJobs.size },
+          'Forced shutdown with running jobs',
+        );
+      }
     },
 
     async triggerJob(jobId: string): Promise<ExecutionResult> {

@@ -2,8 +2,7 @@
  * OpenClaw Gateway HTTP client for spawning and monitoring sessions.
  */
 
-import type { IncomingMessage } from 'node:http';
-import { request as httpRequest } from 'node:http';
+import { httpPost } from '../lib/http.js';
 
 /** Options for creating a Gateway client. */
 export interface GatewayClientOptions {
@@ -77,55 +76,16 @@ function invokeGateway(
   args: Record<string, unknown>,
   timeoutMs = 30000,
 ): Promise<unknown> {
-  return new Promise((resolve, reject) => {
-    const payload = JSON.stringify({ tool, args });
-    const parsedUrl = new URL(`${url}/tools/invoke`);
-
-    const req = httpRequest(
-      {
-        hostname: parsedUrl.hostname,
-        port: parsedUrl.port,
-        path: parsedUrl.pathname,
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Content-Length': Buffer.byteLength(payload),
-          Authorization: `Bearer ${token}`,
-        },
-        timeout: timeoutMs,
-      },
-      (res: IncomingMessage) => {
-        let body = '';
-        res.on('data', (chunk: Buffer) => {
-          body += chunk.toString();
-        });
-        res.on('end', () => {
-          if (res.statusCode !== 200) {
-            reject(
-              new Error(
-                `Gateway request failed: ${String(res.statusCode)} ${body}`,
-              ),
-            );
-            return;
-          }
-          try {
-            resolve(JSON.parse(body) as unknown);
-          } catch {
-            reject(new Error(`Failed to parse Gateway response: ${body}`));
-          }
-        });
-      },
-    );
-
-    req.on('error', reject);
-    req.on('timeout', () => {
-      req.destroy();
-      reject(new Error('Gateway request timed out'));
-    });
-
-    req.write(payload);
-    req.end();
-  });
+  const payload = JSON.stringify({ tool, args });
+  return httpPost(
+    `${url}/tools/invoke`,
+    {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    payload,
+    timeoutMs,
+  );
 }
 
 /** Create a Gateway client. */
@@ -185,11 +145,14 @@ export function createGatewayClient(
     },
 
     async getSessionInfo(sessionKey: string): Promise<SessionInfo | null> {
+      // Note: sessions_list doesn't support filtering by key, so we fetch recent sessions
+      // and search client-side. Consider using sessions_history with limit 1 as alternative,
+      // or request a sessions_get tool from Gateway for more efficient single-session lookup.
       const response = (await invokeGateway(
         url,
         token,
         'sessions_list',
-        { activeMinutes: 120, limit: 100 },
+        { activeMinutes: 120, limit: 500 }, // Increased from 100 to reduce false negatives
         timeoutMs,
       )) as {
         ok: boolean;

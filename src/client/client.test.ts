@@ -2,40 +2,24 @@
  * Tests for the runner client library (cursor and queue operations).
  */
 
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { closeConnection, createConnection } from '../db/connection.js';
-import { runMigrations } from '../db/migrations.js';
+import type { TestDb } from '../test-utils/db.js';
+import { createTestDb } from '../test-utils/db.js';
 import { createClient } from './client.js';
 
 describe('RunnerClient', () => {
-  let testDir: string;
+  let testDb: TestDb;
   let dbPath: string;
 
   beforeEach(() => {
-    testDir = mkdtempSync(join(tmpdir(), 'jeeves-runner-test-'));
-    dbPath = join(testDir, 'test.db');
-    const db = createConnection(dbPath);
-    runMigrations(db);
-    closeConnection(db);
+    testDb = createTestDb();
+    dbPath = testDb.dbPath;
   });
 
   afterEach(() => {
-    // Windows can have file locks from WAL mode, retry a few times
-    try {
-      rmSync(testDir, {
-        recursive: true,
-        force: true,
-        maxRetries: 3,
-        retryDelay: 100,
-      });
-    } catch {
-      // Ignore cleanup errors in tests
-    }
+    testDb.cleanup();
   });
 
   describe('Cursors', () => {
@@ -370,6 +354,45 @@ describe('RunnerClient', () => {
       expect(items).toHaveLength(1);
       expect(items[0]?.payload).toEqual({ test: 'data' });
 
+      client.close();
+    });
+
+    it('should use transaction for atomic dequeue', () => {
+      const client = createClient(dbPath);
+      const db = createConnection(dbPath);
+
+      // Enqueue two items
+      client.enqueue('test-queue', { id: 1 });
+      client.enqueue('test-queue', { id: 2 });
+
+      // Verify both are pending before dequeue
+      const pendingBefore = db
+        .prepare(
+          `SELECT COUNT(*) as count FROM queue_items WHERE queue_id = 'test-queue' AND status = 'pending'`,
+        )
+        .get() as { count: number };
+      expect(pendingBefore.count).toBe(2);
+
+      // Dequeue one item
+      const items = client.dequeue('test-queue', 1);
+      expect(items).toHaveLength(1);
+
+      // Verify exactly one is now processing and one is still pending
+      const processingAfter = db
+        .prepare(
+          `SELECT COUNT(*) as count FROM queue_items WHERE queue_id = 'test-queue' AND status = 'processing'`,
+        )
+        .get() as { count: number };
+      const pendingAfter = db
+        .prepare(
+          `SELECT COUNT(*) as count FROM queue_items WHERE queue_id = 'test-queue' AND status = 'pending'`,
+        )
+        .get() as { count: number };
+
+      expect(processingAfter.count).toBe(1);
+      expect(pendingAfter.count).toBe(1);
+
+      closeConnection(db);
       client.close();
     });
   });

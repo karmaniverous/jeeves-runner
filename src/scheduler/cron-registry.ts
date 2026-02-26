@@ -13,9 +13,9 @@ export interface JobRow {
   name: string;
   schedule: string;
   script: string;
-  type: string;
+  type: 'script' | 'session';
   timeout_ms: number | null;
-  overlap_policy: string;
+  overlap_policy: 'skip' | 'allow';
   on_failure: string | null;
   on_success: string | null;
 }

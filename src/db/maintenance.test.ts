@@ -2,44 +2,26 @@
  * Tests for database maintenance tasks.
  */
 
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-
 import { pino } from 'pino';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { closeConnection, createConnection } from './connection.js';
+import type { TestDb } from '../test-utils/db.js';
+import { createTestDb } from '../test-utils/db.js';
 import { createMaintenance } from './maintenance.js';
-import { runMigrations } from './migrations.js';
 
 describe('Maintenance', () => {
-  let testDir: string;
-  let dbPath: string;
+  let testDb: TestDb;
 
   beforeEach(() => {
-    testDir = mkdtempSync(join(tmpdir(), 'jeeves-runner-test-'));
-    dbPath = join(testDir, 'test.db');
-    const db = createConnection(dbPath);
-    runMigrations(db);
-    closeConnection(db);
+    testDb = createTestDb();
   });
 
   afterEach(() => {
-    try {
-      rmSync(testDir, {
-        recursive: true,
-        force: true,
-        maxRetries: 3,
-        retryDelay: 100,
-      });
-    } catch {
-      // Ignore cleanup errors in tests
-    }
+    testDb.cleanup();
   });
 
   it('should prune old queue items based on retention_days', () => {
-    const db = createConnection(dbPath);
+    const db = testDb.db;
     const logger = pino({ level: 'silent' });
 
     // Create a test queue with 7-day retention
@@ -88,11 +70,10 @@ describe('Maintenance', () => {
     expect(payloads.some((p) => p.test === 'pending')).toBe(true);
 
     maintenance.stop();
-    closeConnection(db);
   });
 
   it('should use default retention when queue not defined', () => {
-    const db = createConnection(dbPath);
+    const db = testDb.db;
     const logger = pino({ level: 'silent' });
 
     // Insert an old completed item for an undefined queue (10 days ago)
@@ -125,6 +106,5 @@ describe('Maintenance', () => {
     expect(payload.test).toBe('recent');
 
     maintenance.stop();
-    closeConnection(db);
   });
 });
