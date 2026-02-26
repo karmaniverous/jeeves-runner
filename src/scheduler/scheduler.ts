@@ -6,12 +6,14 @@ import type { DatabaseSync } from 'node:sqlite';
 
 import type { Logger } from 'pino';
 
+import type { GatewayClient } from '../gateway/client.js';
 import type { Notifier } from '../notify/slack.js';
 import type { RunnerConfig } from '../schemas/config.js';
 import type { JobRow } from './cron-registry.js';
 import { createCronRegistry } from './cron-registry.js';
 import type { ExecutionResult } from './executor.js';
 import type { executeJob } from './executor.js';
+import { executeSession } from './session-executor.js';
 
 /** Scheduler dependencies. */
 export interface SchedulerDeps {
@@ -25,6 +27,8 @@ export interface SchedulerDeps {
   config: RunnerConfig;
   /** Logger instance. */
   logger: Logger;
+  /** Optional Gateway client for session-type jobs. */
+  gatewayClient?: GatewayClient;
 }
 
 /** Scheduler interface for managing job schedules and execution. */
@@ -49,7 +53,7 @@ export interface Scheduler {
  * Create the job scheduler. Manages cron schedules, job execution, overlap policies, and notifications.
  */
 export function createScheduler(deps: SchedulerDeps): Scheduler {
-  const { db, executor, notifier, config, logger } = deps;
+  const { db, executor, notifier, config, logger, gatewayClient } = deps;
   const runningJobs = new Set<string>();
 
   const cronRegistry = createCronRegistry({
@@ -97,7 +101,7 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
     job: JobRow,
     trigger: string,
   ): Promise<ExecutionResult> {
-    const { id, name, script, timeout_ms, on_success, on_failure } = job;
+    const { id, name, script, type, timeout_ms, on_success, on_failure } = job;
 
     // Check concurrency limit
     if (runningJobs.size >= config.maxConcurrency) {
@@ -107,16 +111,34 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
 
     runningJobs.add(id);
     const runId = createRun(id, trigger);
-    logger.info({ jobId: id, runId, trigger }, 'Starting job');
+    logger.info({ jobId: id, runId, trigger, type }, 'Starting job');
 
     try {
-      const result = await executor({
-        script,
-        dbPath: config.dbPath,
-        jobId: id,
-        runId,
-        timeoutMs: timeout_ms ?? undefined,
-      });
+      let result: ExecutionResult;
+
+      // Route based on job type
+      if (type === 'session') {
+        if (!gatewayClient) {
+          throw new Error(
+            'Session job requires Gateway client (gateway.tokenPath not configured)',
+          );
+        }
+        result = await executeSession({
+          script,
+          jobId: id,
+          timeoutMs: timeout_ms ?? undefined,
+          gatewayClient,
+        });
+      } else {
+        // Default to script executor
+        result = await executor({
+          script,
+          dbPath: config.dbPath,
+          jobId: id,
+          runId,
+          timeoutMs: timeout_ms ?? undefined,
+        });
+      }
 
       finishRun(runId, result);
       logger.info({ jobId: id, runId, status: result.status }, 'Job finished');

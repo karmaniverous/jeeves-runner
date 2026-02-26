@@ -26,6 +26,14 @@ const logSchema = z.object({
   file: z.string().optional(),
 });
 
+/** Gateway configuration sub-schema. */
+const gatewaySchema = z.object({
+  /** OpenClaw Gateway URL. */
+  url: z.string().default('http://127.0.0.1:18789'),
+  /** Path to file containing Gateway auth token. */
+  tokenPath: z.string().optional(),
+});
+
 /** Full runner configuration schema. Validates and provides defaults. */
 export const runnerConfigSchema = z.object({
   /** HTTP server port for the runner API. */
@@ -49,6 +57,8 @@ export const runnerConfigSchema = z.object({
   }),
   /** Logging configuration. */
   log: logSchema.default({ level: 'info' }),
+  /** Gateway configuration for session-type jobs. */
+  gateway: gatewaySchema.default({ url: 'http://127.0.0.1:18789' }),
 });
 
 /** Inferred runner configuration type. */

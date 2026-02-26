@@ -13,6 +13,7 @@ export interface JobRow {
   name: string;
   schedule: string;
   script: string;
+  type: string;
   timeout_ms: number | null;
   overlap_policy: string;
   on_failure: string | null;

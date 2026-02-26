@@ -66,6 +66,9 @@ function createTestConfig(): RunnerConfig {
       defaultOnFailure: null,
       defaultOnSuccess: null,
     },
+    gateway: {
+      url: 'http://127.0.0.1:18789',
+    },
     log: {
       level: 'info',
     },

@@ -33,6 +33,21 @@ export { executeJob } from './scheduler/executor.js';
 export type { Scheduler, SchedulerDeps } from './scheduler/scheduler.js';
 export { createScheduler } from './scheduler/scheduler.js';
 
+// Gateway
+export type {
+  GatewayClient,
+  GatewayClientOptions,
+  SessionInfo,
+  SessionMessage,
+  SpawnSessionOptions,
+  SpawnSessionResult,
+} from './gateway/client.js';
+export { createGatewayClient } from './gateway/client.js';
+
+// Session executor
+export type { SessionExecutionOptions } from './scheduler/session-executor.js';
+export { executeSession } from './scheduler/session-executor.js';
+
 // Notifier
 export type { Notifier, NotifyConfig } from './notify/slack.js';
 export { createNotifier } from './notify/slack.js';
