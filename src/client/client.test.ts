@@ -77,6 +77,142 @@ describe('RunnerClient', () => {
     });
   });
 
+  describe('State', () => {
+    it('should set and get a state value', () => {
+      const client = createClient(dbPath);
+      client.setState('test', 'key1', 'value1');
+      expect(client.getState('test', 'key1')).toBe('value1');
+      client.close();
+    });
+
+    it('should return null for non-existent state', () => {
+      const client = createClient(dbPath);
+      expect(client.getState('test', 'missing')).toBeNull();
+      client.close();
+    });
+
+    it('should delete a state value', () => {
+      const client = createClient(dbPath);
+      client.setState('test', 'key1', 'value1');
+      expect(client.getState('test', 'key1')).toBe('value1');
+      client.deleteState('test', 'key1');
+      expect(client.getState('test', 'key1')).toBeNull();
+      client.close();
+    });
+
+    it('should update an existing state value', () => {
+      const client = createClient(dbPath);
+      client.setState('test', 'key1', 'value1');
+      client.setState('test', 'key1', 'value2');
+      expect(client.getState('test', 'key1')).toBe('value2');
+      client.close();
+    });
+
+    it('should set a state value with TTL', () => {
+      const client = createClient(dbPath);
+      client.setState('test', 'key1', 'value1', { ttl: '1d' });
+      expect(client.getState('test', 'key1')).toBe('value1');
+      client.close();
+    });
+
+    it('should be compatible with cursor methods (same storage)', () => {
+      const client = createClient(dbPath);
+      // Set via cursor API
+      client.setCursor('test', 'key1', 'value1');
+      // Get via state API
+      expect(client.getState('test', 'key1')).toBe('value1');
+      // Update via state API
+      client.setState('test', 'key1', 'value2');
+      // Get via cursor API
+      expect(client.getCursor('test', 'key1')).toBe('value2');
+      client.close();
+    });
+  });
+
+  describe('State Items', () => {
+    it('should set item and hasItem returns true', () => {
+      const client = createClient(dbPath);
+      client.setItem('test', 'key1', 'item1', 'value1');
+      expect(client.hasItem('test', 'key1', 'item1')).toBe(true);
+      client.close();
+    });
+
+    it('should return false for missing item', () => {
+      const client = createClient(dbPath);
+      expect(client.hasItem('test', 'key1', 'missing')).toBe(false);
+      client.close();
+    });
+
+    it('should set and get item value', () => {
+      const client = createClient(dbPath);
+      client.setItem('test', 'key1', 'item1', 'value1');
+      expect(client.getItem('test', 'key1', 'item1')).toBe('value1');
+      client.close();
+    });
+
+    it('should set item with no value (existence-only)', () => {
+      const client = createClient(dbPath);
+      client.setItem('test', 'key1', 'item1');
+      expect(client.hasItem('test', 'key1', 'item1')).toBe(true);
+      expect(client.getItem('test', 'key1', 'item1')).toBeNull();
+      client.close();
+    });
+
+    it('should delete item', () => {
+      const client = createClient(dbPath);
+      client.setItem('test', 'key1', 'item1', 'value1');
+      expect(client.hasItem('test', 'key1', 'item1')).toBe(true);
+      client.deleteItem('test', 'key1', 'item1');
+      expect(client.hasItem('test', 'key1', 'item1')).toBe(false);
+      client.close();
+    });
+
+    it('should count items in empty collection', () => {
+      const client = createClient(dbPath);
+      expect(client.countItems('test', 'empty-key')).toBe(0);
+      client.close();
+    });
+
+    it('should count items in collection', () => {
+      const client = createClient(dbPath);
+      client.setItem('test', 'key1', 'item1', 'value1');
+      client.setItem('test', 'key1', 'item2', 'value2');
+      client.setItem('test', 'key1', 'item3', 'value3');
+      expect(client.countItems('test', 'key1')).toBe(3);
+      client.close();
+    });
+
+    it('should overwrite item (upsert)', () => {
+      const client = createClient(dbPath);
+      client.setItem('test', 'key1', 'item1', 'value1');
+      expect(client.getItem('test', 'key1', 'item1')).toBe('value1');
+      client.setItem('test', 'key1', 'item1', 'value2');
+      expect(client.getItem('test', 'key1', 'item1')).toBe('value2');
+      client.close();
+    });
+
+    it('should isolate collections by namespace and key', () => {
+      const client = createClient(dbPath);
+      client.setItem('ns1', 'key1', 'item1', 'value1');
+      client.setItem('ns2', 'key1', 'item1', 'value2');
+      expect(client.getItem('ns1', 'key1', 'item1')).toBe('value1');
+      expect(client.getItem('ns2', 'key1', 'item1')).toBe('value2');
+      client.close();
+    });
+
+    it('should auto-create parent state row', () => {
+      const client = createClient(dbPath);
+      // Verify parent doesn't exist
+      expect(client.getState('test', 'new-key')).toBeNull();
+      // Set item (should auto-create parent)
+      client.setItem('test', 'new-key', 'item1', 'value1');
+      // Verify parent now exists
+      expect(client.getState('test', 'new-key')).toBeNull(); // value is NULL
+      expect(client.hasItem('test', 'new-key', 'item1')).toBe(true);
+      client.close();
+    });
+  });
+
   describe('Queues', () => {
     it('should enqueue and dequeue items', () => {
       const client = createClient(dbPath);

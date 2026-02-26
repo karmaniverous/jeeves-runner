@@ -7,6 +7,7 @@ import type { DatabaseSync } from 'node:sqlite';
 import { JSONPath } from 'jsonpath-plus';
 
 import { closeConnection, createConnection } from '../db/connection.js';
+import { createCollectionOps, createStateOps } from './state-ops.js';
 
 /** Queue item returned from dequeue operation. */
 export interface QueueItem {
@@ -29,6 +30,32 @@ export interface RunnerClient {
   ): void;
   /** Delete a cursor by namespace and key. */
   deleteCursor(namespace: string, key: string): void;
+  /** Retrieve a state value by namespace and key (alias for getCursor). Returns null if not found or expired. */
+  getState(namespace: string, key: string): string | null;
+  /** Set or update a state value with optional TTL (alias for setCursor). */
+  setState(
+    namespace: string,
+    key: string,
+    value: string,
+    options?: { ttl?: string },
+  ): void;
+  /** Delete a state value by namespace and key (alias for deleteCursor). */
+  deleteState(namespace: string, key: string): void;
+  /** Check if a state item exists in a collection. */
+  hasItem(namespace: string, key: string, itemKey: string): boolean;
+  /** Retrieve a state item value from a collection. Returns null if not found. */
+  getItem(namespace: string, key: string, itemKey: string): string | null;
+  /** Set or update a state item in a collection. Value is optional (for existence-only tracking). Auto-creates parent state row if needed. */
+  setItem(
+    namespace: string,
+    key: string,
+    itemKey: string,
+    value?: string,
+  ): void;
+  /** Delete a state item from a collection. */
+  deleteItem(namespace: string, key: string, itemKey: string): void;
+  /** Count state items in a collection. */
+  countItems(namespace: string, key: string): number;
   /** Add an item to a queue with optional priority and max attempts. Returns the queue item ID, or -1 if skipped due to deduplication. */
   enqueue(
     queue: string,
@@ -49,35 +76,6 @@ export interface RunnerClient {
   close(): void;
 }
 
-/** Parse TTL string (e.g., '30d', '24h', '60m') into ISO datetime offset from now. */
-function parseTtl(ttl: string): string {
-  const match = /^(\d+)([dhm])$/.exec(ttl);
-  if (!match) throw new Error(`Invalid TTL format: ${ttl}`);
-
-  const amount = match[1];
-  const unit = match[2];
-  if (!amount || !unit) throw new Error(`Invalid TTL format: ${ttl}`);
-
-  const num = parseInt(amount, 10);
-
-  let modifier: string;
-  switch (unit) {
-    case 'd':
-      modifier = `+${String(num)} days`;
-      break;
-    case 'h':
-      modifier = `+${String(num)} hours`;
-      break;
-    case 'm':
-      modifier = `+${String(num)} minutes`;
-      break;
-    default:
-      throw new Error(`Unknown TTL unit: ${unit}`);
-  }
-
-  return `datetime('now', '${modifier}')`;
-}
-
 /**
  * Create a runner client for job scripts. Opens its own DB connection.
  */
@@ -89,40 +87,12 @@ export function createClient(dbPath?: string): RunnerClient {
     );
 
   const db: DatabaseSync = createConnection(path);
+  const stateOps = createStateOps(db);
+  const collectionOps = createCollectionOps(db);
 
   return {
-    getCursor(namespace: string, key: string): string | null {
-      const row = db
-        .prepare(
-          `SELECT value FROM cursors 
-           WHERE namespace = ? AND key = ? 
-           AND (expires_at IS NULL OR expires_at > datetime('now'))`,
-        )
-        .get(namespace, key) as { value: string } | undefined;
-      return row?.value ?? null;
-    },
-
-    setCursor(
-      namespace: string,
-      key: string,
-      value: string,
-      options?: { ttl?: string },
-    ): void {
-      const expiresAt = options?.ttl ? parseTtl(options.ttl) : null;
-      const sql = expiresAt
-        ? `INSERT INTO cursors (namespace, key, value, expires_at) VALUES (?, ?, ?, ${expiresAt})
-           ON CONFLICT(namespace, key) DO UPDATE SET value = excluded.value, expires_at = excluded.expires_at, updated_at = datetime('now')`
-        : `INSERT INTO cursors (namespace, key, value) VALUES (?, ?, ?)
-           ON CONFLICT(namespace, key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')`;
-      db.prepare(sql).run(namespace, key, value);
-    },
-
-    deleteCursor(namespace: string, key: string): void {
-      db.prepare('DELETE FROM cursors WHERE namespace = ? AND key = ?').run(
-        namespace,
-        key,
-      );
-    },
+    ...stateOps,
+    ...collectionOps,
 
     enqueue(
       queue: string,

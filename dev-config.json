@@ -1,0 +1,1 @@
+{"port":3100,"dbPath":"J:/state/runner/runner.sqlite","maxConcurrency":4,"runRetentionDays":30,"cursorCleanupIntervalMs":3600000,"shutdownGraceMs":30000,"notifications":{"slackTokenPath":"J:/config/credentials/slack-bot-token","defaultOnFailure":"D0AB0NJ96H3","defaultOnSuccess":null},"log":{"level":"info"}}
