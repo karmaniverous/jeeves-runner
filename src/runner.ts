@@ -17,9 +17,11 @@ import { executeJob } from './scheduler/executor.js';
 import { createScheduler, type Scheduler } from './scheduler/scheduler.js';
 import type { RunnerConfig } from './schemas/config.js';
 
-/** Runner interface. */
+/** Runner interface for managing the runner lifecycle. */
 export interface Runner {
+  /** Initialize and start all runner components (database, scheduler, API server). */
   start(): Promise<void>;
+  /** Gracefully stop all runner components and clean up resources. */
   stop(): Promise<void>;
 }
 

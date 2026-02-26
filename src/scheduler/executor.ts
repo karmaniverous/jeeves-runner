@@ -7,22 +7,35 @@ import { extname } from 'node:path';
 
 /** Result of a job execution. */
 export interface ExecutionResult {
+  /** Execution outcome: 'ok', 'error', or 'timeout'. */
   status: 'ok' | 'error' | 'timeout';
+  /** Process exit code (null if timeout or spawn error). */
   exitCode: number | null;
+  /** Total execution duration in milliseconds. */
   durationMs: number;
+  /** Token count parsed from JR_RESULT output (for LLM jobs). */
   tokens: number | null;
+  /** Additional result metadata parsed from JR_RESULT output. */
   resultMeta: string | null;
+  /** Last N lines of stdout. */
   stdoutTail: string;
+  /** Last N lines of stderr. */
   stderrTail: string;
+  /** Error message if execution failed. */
   error: string | null;
 }
 
 /** Options for executing a job script. */
 export interface ExecutionOptions {
+  /** Path to the script file to execute. */
   script: string;
+  /** Path to the SQLite database for job state access. */
   dbPath: string;
+  /** Job identifier (passed as JR_JOB_ID env var). */
   jobId: string;
+  /** Run identifier (passed as JR_RUN_ID env var). */
   runId: number;
+  /** Optional execution timeout in milliseconds. */
   timeoutMs?: number;
 }
 

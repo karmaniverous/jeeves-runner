@@ -6,27 +6,44 @@ import type { DatabaseSync } from 'node:sqlite';
 
 import { closeConnection, createConnection } from '../db/connection.js';
 
+/** Queue item returned from dequeue operation. */
+export interface QueueItem {
+  /** Queue item unique identifier. */
+  id: number;
+  /** Queue item payload (deserialized from JSON). */
+  payload: unknown;
+}
+
 /** Client interface for job scripts to interact with runner state and queues. */
 export interface RunnerClient {
+  /** Retrieve a cursor value by namespace and key. Returns null if not found or expired. */
   getCursor(namespace: string, key: string): string | null;
+  /** Set or update a cursor value with optional TTL (e.g., '30d', '24h', '60m'). */
   setCursor(
     namespace: string,
     key: string,
     value: string,
     options?: { ttl?: string },
   ): void;
+  /** Delete a cursor by namespace and key. */
   deleteCursor(namespace: string, key: string): void;
+  /** Add an item to a queue with optional priority and max attempts. Returns the queue item ID. */
   enqueue(
     queue: string,
     payload: unknown,
     options?: { priority?: number; maxAttempts?: number },
   ): number;
-  dequeue(
-    queue: string,
-    count?: number,
-  ): Array<{ id: number; payload: unknown }>;
+  /**
+   * Claim and retrieve items from a queue for processing. Returns array of queue items with id and payload.
+   * @param queue - Queue name
+   * @param count - Number of items to dequeue (default 1)
+   */
+  dequeue(queue: string, count?: number): QueueItem[];
+  /** Mark a queue item as successfully completed. */
   done(queueItemId: number): void;
+  /** Mark a queue item as failed with optional error message. */
   fail(queueItemId: number, error?: string): void;
+  /** Close the database connection. */
   close(): void;
 }
 
@@ -121,7 +138,7 @@ export function createClient(dbPath?: string): RunnerClient {
       return result.lastInsertRowid;
     },
 
-    dequeue(queue: string, count = 1): Array<{ id: number; payload: unknown }> {
+    dequeue(queue: string, count = 1): QueueItem[] {
       // First, SELECT the items to claim (with correct ordering)
       const rows = db
         .prepare(

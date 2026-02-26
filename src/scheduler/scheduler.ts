@@ -4,50 +4,63 @@
 
 import type { DatabaseSync } from 'node:sqlite';
 
-import { Cron } from 'croner';
 import type { Logger } from 'pino';
 
 import type { Notifier } from '../notify/slack.js';
 import type { RunnerConfig } from '../schemas/config.js';
+import type { JobRow } from './cron-registry.js';
+import { createCronRegistry } from './cron-registry.js';
 import type { ExecutionResult } from './executor.js';
 import type { executeJob } from './executor.js';
 
 /** Scheduler dependencies. */
 export interface SchedulerDeps {
+  /** SQLite database connection. */
   db: DatabaseSync;
+  /** Job executor function. */
   executor: typeof executeJob;
+  /** Notification service for job completion events. */
   notifier: Notifier;
+  /** Runner configuration. */
   config: RunnerConfig;
+  /** Logger instance. */
   logger: Logger;
 }
 
-/** Scheduler interface. */
+/** Scheduler interface for managing job schedules and execution. */
 export interface Scheduler {
+  /** Initialize and start the scheduler, loading all enabled jobs. */
   start(): void;
+  /** Stop the scheduler and gracefully wait for running jobs to complete. */
   stop(): void;
+  /** Manually trigger a job by ID, bypassing the schedule. */
   triggerJob(jobId: string): Promise<ExecutionResult>;
+  /** Force an immediate reconciliation of job schedules with the database. */
+  reconcileNow(): void;
+  /** Get list of currently running job IDs. */
   getRunningJobs(): string[];
+  /** Get list of job IDs that failed to register cron schedules. */
+  getFailedRegistrations(): string[];
 }
 
-/** Job record from database. */
-interface JobRow {
-  id: string;
-  name: string;
-  schedule: string;
-  script: string;
-  timeout_ms: number | null;
-  overlap_policy: string;
-  on_failure: string | null;
-  on_success: string | null;
-}
+// JobRow is imported from cron-registry
 
 /**
  * Create the job scheduler. Manages cron schedules, job execution, overlap policies, and notifications.
  */
 export function createScheduler(deps: SchedulerDeps): Scheduler {
   const { db, executor, notifier, config, logger } = deps;
-  const crons = new Map<string, Cron>();
   const runningJobs = new Set<string>();
+
+  const cronRegistry = createCronRegistry({
+    db,
+    logger,
+    onScheduledRun: (job) => {
+      void onScheduledRun(job);
+    },
+  });
+
+  let reconcileInterval: NodeJS.Timeout | null = null;
 
   /** Insert a run record and return its ID. */
   function createRun(jobId: string, trigger: string): number {
@@ -157,52 +170,48 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
     });
   }
 
+  // Cron registration and reconciliation are handled by cronRegistry.
+
   return {
     start(): void {
-      // Load all enabled jobs
-      const jobs = db
-        .prepare('SELECT * FROM jobs WHERE enabled = 1')
-        .all() as unknown as JobRow[];
+      const { totalEnabled, failedIds } = cronRegistry.reconcile();
 
-      logger.info({ count: jobs.length }, 'Loading jobs');
+      logger.info({ count: totalEnabled }, 'Loading jobs');
 
-      for (const job of jobs) {
-        try {
-          const jobId = job.id;
-          const cron = new Cron(job.schedule, () => {
-            // Re-read job from DB to get current configuration
-            const currentJob = db
-              .prepare('SELECT * FROM jobs WHERE id = ? AND enabled = 1')
-              .get(jobId) as JobRow | undefined;
-
-            if (!currentJob) {
-              logger.warn(
-                { jobId },
-                'Job no longer exists or disabled, skipping',
-              );
-              return;
-            }
-
-            void onScheduledRun(currentJob);
-          });
-          crons.set(job.id, cron);
-          logger.info(
-            { jobId: job.id, schedule: job.schedule },
-            'Scheduled job',
-          );
-        } catch (err) {
-          logger.error({ jobId: job.id, err }, 'Failed to schedule job');
+      if (failedIds.length > 0) {
+        const ok = totalEnabled - failedIds.length;
+        logger.warn(
+          { failed: failedIds.length, total: totalEnabled },
+          `${String(failedIds.length)} of ${String(totalEnabled)} jobs failed to register`,
+        );
+        const message = `⚠️ jeeves-runner started: ${String(ok)}/${String(totalEnabled)} jobs scheduled, ${String(failedIds.length)} failed: ${failedIds.join(', ')}`;
+        const channel = config.notifications.defaultOnFailure;
+        if (channel) {
+          void notifier.notifyFailure('jeeves-runner', 0, message, channel);
         }
+      }
+
+      if (reconcileInterval === null && config.reconcileIntervalMs > 0) {
+        reconcileInterval = setInterval(() => {
+          try {
+            cronRegistry.reconcile();
+          } catch (err: unknown) {
+            logger.error({ err }, 'Reconciliation failed');
+          }
+        }, config.reconcileIntervalMs);
       }
     },
 
     stop(): void {
       logger.info('Stopping scheduler');
-      // Stop all crons
-      for (const cron of crons.values()) {
-        cron.stop();
+
+      if (reconcileInterval) {
+        clearInterval(reconcileInterval);
+        reconcileInterval = null;
       }
-      crons.clear();
+
+      // Stop all crons
+      cronRegistry.stopAll();
 
       // Wait for running jobs (simple poll with timeout)
       const deadline = Date.now() + config.shutdownGraceMs;
@@ -228,8 +237,16 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
       return runJob(job, 'manual');
     },
 
+    reconcileNow(): void {
+      cronRegistry.reconcile();
+    },
+
     getRunningJobs(): string[] {
       return Array.from(runningJobs);
+    },
+
+    getFailedRegistrations(): string[] {
+      return cronRegistry.getFailedRegistrations();
     },
   };
 }

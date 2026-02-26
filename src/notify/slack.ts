@@ -6,16 +6,19 @@ import { request } from 'node:https';
 
 /** Notification configuration. */
 export interface NotifyConfig {
+  /** Slack bot token for posting messages (null if not configured). */
   slackToken: string | null;
 }
 
 /** Notifier interface for job completion events. */
 export interface Notifier {
+  /** Send a success notification to a Slack channel. */
   notifySuccess(
     jobName: string,
     durationMs: number,
     channel: string,
   ): Promise<void>;
+  /** Send a failure notification to a Slack channel. */
   notifyFailure(
     jobName: string,
     durationMs: number,
