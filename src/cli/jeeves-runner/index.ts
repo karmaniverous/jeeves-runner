@@ -8,6 +8,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { Command } from 'commander';
+import { CronPattern } from 'croner';
 
 import { createConnection } from '../../db/connection.js';
 import { runMigrations } from '../../db/migrations.js';
@@ -102,6 +103,17 @@ program
   .option('-c, --config <path>', 'Path to config file')
   .action((options: AddJobOptions) => {
     const config = loadConfig(options.config);
+
+    // Validate schedule expression before inserting
+    try {
+      new CronPattern(options.schedule);
+    } catch (err) {
+      console.error(
+        `Invalid schedule expression: ${err instanceof Error ? err.message : String(err)}`,
+      );
+      process.exit(1);
+    }
+
     const db = createConnection(config.dbPath);
     runMigrations(db);
 
