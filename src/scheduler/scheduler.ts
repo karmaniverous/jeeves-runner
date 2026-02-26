@@ -36,7 +36,7 @@ export interface Scheduler {
   /** Initialize and start the scheduler, loading all enabled jobs. */
   start(): void;
   /** Stop the scheduler and gracefully wait for running jobs to complete. */
-  stop(): void;
+  stop(): Promise<void>;
   /** Manually trigger a job by ID, bypassing the schedule. */
   triggerJob(jobId: string): Promise<ExecutionResult>;
   /** Force an immediate reconciliation of job schedules with the database. */
@@ -224,7 +224,7 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
       }
     },
 
-    stop(): void {
+    async stop(): Promise<void> {
       logger.info('Stopping scheduler');
 
       if (reconcileInterval) {
@@ -235,19 +235,18 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
       // Stop all crons
       cronRegistry.stopAll();
 
-      // Wait for running jobs (simple poll with timeout)
+      // Wait for running jobs (with timeout)
       const deadline = Date.now() + config.shutdownGraceMs;
-      const checkInterval = setInterval(() => {
-        if (runningJobs.size === 0 || Date.now() > deadline) {
-          clearInterval(checkInterval);
-          if (runningJobs.size > 0) {
-            logger.warn(
-              { count: runningJobs.size },
-              'Forced shutdown with running jobs',
-            );
-          }
-        }
-      }, 100);
+      while (runningJobs.size > 0 && Date.now() < deadline) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+
+      if (runningJobs.size > 0) {
+        logger.warn(
+          { count: runningJobs.size },
+          'Forced shutdown with running jobs',
+        );
+      }
     },
 
     async triggerJob(jobId: string): Promise<ExecutionResult> {

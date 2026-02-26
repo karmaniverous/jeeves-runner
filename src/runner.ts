@@ -130,7 +130,7 @@ export function createRunner(config: RunnerConfig): Runner {
       }
 
       if (scheduler) {
-        scheduler.stop();
+        await scheduler.stop();
         logger.info('Scheduler stopped');
       }
 
