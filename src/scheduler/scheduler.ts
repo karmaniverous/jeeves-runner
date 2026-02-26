@@ -27,6 +27,7 @@ export interface Scheduler {
   stop(): void;
   triggerJob(jobId: string): Promise<ExecutionResult>;
   getRunningJobs(): string[];
+  getFailedRegistrations(): string[];
 }
 
 /** Job record from database. */
@@ -48,6 +49,7 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
   const { db, executor, notifier, config, logger } = deps;
   const crons = new Map<string, Cron>();
   const runningJobs = new Set<string>();
+  const failedRegistrations = new Set<string>();
 
   /** Insert a run record and return its ID. */
   function createRun(jobId: string, trigger: string): number {
@@ -166,6 +168,8 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
 
       logger.info({ count: jobs.length }, 'Loading jobs');
 
+      const failedJobs: string[] = [];
+
       for (const job of jobs) {
         try {
           const jobId = job.id;
@@ -192,6 +196,22 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
           );
         } catch (err) {
           logger.error({ jobId: job.id, err }, 'Failed to schedule job');
+          failedJobs.push(job.id);
+          failedRegistrations.add(job.id);
+        }
+      }
+
+      // Notify if any jobs failed to register
+      if (failedJobs.length > 0) {
+        const ok = jobs.length - failedJobs.length;
+        logger.warn(
+          { failed: failedJobs.length, total: jobs.length },
+          `${String(failedJobs.length)} of ${String(jobs.length)} jobs failed to register`,
+        );
+        const message = `⚠️ jeeves-runner started: ${String(ok)}/${String(jobs.length)} jobs scheduled, ${String(failedJobs.length)} failed: ${failedJobs.join(', ')}`;
+        const channel = config.notifications.defaultOnFailure;
+        if (channel) {
+          void notifier.notifyFailure('jeeves-runner', 0, message, channel);
         }
       }
     },
@@ -230,6 +250,10 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
 
     getRunningJobs(): string[] {
       return Array.from(runningJobs);
+    },
+
+    getFailedRegistrations(): string[] {
+      return Array.from(failedRegistrations);
     },
   };
 }

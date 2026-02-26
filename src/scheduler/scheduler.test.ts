@@ -15,12 +15,25 @@ import { createScheduler } from './scheduler.js';
 type CronCapture = { schedule: string; callback: () => void };
 const capturedCrons: CronCapture[] = [];
 
-vi.mock('croner', () => {
+vi.mock('croner', async () => {
+  const actualUnknown: unknown = await vi.importActual('croner');
+  if (
+    typeof actualUnknown !== 'object' ||
+    actualUnknown === null ||
+    !('CronPattern' in actualUnknown)
+  ) {
+    throw new Error('Failed to import actual croner module');
+  }
+
+  const actual = actualUnknown as { CronPattern: new (s: string) => unknown };
+
   class Cron {
     public schedule: string;
     public callback: () => void;
 
     public constructor(schedule: string, callback: () => void) {
+      // Validate the schedule using real CronPattern (same as real Cron)
+      new actual.CronPattern(schedule);
       this.schedule = schedule;
       this.callback = callback;
       capturedCrons.push({ schedule, callback });
@@ -31,7 +44,7 @@ vi.mock('croner', () => {
     }
   }
 
-  return { Cron };
+  return { Cron, CronPattern: actual.CronPattern };
 });
 
 function createTestConfig(): RunnerConfig {
@@ -103,13 +116,12 @@ function createMocks() {
     Promise.resolve(defaultResult),
   );
 
+  const notifySuccessMock = vi.fn(() => Promise.resolve(undefined));
+  const notifyFailureMock = vi.fn(() => Promise.resolve(undefined));
+
   const notifier: Notifier = {
-    notifySuccess: vi.fn(() =>
-      Promise.resolve(undefined),
-    ) as unknown as Notifier['notifySuccess'],
-    notifyFailure: vi.fn(() =>
-      Promise.resolve(undefined),
-    ) as unknown as Notifier['notifyFailure'],
+    notifySuccess: notifySuccessMock as unknown as Notifier['notifySuccess'],
+    notifyFailure: notifyFailureMock as unknown as Notifier['notifyFailure'],
   };
 
   const logger = {
@@ -118,7 +130,13 @@ function createMocks() {
     error: vi.fn(),
   };
 
-  return { executorMock, notifier, logger };
+  return {
+    executorMock,
+    notifier,
+    logger,
+    notifySuccessMock,
+    notifyFailureMock,
+  };
 }
 
 describe('createScheduler', () => {
@@ -197,6 +215,87 @@ describe('createScheduler', () => {
     await new Promise((r) => setTimeout(r, 10));
 
     expect(executorMock).not.toHaveBeenCalled();
+
+    scheduler.stop();
+    db.close();
+  });
+
+  it('tracks jobs that fail to register', () => {
+    capturedCrons.length = 0;
+
+    const db = createDb();
+    // Insert a job with an invalid schedule (e.g., value > 59 for minutes)
+    db.prepare(
+      `INSERT INTO jobs (id, name, schedule, script, enabled)
+       VALUES (?, ?, ?, ?, ?)`,
+    ).run('bad-job', 'Bad Job', '*/67 * * * *', '/path/to/script.js', 1);
+
+    // Insert a valid job
+    db.prepare(
+      `INSERT INTO jobs (id, name, schedule, script, enabled)
+       VALUES (?, ?, ?, ?, ?)`,
+    ).run('good-job', 'Good Job', '*/5 * * * *', '/path/to/script.js', 1);
+
+    const { executorMock, notifier, logger, notifyFailureMock } = createMocks();
+
+    const config = createTestConfig();
+    config.notifications.defaultOnFailure = '#test-alerts';
+
+    const scheduler = createScheduler({
+      db,
+      executor: executorMock as unknown as (
+        options: ExecutionOptions,
+      ) => Promise<ExecutionResult>,
+      notifier,
+      config,
+      logger: logger as unknown as Logger,
+    });
+
+    scheduler.start();
+
+    // The bad job should be in failedRegistrations
+    const failed = scheduler.getFailedRegistrations();
+    expect(failed).toContain('bad-job');
+    expect(failed).not.toContain('good-job');
+
+    // Verify notifier was called with the default failure channel
+    expect(notifyFailureMock).toHaveBeenCalledWith(
+      'jeeves-runner',
+      0,
+      expect.stringContaining('bad-job'),
+      '#test-alerts',
+    );
+
+    scheduler.stop();
+    db.close();
+  });
+
+  it('does not include valid schedules in failed registrations', () => {
+    capturedCrons.length = 0;
+
+    const db = createDb();
+    db.prepare(
+      `INSERT INTO jobs (id, name, schedule, script, enabled)
+       VALUES (?, ?, ?, ?, ?)`,
+    ).run('valid-job', 'Valid Job', '*/5 * * * *', '/path/to/script.js', 1);
+
+    const { executorMock, notifier, logger, notifyFailureMock } = createMocks();
+
+    const scheduler = createScheduler({
+      db,
+      executor: executorMock as unknown as (
+        options: ExecutionOptions,
+      ) => Promise<ExecutionResult>,
+      notifier,
+      config: createTestConfig(),
+      logger: logger as unknown as Logger,
+    });
+
+    scheduler.start();
+
+    const failed = scheduler.getFailedRegistrations();
+    expect(failed).toHaveLength(0);
+    expect(notifyFailureMock).not.toHaveBeenCalled();
 
     scheduler.stop();
     db.close();
