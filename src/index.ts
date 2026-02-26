@@ -17,7 +17,7 @@ export type { Runner } from './runner.js';
 export { createRunner } from './runner.js';
 
 // Client
-export type { RunnerClient } from './client/client.js';
+export type { QueueItem, RunnerClient } from './client/client.js';
 export { createClient } from './client/client.js';
 
 // Executor
