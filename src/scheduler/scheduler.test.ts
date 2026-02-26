@@ -12,7 +12,11 @@ import type { RunnerConfig } from '../schemas/config.js';
 import type { ExecutionOptions, ExecutionResult } from './executor.js';
 import { createScheduler } from './scheduler.js';
 
-type CronCapture = { schedule: string; callback: () => void };
+type CronCapture = {
+  schedule: string;
+  callback: () => void;
+  stopped: { value: boolean };
+};
 const capturedCrons: CronCapture[] = [];
 
 vi.mock('croner', async () => {
@@ -30,17 +34,19 @@ vi.mock('croner', async () => {
   class Cron {
     public schedule: string;
     public callback: () => void;
+    public stopped: { value: boolean };
 
     public constructor(schedule: string, callback: () => void) {
       // Validate the schedule using real CronPattern (same as real Cron)
       new actual.CronPattern(schedule);
       this.schedule = schedule;
       this.callback = callback;
-      capturedCrons.push({ schedule, callback });
+      this.stopped = { value: false };
+      capturedCrons.push({ schedule, callback, stopped: this.stopped });
     }
 
     public stop(): void {
-      // no-op
+      this.stopped.value = true;
     }
   }
 
@@ -55,6 +61,7 @@ function createTestConfig(): RunnerConfig {
     runRetentionDays: 30,
     cursorCleanupIntervalMs: 3600000,
     shutdownGraceMs: 5000,
+    reconcileIntervalMs: 0,
     notifications: {
       defaultOnFailure: null,
       defaultOnSuccess: null,
@@ -296,6 +303,113 @@ describe('createScheduler', () => {
     const failed = scheduler.getFailedRegistrations();
     expect(failed).toHaveLength(0);
     expect(notifyFailureMock).not.toHaveBeenCalled();
+
+    scheduler.stop();
+    db.close();
+  });
+
+  it('registers newly inserted enabled jobs on reconciliation', () => {
+    capturedCrons.length = 0;
+
+    const db = createDb();
+    const { executorMock, notifier, logger } = createMocks();
+
+    const scheduler = createScheduler({
+      db,
+      executor: executorMock as unknown as (
+        options: ExecutionOptions,
+      ) => Promise<ExecutionResult>,
+      notifier,
+      config: createTestConfig(),
+      logger: logger as unknown as Logger,
+    });
+
+    scheduler.start();
+    expect(capturedCrons).toHaveLength(0);
+
+    db.prepare(
+      `INSERT INTO jobs (id, name, schedule, script, enabled)
+       VALUES (?, ?, ?, ?, ?)`,
+    ).run('new-job', 'New Job', '*/5 * * * *', '/path/to/script.js', 1);
+
+    scheduler.reconcileNow();
+
+    expect(capturedCrons).toHaveLength(1);
+    expect(capturedCrons[0]?.schedule).toBe('*/5 * * * *');
+
+    scheduler.stop();
+    db.close();
+  });
+
+  it('removes disabled jobs on reconciliation', () => {
+    capturedCrons.length = 0;
+
+    const db = createDb();
+    db.prepare(
+      `INSERT INTO jobs (id, name, schedule, script, enabled)
+       VALUES (?, ?, ?, ?, ?)`,
+    ).run('job-disable', 'Disable Me', '*/5 * * * *', '/path/to/script.js', 1);
+
+    const { executorMock, notifier, logger } = createMocks();
+
+    const scheduler = createScheduler({
+      db,
+      executor: executorMock as unknown as (
+        options: ExecutionOptions,
+      ) => Promise<ExecutionResult>,
+      notifier,
+      config: createTestConfig(),
+      logger: logger as unknown as Logger,
+    });
+
+    scheduler.start();
+    expect(capturedCrons).toHaveLength(1);
+
+    db.prepare('UPDATE jobs SET enabled = 0 WHERE id = ?').run('job-disable');
+
+    scheduler.reconcileNow();
+
+    expect(capturedCrons[0]?.stopped.value).toBe(true);
+
+    scheduler.stop();
+    db.close();
+  });
+
+  it('re-registers jobs whose schedule changes on reconciliation', () => {
+    capturedCrons.length = 0;
+
+    const db = createDb();
+    db.prepare(
+      `INSERT INTO jobs (id, name, schedule, script, enabled)
+       VALUES (?, ?, ?, ?, ?)`,
+    ).run('job-change', 'Change Me', '*/5 * * * *', '/path/to/script.js', 1);
+
+    const { executorMock, notifier, logger } = createMocks();
+
+    const scheduler = createScheduler({
+      db,
+      executor: executorMock as unknown as (
+        options: ExecutionOptions,
+      ) => Promise<ExecutionResult>,
+      notifier,
+      config: createTestConfig(),
+      logger: logger as unknown as Logger,
+    });
+
+    scheduler.start();
+    expect(capturedCrons).toHaveLength(1);
+    expect(capturedCrons[0]?.schedule).toBe('*/5 * * * *');
+
+    db.prepare('UPDATE jobs SET schedule = ? WHERE id = ?').run(
+      '*/10 * * * *',
+      'job-change',
+    );
+
+    scheduler.reconcileNow();
+
+    expect(capturedCrons[0]?.stopped.value).toBe(true);
+    expect(capturedCrons).toHaveLength(2);
+    expect(capturedCrons[1]?.schedule).toBe('*/10 * * * *');
 
     scheduler.stop();
     db.close();

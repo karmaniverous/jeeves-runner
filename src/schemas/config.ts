@@ -29,6 +29,7 @@ export const runnerConfigSchema = z.object({
   runRetentionDays: z.number().default(30),
   cursorCleanupIntervalMs: z.number().default(3600000),
   shutdownGraceMs: z.number().default(30000),
+  reconcileIntervalMs: z.number().default(60000),
   notifications: notificationsSchema.default({
     defaultOnFailure: null,
     defaultOnSuccess: null,

@@ -91,6 +91,7 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
       reply.code(404);
       return { error: 'Job not found' };
     }
+    scheduler.reconcileNow();
     return { ok: true };
   });
 
@@ -105,6 +106,7 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
         reply.code(404);
         return { error: 'Job not found' };
       }
+      scheduler.reconcileNow();
       return { ok: true };
     },
   );
