@@ -35,21 +35,16 @@ export function parseTtl(ttl: string): string {
 
 /** State operations for scalar key-value state. */
 export interface StateOps {
-  getCursor(namespace: string, key: string): string | null;
-  setCursor(
-    namespace: string,
-    key: string,
-    value: string,
-    options?: { ttl?: string },
-  ): void;
-  deleteCursor(namespace: string, key: string): void;
+  /** Retrieve a state value by namespace and key. Returns null if not found or expired. */
   getState(namespace: string, key: string): string | null;
+  /** Set or update a state value with optional TTL (e.g., '30d', '24h', '60m'). */
   setState(
     namespace: string,
     key: string,
     value: string,
     options?: { ttl?: string },
   ): void;
+  /** Delete a state value by namespace and key. */
   deleteState(namespace: string, key: string): void;
 }
 
@@ -76,7 +71,7 @@ export interface CollectionOps {
 /** Create state operations for the given database connection. */
 export function createStateOps(db: DatabaseSync): StateOps {
   return {
-    getCursor(namespace: string, key: string): string | null {
+    getState(namespace: string, key: string): string | null {
       const row = db
         .prepare(
           `SELECT value FROM state 
@@ -87,7 +82,7 @@ export function createStateOps(db: DatabaseSync): StateOps {
       return row?.value ?? null;
     },
 
-    setCursor(
+    setState(
       namespace: string,
       key: string,
       value: string,
@@ -107,28 +102,11 @@ export function createStateOps(db: DatabaseSync): StateOps {
       }
     },
 
-    deleteCursor(namespace: string, key: string): void {
+    deleteState(namespace: string, key: string): void {
       db.prepare('DELETE FROM state WHERE namespace = ? AND key = ?').run(
         namespace,
         key,
       );
-    },
-
-    getState(namespace: string, key: string): string | null {
-      return this.getCursor(namespace, key);
-    },
-
-    setState(
-      namespace: string,
-      key: string,
-      value: string,
-      options?: { ttl?: string },
-    ): void {
-      this.setCursor(namespace, key, value, options);
-    },
-
-    deleteState(namespace: string, key: string): void {
-      this.deleteCursor(namespace, key);
     },
   };
 }

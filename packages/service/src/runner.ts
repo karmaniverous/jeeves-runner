@@ -86,12 +86,12 @@ export function createRunner(config: RunnerConfig, deps?: RunnerDeps): Runner {
         logger.info('Gateway client initialized');
       }
 
-      // Maintenance (run retention pruning + cursor cleanup)
+      // Maintenance (run retention pruning + state cleanup)
       maintenance = createMaintenance(
         db,
         {
           runRetentionDays: config.runRetentionDays,
-          cursorCleanupIntervalMs: config.cursorCleanupIntervalMs,
+          stateCleanupIntervalMs: config.stateCleanupIntervalMs,
         },
         logger,
       );
