@@ -1,5 +1,6 @@
 {
-  "entryPoints": ["./src/index.ts"],
+  "entryPoints": ["./packages/service/src/index.ts"],
+  "tsconfig": "./packages/service/tsconfig.json",
   "highlightLanguages": [
     "bash",
     "console",
@@ -21,7 +22,7 @@
   },
   "out": "./docs/",
   "plugin": ["typedoc-plugin-mdn-links", "typedoc-plugin-replace-text"],
-  "projectDocuments": ["./CHANGELOG.md"],
+  "projectDocuments": ["./packages/service/CHANGELOG.md"],
   "replaceText": {
     "replacements": [
       {

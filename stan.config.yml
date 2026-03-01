@@ -17,7 +17,7 @@ stan-cli:
       script: npm run lint:fix
       warnPattern: \\d+:\\d+\\s+warning
     test: npm run test -- --no-color
-    diagrams: npm run diagrams
+    diagrams: npm run diagrams --workspace=packages/service
     docs:
       script: npm run docs -- --emit none
       warnPattern: \\[warning\\]

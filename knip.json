@@ -1,0 +1,8 @@
+{
+  "ignoreDependencies": ["tsx"],
+  "ignore": ["docs/**"],
+  "workspaces": {
+    "packages/service": {},
+    "packages/openclaw": {}
+  }
+}
