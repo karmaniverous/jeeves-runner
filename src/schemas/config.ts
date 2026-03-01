@@ -37,7 +37,7 @@ const gatewaySchema = z.object({
 /** Full runner configuration schema. Validates and provides defaults. */
 export const runnerConfigSchema = z.object({
   /** HTTP server port for the runner API. */
-  port: z.number().default(3100),
+  port: z.number().default(1937),
   /** Path to SQLite database file. */
   dbPath: z.string().default('./data/runner.sqlite'),
   /** Maximum number of concurrent job executions. */
