@@ -1,142 +1,34 @@
 {
-  "author": "Jason Williscroft",
-  "bin": {
-    "jeeves-runner": "./dist/cli/jeeves-runner/index.js"
+  "name": "jeeves-runner-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace=packages/service",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "test": "npm run test --workspace=packages/service",
+    "knip": "knip",
+    "docs": "typedoc",
+    "typecheck": "npm run typecheck --workspace=packages/service"
   },
-  "auto-changelog": {
-    "output": "CHANGELOG.md",
-    "unreleased": true,
-    "commitLimit": false,
-    "hideCredit": true
-  },
-  "bugs": {
-    "url": "https://github.com/karmaniverous/jeeves-runner/issues"
-  },
-  "dependencies": {
-    "commander": "^14.0.3",
-    "croner": "^10.0.1",
-    "fastify": "^5.7.4",
-    "jsonpath-plus": "^10.4.0",
-    "pino": "^10.3.1",
-    "zod": "^4.3.6"
-  },
-  "description": "Graph-aware job execution engine with SQLite state. Part of the Jeeves platform.",
   "devDependencies": {
-    "@dotenvx/dotenvx": "^1.52.0",
     "@eslint/js": "^9.39.3",
-    "@rollup/plugin-alias": "^6.0.0",
-    "@rollup/plugin-commonjs": "^29.0.0",
-    "@rollup/plugin-json": "^6.1.0",
-    "@rollup/plugin-node-resolve": "^16.0.3",
-    "@rollup/plugin-typescript": "^12.3.0",
-    "@types/fs-extra": "^11.0.4",
-    "@types/node": "^25.3.0",
-    "@vitest/coverage-v8": "^4.0.18",
-    "@vitest/eslint-plugin": "^1.6.9",
-    "auto-changelog": "^2.5.0",
-    "cross-env": "^10.1.0",
     "eslint": "^9.39.3",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "eslint-plugin-tsdoc": "^0.5.0",
-    "fs-extra": "^11.3.3",
-    "happy-dom": "^20.7.0",
     "knip": "^5.85.0",
     "lefthook": "^2.1.1",
     "prettier": "^3.8.1",
-    "release-it": "^19.2.4",
     "rimraf": "^6.1.3",
-    "rollup": "^4.59.0",
-    "rollup-plugin-copy": "^3.5.0",
-    "rollup-plugin-dts": "^6.3.0",
-    "tslib": "^2.8.1",
-    "typedoc": "^0.28.17",
-    "typedoc-plugin-mdn-links": "^5.1.1",
-    "typedoc-plugin-replace-text": "^4.2.0",
+    "tsx": "^4.21.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.56.1",
-    "vitest": "^4.0.18"
+    "typescript-eslint": "^8.56.1"
   },
   "engines": {
     "node": ">=20"
-  },
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./dist/mjs/index.js"
-    }
-  },
-  "files": [
-    "dist"
-  ],
-  "homepage": "https://github.com/karmaniverous/jeeves-runner#readme",
-  "keywords": [
-    "jeeves",
-    "job-scheduler",
-    "cron",
-    "sqlite",
-    "workflow",
-    "automation",
-    "graph",
-    "fastify",
-    "typescript"
-  ],
-  "license": "BSD-3-Clause",
-  "module": "dist/mjs/index.js",
-  "name": "@karmaniverous/jeeves-runner",
-  "publishConfig": {
-    "access": "public"
-  },
-  "release-it": {
-    "git": {
-      "changelog": "npx auto-changelog --unreleased-only --stdout --template https://raw.githubusercontent.com/release-it/release-it/main/templates/changelog-compact.hbs",
-      "commitMessage": "chore: release v${version}",
-      "requireBranch": "main"
-    },
-    "github": {
-      "release": true
-    },
-    "hooks": {
-      "after:init": [
-        "npm run lint",
-        "npm run test",
-        "npm run knip",
-        "npm run build"
-      ],
-      "before:npm:release": [
-        "npx auto-changelog -p",
-        "npm run docs",
-        "git add -A"
-      ],
-      "after:release": [
-        "git switch -c release/${version}",
-        "git push -u origin release/${version}",
-        "git switch ${branchName}"
-      ]
-    },
-    "npm": {
-      "publish": true
-    }
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/karmaniverous/jeeves-runner.git"
-  },
-  "scripts": {
-    "build": "rimraf dist && cross-env NO_COLOR=1 rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
-    "changelog": "auto-changelog",
-    "diagrams": "cd diagrams/src && plantuml -tpng -o ../out -r .",
-    "docs": "typedoc",
-    "knip": "knip",
-    "lint": "eslint .",
-    "lint:fix": "eslint --fix .",
-    "release": "dotenvx run -f .env.local -- release-it",
-    "release:pre": "dotenvx run -f .env.local -- release-it --no-git.requireBranch --github.prerelease --preRelease",
-    "test": "vitest run",
-    "typecheck": "tsc"
-  },
-  "type": "module",
-  "types": "dist/index.d.ts",
-  "version": "0.2.0"
+  }
 }
