@@ -15,7 +15,7 @@ export type { Run, RunStatus, RunTrigger } from './schemas/run.js';
 export { runSchema, runStatusSchema, runTriggerSchema } from './schemas/run.js';
 
 // Runner
-export type { Runner } from './runner.js';
+export type { Runner, RunnerDeps } from './runner.js';
 export { createRunner } from './runner.js';
 
 // Client
@@ -26,6 +26,7 @@ export { createClient } from './client/client.js';
 export type {
   ExecutionOptions,
   ExecutionResult,
+  ResolvedCommand,
 } from './scheduler/executor.js';
 export { executeJob } from './scheduler/executor.js';
 
