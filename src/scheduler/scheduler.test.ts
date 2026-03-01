@@ -55,7 +55,7 @@ vi.mock('croner', async () => {
 
 function createTestConfig(): RunnerConfig {
   return {
-    port: 3100,
+    port: 1937,
     dbPath: ':memory:',
     maxConcurrency: 5,
     runRetentionDays: 30,
