@@ -18,7 +18,7 @@ function testConfig(dbPath: string, port: number) {
     reconcileIntervalMs: 0,
     shutdownGraceMs: 1000,
     runRetentionDays: 30,
-    cursorCleanupIntervalMs: 3600000,
+    stateCleanupIntervalMs: 3600000,
     log: { level: 'fatal' as const },
     notifications: {
       defaultOnSuccess: null,

@@ -50,7 +50,7 @@ describe('Maintenance', () => {
 
     const maintenance = createMaintenance(
       db,
-      { runRetentionDays: 30, cursorCleanupIntervalMs: 60000 },
+      { runRetentionDays: 30, stateCleanupIntervalMs: 60000 },
       logger,
     );
 
@@ -90,7 +90,7 @@ describe('Maintenance', () => {
 
     const maintenance = createMaintenance(
       db,
-      { runRetentionDays: 30, cursorCleanupIntervalMs: 60000 },
+      { runRetentionDays: 30, stateCleanupIntervalMs: 60000 },
       logger,
     );
 
