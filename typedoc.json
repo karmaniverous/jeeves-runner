@@ -1,5 +1,7 @@
 {
-  "entryPoints": ["./packages/service/src/index.ts"],
+  "entryPoints": [
+    "./packages/service/src/index.ts"
+  ],
   "tsconfig": "./packages/service/tsconfig.json",
   "highlightLanguages": [
     "bash",
@@ -16,13 +18,20 @@
     "yaml",
     "yml"
   ],
-  "hostedBaseUrl": "https://docs.karmanivero.us/npm-package-template-ts",
+  "hostedBaseUrl": "https://docs.karmanivero.us/jeeves-runner",
   "navigationLinks": {
-    "GitHub": "https://github.com/karmaniverous/npm-package-template-ts"
+    "GitHub": "https://github.com/karmaniverous/jeeves-runner"
   },
   "out": "./docs/",
-  "plugin": ["typedoc-plugin-mdn-links", "typedoc-plugin-replace-text"],
-  "projectDocuments": ["./packages/service/CHANGELOG.md"],
+  "plugin": [
+    "typedoc-plugin-mdn-links",
+    "typedoc-plugin-replace-text"
+  ],
+  "projectDocuments": [
+    "./packages/service/CHANGELOG.md",
+    "./packages/service/guides/index.md",
+    "./packages/openclaw/guides/index.md"
+  ],
   "replaceText": {
     "replacements": [
       {
@@ -35,6 +44,6 @@
   "searchInComments": true,
   "searchInDocuments": true,
   "validation": {
-    "notDocumented": false
+    "notDocumented": true
   }
 }

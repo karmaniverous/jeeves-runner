@@ -1,0 +1,26 @@
+@startuml job-lifecycle
+title Job Lifecycle
+
+skinparam backgroundColor white
+skinparam shadowing false
+
+[*] --> Disabled : add-job (enabled=0)
+[*] --> Idle : add-job (enabled=1)
+
+Disabled --> Idle : enable
+Idle --> Disabled : disable
+
+Idle --> Scheduled : cron fires
+Scheduled --> Running : executor picks up
+
+Running --> OK : exit code 0
+Running --> Error : non-zero exit
+Running --> Timeout : exceeded timeout_ms
+
+OK --> Idle : awaits next cron
+Error --> Idle : awaits next cron
+Timeout --> Idle : awaits next cron
+
+Scheduled --> Idle : skipped\n(overlap_policy=skip\n& already running)
+
+@enduml
