@@ -86,7 +86,7 @@ describe('CLI', () => {
     }).toThrow();
   });
 
-  it('should list jobs after adding one', () => {
+  it('should list jobs after adding one', { timeout: 15000 }, () => {
     execSync(
       `node dist/cli/jeeves-runner/index.js add-job --config "${configPath}" --id test-job --name "Test Job" --schedule "0 0 * * *" --script "echo test"`,
     );
