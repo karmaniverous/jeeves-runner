@@ -105,6 +105,9 @@ CREATE INDEX idx_queue_items_dedup ON queue_items(queue_id, dedup_key, status);
 -- Create new poll index
 CREATE INDEX idx_queue_items_poll ON queue_items(queue_id, status, priority DESC, created_at);
 
+-- NOTE: These queue definitions are deployment-specific seeds. New installations
+-- should define queues via the seed script or API, not here. These remain in the
+-- migration for backward compatibility with existing databases.
 -- Seed queue definitions
 INSERT INTO queues (id, name, description, dedup_expr, dedup_scope, max_attempts, retention_days) VALUES
   ('email-updates', 'Email Update Queue', NULL, NULL, NULL, 1, 7),

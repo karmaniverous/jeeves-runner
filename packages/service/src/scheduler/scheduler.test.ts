@@ -132,6 +132,9 @@ function createMocks() {
   const notifier: Notifier = {
     notifySuccess: notifySuccessMock as unknown as Notifier['notifySuccess'],
     notifyFailure: notifyFailureMock as unknown as Notifier['notifyFailure'],
+    dispatchResult: vi.fn(
+      async () => {},
+    ) as unknown as Notifier['dispatchResult'],
   };
 
   const logger = {
@@ -477,6 +480,7 @@ describe('createScheduler', () => {
     const mockNotifier: Notifier = {
       notifySuccess: vi.fn(async () => {}),
       notifyFailure: vi.fn(async () => {}),
+      dispatchResult: vi.fn(async () => {}),
     };
 
     const mockLogger = {
@@ -590,6 +594,7 @@ describe('createScheduler', () => {
     const mockNotifier: Notifier = {
       notifySuccess: vi.fn(async () => {}),
       notifyFailure: vi.fn(async () => {}),
+      dispatchResult: vi.fn(async () => {}),
     };
 
     const mockLogger = {

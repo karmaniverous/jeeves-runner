@@ -10,6 +10,12 @@ export interface NotifyConfig {
   slackToken: string | null;
 }
 
+/** Logger subset used by the notifier. */
+export interface NotifyLogger {
+  /** Log an error with structured context. */
+  error(obj: Record<string, unknown>, msg: string): void;
+}
+
 /** Notifier interface for job completion events. */
 export interface Notifier {
   /** Send a success notification to a Slack channel. */
@@ -24,6 +30,14 @@ export interface Notifier {
     durationMs: number,
     error: string | null,
     channel: string,
+  ): Promise<void>;
+  /** Dispatch notification based on execution result and per-job channel config. */
+  dispatchResult(
+    result: { status: string; durationMs: number; error: string | null },
+    jobName: string,
+    onSuccess: string | null,
+    onFailure: string | null,
+    logger: NotifyLogger,
   ): Promise<void>;
 }
 
@@ -58,12 +72,12 @@ export function createNotifier(config: NotifyConfig): Notifier {
     ): Promise<void> {
       if (!slackToken) {
         console.warn(
-          `No Slack token configured — skipping success notification for ${jobName}`,
+          `No Slack token configured � skipping success notification for ${jobName}`,
         );
         return;
       }
       const durationSec = (durationMs / 1000).toFixed(1);
-      const text = `✅ *${jobName}* completed (${durationSec}s)`;
+      const text = `?? *${jobName}* completed (${durationSec}s)`;
       await postToSlack(slackToken, channel, text);
     },
 
@@ -75,14 +89,39 @@ export function createNotifier(config: NotifyConfig): Notifier {
     ): Promise<void> {
       if (!slackToken) {
         console.warn(
-          `No Slack token configured — skipping failure notification for ${jobName}`,
+          `No Slack token configured � skipping failure notification for ${jobName}`,
         );
         return;
       }
       const durationSec = (durationMs / 1000).toFixed(1);
       const errorMsg = error ? `: ${error}` : '';
-      const text = `⚠️ *${jobName}* failed (${durationSec}s)${errorMsg}`;
+      const text = `?? *${jobName}* failed (${durationSec}s)${errorMsg}`;
       await postToSlack(slackToken, channel, text);
+    },
+
+    async dispatchResult(
+      result: { status: string; durationMs: number; error: string | null },
+      jobName: string,
+      onSuccess: string | null,
+      onFailure: string | null,
+      logger: NotifyLogger,
+    ): Promise<void> {
+      if (result.status === 'ok' && onSuccess) {
+        await this.notifySuccess(jobName, result.durationMs, onSuccess).catch(
+          (err: unknown) => {
+            logger.error({ jobName, err }, 'Success notification failed');
+          },
+        );
+      } else if (result.status !== 'ok' && onFailure) {
+        await this.notifyFailure(
+          jobName,
+          result.durationMs,
+          result.error,
+          onFailure,
+        ).catch((err: unknown) => {
+          logger.error({ jobName, err }, 'Failure notification failed');
+        });
+      }
     },
   };
 }
