@@ -14,6 +14,7 @@ import { createConnection } from '../../db/connection.js';
 import { runMigrations } from '../../db/migrations.js';
 import { createRunner } from '../../runner.js';
 import { runnerConfigSchema } from '../../schemas/config.js';
+import { registerServiceCommand } from './commands/service.js';
 
 /** Options shared by commands that accept --config. */
 interface ConfigOptions {
@@ -205,5 +206,7 @@ program
       }
     })();
   });
+
+registerServiceCommand(program);
 
 program.parse();
