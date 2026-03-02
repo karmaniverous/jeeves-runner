@@ -37,15 +37,15 @@ const gatewaySchema = z.object({
 /** Full runner configuration schema. Validates and provides defaults. */
 export const runnerConfigSchema = z.object({
   /** HTTP server port for the runner API. */
-  port: z.number().default(3100),
+  port: z.number().default(1937),
   /** Path to SQLite database file. */
   dbPath: z.string().default('./data/runner.sqlite'),
   /** Maximum number of concurrent job executions. */
   maxConcurrency: z.number().default(4),
   /** Number of days to retain completed run records. */
   runRetentionDays: z.number().default(30),
-  /** Interval in milliseconds for cursor cleanup task. */
-  cursorCleanupIntervalMs: z.number().default(3600000),
+  /** Interval in milliseconds for expired state cleanup task. */
+  stateCleanupIntervalMs: z.number().default(3600000),
   /** Grace period in milliseconds for shutdown completion. */
   shutdownGraceMs: z.number().default(30000),
   /** Interval in milliseconds for job reconciliation checks. */

@@ -55,11 +55,11 @@ vi.mock('croner', async () => {
 
 function createTestConfig(): RunnerConfig {
   return {
-    port: 3100,
+    port: 1937,
     dbPath: ':memory:',
     maxConcurrency: 5,
     runRetentionDays: 30,
-    cursorCleanupIntervalMs: 3600000,
+    stateCleanupIntervalMs: 3600000,
     shutdownGraceMs: 5000,
     reconcileIntervalMs: 0,
     notifications: {
@@ -492,7 +492,7 @@ describe('createScheduler', () => {
       reconcileIntervalMs: 0,
       shutdownGraceMs: 5000,
       runRetentionDays: 30,
-      cursorCleanupIntervalMs: 3600000,
+      stateCleanupIntervalMs: 3600000,
       log: { level: 'info' },
       notifications: {
         defaultOnSuccess: null,
@@ -605,7 +605,7 @@ describe('createScheduler', () => {
       reconcileIntervalMs: 0,
       shutdownGraceMs: 5000,
       runRetentionDays: 30,
-      cursorCleanupIntervalMs: 3600000,
+      stateCleanupIntervalMs: 3600000,
       log: { level: 'info' },
       notifications: {
         defaultOnSuccess: null,

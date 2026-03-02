@@ -62,17 +62,17 @@ describe('StateOps', () => {
     testDb.cleanup();
   });
 
-  it('should get and set cursor', () => {
+  it('should get and set state', () => {
     const ops = createStateOps(testDb.db);
-    ops.setCursor('test', 'key1', 'value1');
-    expect(ops.getCursor('test', 'key1')).toBe('value1');
+    ops.setState('test', 'key1', 'value1');
+    expect(ops.getState('test', 'key1')).toBe('value1');
   });
 
-  it('should delete cursor', () => {
+  it('should delete state', () => {
     const ops = createStateOps(testDb.db);
-    ops.setCursor('test', 'key1', 'value1');
-    ops.deleteCursor('test', 'key1');
-    expect(ops.getCursor('test', 'key1')).toBeNull();
+    ops.setState('test', 'key1', 'value1');
+    ops.deleteState('test', 'key1');
+    expect(ops.getState('test', 'key1')).toBeNull();
   });
 
   it('should get and set state (aliases)', () => {

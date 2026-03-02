@@ -1,0 +1,26 @@
+{
+  "id": "jeeves-runner-openclaw",
+  "name": "Jeeves Runner",
+  "description": "Job execution engine management - status, troubleshooting, and operational tools for jeeves-runner.",
+  "version": "0.1.0",
+  "skills": [
+    "dist/skills/jeeves-runner"
+  ],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "apiUrl": {
+        "type": "string",
+        "description": "jeeves-runner API base URL",
+        "default": "http://127.0.0.1:1937"
+      }
+    }
+  },
+  "uiHints": {
+    "apiUrl": {
+      "label": "Runner API URL",
+      "placeholder": "http://127.0.0.1:1937"
+    }
+  }
+}

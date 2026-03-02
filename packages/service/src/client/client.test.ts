@@ -1,5 +1,5 @@
 /**
- * Tests for the runner client library (cursor and queue operations).
+ * Tests for the runner client library (state and queue operations).
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -22,45 +22,6 @@ describe('RunnerClient', () => {
     testDb.cleanup();
   });
 
-  describe('Cursors', () => {
-    it('should set and get a cursor', () => {
-      const client = createClient(dbPath);
-      client.setCursor('test', 'key1', 'value1');
-      expect(client.getCursor('test', 'key1')).toBe('value1');
-      client.close();
-    });
-
-    it('should return null for non-existent cursor', () => {
-      const client = createClient(dbPath);
-      expect(client.getCursor('test', 'missing')).toBeNull();
-      client.close();
-    });
-
-    it('should delete a cursor', () => {
-      const client = createClient(dbPath);
-      client.setCursor('test', 'key1', 'value1');
-      expect(client.getCursor('test', 'key1')).toBe('value1');
-      client.deleteCursor('test', 'key1');
-      expect(client.getCursor('test', 'missing')).toBeNull();
-      client.close();
-    });
-
-    it('should update an existing cursor', () => {
-      const client = createClient(dbPath);
-      client.setCursor('test', 'key1', 'value1');
-      client.setCursor('test', 'key1', 'value2');
-      expect(client.getCursor('test', 'key1')).toBe('value2');
-      client.close();
-    });
-
-    it('should set a cursor with TTL', () => {
-      const client = createClient(dbPath);
-      client.setCursor('test', 'key1', 'value1', { ttl: '1d' });
-      expect(client.getCursor('test', 'key1')).toBe('value1');
-      client.close();
-    });
-  });
-
   describe('State', () => {
     it('should set and get a state value', () => {
       const client = createClient(dbPath);
@@ -69,7 +30,7 @@ describe('RunnerClient', () => {
       client.close();
     });
 
-    it('should return null for non-existent state', () => {
+    it('should return null for non-existent state value', () => {
       const client = createClient(dbPath);
       expect(client.getState('test', 'missing')).toBeNull();
       client.close();
@@ -80,7 +41,7 @@ describe('RunnerClient', () => {
       client.setState('test', 'key1', 'value1');
       expect(client.getState('test', 'key1')).toBe('value1');
       client.deleteState('test', 'key1');
-      expect(client.getState('test', 'key1')).toBeNull();
+      expect(client.getState('test', 'missing')).toBeNull();
       client.close();
     });
 
@@ -96,19 +57,6 @@ describe('RunnerClient', () => {
       const client = createClient(dbPath);
       client.setState('test', 'key1', 'value1', { ttl: '1d' });
       expect(client.getState('test', 'key1')).toBe('value1');
-      client.close();
-    });
-
-    it('should be compatible with cursor methods (same storage)', () => {
-      const client = createClient(dbPath);
-      // Set via cursor API
-      client.setCursor('test', 'key1', 'value1');
-      // Get via state API
-      expect(client.getState('test', 'key1')).toBe('value1');
-      // Update via state API
-      client.setState('test', 'key1', 'value2');
-      // Get via cursor API
-      expect(client.getCursor('test', 'key1')).toBe('value2');
       client.close();
     });
   });

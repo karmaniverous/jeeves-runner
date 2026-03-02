@@ -5,13 +5,13 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspace=packages/service",
+    "build": "npm run build --workspaces",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
-    "test": "npm run test --workspace=packages/service",
+    "test": "npm run test --workspaces",
     "knip": "knip",
     "docs": "typedoc",
-    "typecheck": "npm run typecheck --workspace=packages/service"
+    "typecheck": "npm run typecheck --workspaces"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.3",

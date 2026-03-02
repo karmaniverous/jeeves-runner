@@ -1,5 +1,5 @@
 /**
- * Job client library for runner jobs. Provides cursor (state) and queue operations. Opens its own DB connection via JR_DB_PATH env var.
+ * Job client library for runner jobs. Provides state and queue operations. Opens its own DB connection via JR_DB_PATH env var.
  */
 
 import type { DatabaseSync } from 'node:sqlite';
@@ -13,27 +13,16 @@ export type { QueueItem };
 
 /** Client interface for job scripts to interact with runner state and queues. */
 export interface RunnerClient {
-  /** Retrieve a cursor value by namespace and key. Returns null if not found or expired. */
-  getCursor(namespace: string, key: string): string | null;
-  /** Set or update a cursor value with optional TTL (e.g., '30d', '24h', '60m'). */
-  setCursor(
-    namespace: string,
-    key: string,
-    value: string,
-    options?: { ttl?: string },
-  ): void;
-  /** Delete a cursor by namespace and key. */
-  deleteCursor(namespace: string, key: string): void;
-  /** Retrieve a state value by namespace and key (alias for getCursor). Returns null if not found or expired. */
+  /** Retrieve a state value by namespace and key. Returns null if not found or expired. */
   getState(namespace: string, key: string): string | null;
-  /** Set or update a state value with optional TTL (alias for setCursor). */
+  /** Set or update a state value with optional TTL (e.g., '30d', '24h', '60m'). */
   setState(
     namespace: string,
     key: string,
     value: string,
     options?: { ttl?: string },
   ): void;
-  /** Delete a state value by namespace and key (alias for deleteCursor). */
+  /** Delete a state value by namespace and key. */
   deleteState(namespace: string, key: string): void;
   /** Check if a state item exists in a collection. */
   hasItem(namespace: string, key: string, itemKey: string): boolean;

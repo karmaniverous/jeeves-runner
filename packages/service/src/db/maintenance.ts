@@ -1,5 +1,5 @@
 /**
- * Database maintenance tasks: run retention pruning and expired cursor cleanup.
+ * Database maintenance tasks: run retention pruning and expired state cleanup.
  */
 
 import type { DatabaseSync } from 'node:sqlite';
@@ -11,7 +11,7 @@ export interface MaintenanceConfig {
   /** Number of days to retain completed run records before pruning. */
   runRetentionDays: number;
   /** Interval in milliseconds between maintenance task runs. */
-  cursorCleanupIntervalMs: number;
+  stateCleanupIntervalMs: number;
 }
 
 /** Maintenance controller with start/stop lifecycle. */
@@ -38,7 +38,7 @@ function pruneOldRuns(db: DatabaseSync, days: number, logger: Logger): void {
 }
 
 /** Delete expired state entries. */
-function cleanExpiredCursors(db: DatabaseSync, logger: Logger): void {
+function cleanExpiredState(db: DatabaseSync, logger: Logger): void {
   const result = db
     .prepare(
       `DELETE FROM state WHERE expires_at IS NOT NULL AND expires_at < datetime('now')`,
@@ -79,7 +79,7 @@ export function createMaintenance(
 
   function runAll(): void {
     pruneOldRuns(db, config.runRetentionDays, logger);
-    cleanExpiredCursors(db, logger);
+    cleanExpiredState(db, logger);
     pruneOldQueueItems(db, logger);
   }
 
@@ -88,7 +88,7 @@ export function createMaintenance(
       // Run immediately on startup
       runAll();
       // Then run periodically
-      interval = setInterval(runAll, config.cursorCleanupIntervalMs);
+      interval = setInterval(runAll, config.stateCleanupIntervalMs);
     },
 
     stop(): void {
