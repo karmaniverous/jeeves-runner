@@ -145,7 +145,8 @@ export function createGatewayClient(
     },
 
     async getSessionInfo(sessionKey: string): Promise<SessionInfo | null> {
-      // Note: sessions_list doesn't support filtering by key, so we fetch recent sessions
+      // TODO: Replace with a direct session lookup when Gateway adds sessions_get.
+      // Currently fetches up to 500 sessions and searches client-side — O(n) and
       // and search client-side. Consider using sessions_history with limit 1 as alternative,
       // or request a sessions_get tool from Gateway for more efficient single-session lookup.
       const response = (await invokeGateway(

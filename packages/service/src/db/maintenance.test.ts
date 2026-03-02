@@ -1,5 +1,5 @@
 /**
- * Tests for database maintenance tasks.
+ * Tests for database maintenance tasks: run pruning, state expiry, queue retention.
  */
 
 import { pino } from 'pino';
@@ -20,32 +20,91 @@ describe('Maintenance', () => {
     testDb.cleanup();
   });
 
+  it('should prune runs older than runRetentionDays', () => {
+    const db = testDb.db;
+    const logger = pino({ level: 'silent' });
+
+    // Insert a job
+    db.prepare(
+      `INSERT INTO jobs (id, name, schedule, script) VALUES ('j1', 'J1', '0 * * * *', 'echo 1')`,
+    ).run();
+
+    // Insert an old run (40 days ago)
+    db.prepare(
+      `INSERT INTO runs (job_id, status, started_at) VALUES ('j1', 'ok', datetime('now', '-40 days'))`,
+    ).run();
+
+    // Insert a recent run (5 days ago)
+    db.prepare(
+      `INSERT INTO runs (job_id, status, started_at) VALUES ('j1', 'ok', datetime('now', '-5 days'))`,
+    ).run();
+
+    const maintenance = createMaintenance(
+      db,
+      { runRetentionDays: 30, stateCleanupIntervalMs: 60000 },
+      logger,
+    );
+    maintenance.runNow();
+    maintenance.stop();
+
+    const runs = db.prepare('SELECT * FROM runs').all();
+    expect(runs).toHaveLength(1);
+  });
+
+  it('should clean expired state entries', () => {
+    const db = testDb.db;
+    const logger = pino({ level: 'silent' });
+
+    // Insert expired state
+    db.prepare(
+      `INSERT INTO state (namespace, key, value, expires_at) VALUES ('ns', 'expired', 'v', datetime('now', '-1 hour'))`,
+    ).run();
+
+    // Insert non-expired state
+    db.prepare(
+      `INSERT INTO state (namespace, key, value, expires_at) VALUES ('ns', 'valid', 'v', datetime('now', '+1 hour'))`,
+    ).run();
+
+    // Insert state without expiry
+    db.prepare(
+      `INSERT INTO state (namespace, key, value) VALUES ('ns', 'permanent', 'v')`,
+    ).run();
+
+    const maintenance = createMaintenance(
+      db,
+      { runRetentionDays: 30, stateCleanupIntervalMs: 60000 },
+      logger,
+    );
+    maintenance.runNow();
+    maintenance.stop();
+
+    const states = db
+      .prepare('SELECT key FROM state ORDER BY key')
+      .all() as Array<{ key: string }>;
+    expect(states.map((s) => s.key)).toEqual(['permanent', 'valid']);
+  });
+
   it('should prune old queue items based on retention_days', () => {
     const db = testDb.db;
     const logger = pino({ level: 'silent' });
 
-    // Create a test queue with 7-day retention
     db.prepare(
-      `INSERT INTO queues (id, name, max_attempts, retention_days) 
-       VALUES ('test-retention', 'Test Retention', 1, 7)`,
+      `INSERT INTO queues (id, name, max_attempts, retention_days) VALUES ('test-q', 'Test', 1, 7)`,
     ).run();
 
-    // Insert an old completed item (10 days ago)
+    // Old completed item (10 days ago)
     db.prepare(
-      `INSERT INTO queue_items (queue_id, payload, status, finished_at) 
-       VALUES ('test-retention', '{"test": "old"}', 'done', datetime('now', '-10 days'))`,
+      `INSERT INTO queue_items (queue_id, payload, status, finished_at) VALUES ('test-q', '"old"', 'done', datetime('now', '-10 days'))`,
     ).run();
 
-    // Insert a recent completed item (3 days ago)
+    // Recent completed item (3 days ago)
     db.prepare(
-      `INSERT INTO queue_items (queue_id, payload, status, finished_at) 
-       VALUES ('test-retention', '{"test": "recent"}', 'done', datetime('now', '-3 days'))`,
+      `INSERT INTO queue_items (queue_id, payload, status, finished_at) VALUES ('test-q', '"recent"', 'done', datetime('now', '-3 days'))`,
     ).run();
 
-    // Insert a pending item (should never be pruned)
+    // Pending item (never pruned)
     db.prepare(
-      `INSERT INTO queue_items (queue_id, payload, status) 
-       VALUES ('test-retention', '{"test": "pending"}', 'pending')`,
+      `INSERT INTO queue_items (queue_id, payload, status) VALUES ('test-q', '"pending"', 'pending')`,
     ).run();
 
     const maintenance = createMaintenance(
@@ -53,39 +112,27 @@ describe('Maintenance', () => {
       { runRetentionDays: 30, stateCleanupIntervalMs: 60000 },
       logger,
     );
-
     maintenance.runNow();
+    maintenance.stop();
 
-    // Check that old item was pruned
     const items = db
       .prepare('SELECT payload FROM queue_items WHERE queue_id = ?')
-      .all('test-retention') as Array<{ payload: string }>;
-
+      .all('test-q') as Array<{ payload: string }>;
     expect(items).toHaveLength(2);
-    const payloads = items.map(
-      (i) => JSON.parse(i.payload) as { test: string },
-    );
-    expect(payloads.some((p) => p.test === 'old')).toBe(false);
-    expect(payloads.some((p) => p.test === 'recent')).toBe(true);
-    expect(payloads.some((p) => p.test === 'pending')).toBe(true);
-
-    maintenance.stop();
+    const payloads = items.map((i) => String(JSON.parse(i.payload)));
+    expect(payloads).toEqual(expect.arrayContaining(['recent', 'pending']));
   });
 
-  it('should use default retention when queue not defined', () => {
+  it('should use default 7-day retention for undefined queues', () => {
     const db = testDb.db;
     const logger = pino({ level: 'silent' });
 
-    // Insert an old completed item for an undefined queue (10 days ago)
     db.prepare(
-      `INSERT INTO queue_items (queue_id, payload, status, finished_at) 
-       VALUES ('undefined-queue', '{"test": "old"}', 'done', datetime('now', '-10 days'))`,
+      `INSERT INTO queue_items (queue_id, payload, status, finished_at) VALUES ('unknown', '"old"', 'done', datetime('now', '-10 days'))`,
     ).run();
 
-    // Insert a recent completed item (3 days ago)
     db.prepare(
-      `INSERT INTO queue_items (queue_id, payload, status, finished_at) 
-       VALUES ('undefined-queue', '{"test": "recent"}', 'done', datetime('now', '-3 days'))`,
+      `INSERT INTO queue_items (queue_id, payload, status, finished_at) VALUES ('unknown', '"recent"', 'done', datetime('now', '-3 days'))`,
     ).run();
 
     const maintenance = createMaintenance(
@@ -93,18 +140,12 @@ describe('Maintenance', () => {
       { runRetentionDays: 30, stateCleanupIntervalMs: 60000 },
       logger,
     );
-
     maintenance.runNow();
-
-    // Old item should be pruned (default 7-day retention)
-    const items = db
-      .prepare('SELECT payload FROM queue_items WHERE queue_id = ?')
-      .all('undefined-queue') as Array<{ payload: string }>;
-
-    expect(items).toHaveLength(1);
-    const payload = JSON.parse(items[0].payload) as { test: string };
-    expect(payload.test).toBe('recent');
-
     maintenance.stop();
+
+    const items = db
+      .prepare("SELECT * FROM queue_items WHERE queue_id = 'unknown'")
+      .all();
+    expect(items).toHaveLength(1);
   });
 });

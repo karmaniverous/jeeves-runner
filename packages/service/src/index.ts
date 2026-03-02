@@ -50,7 +50,7 @@ export type { SessionExecutionOptions } from './scheduler/session-executor.js';
 export { executeSession } from './scheduler/session-executor.js';
 
 // Notifier
-export type { Notifier, NotifyConfig } from './notify/slack.js';
+export type { Notifier, NotifyConfig, NotifyLogger } from './notify/slack.js';
 export { createNotifier } from './notify/slack.js';
 
 // Database

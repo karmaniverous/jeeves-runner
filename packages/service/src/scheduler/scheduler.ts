@@ -13,7 +13,6 @@ import type { JobRow } from './cron-registry.js';
 import { createCronRegistry } from './cron-registry.js';
 import type { ExecutionResult } from './executor.js';
 import type { executeJob } from './executor.js';
-import { dispatchNotification } from './notification-helper.js';
 import { createRunRepository } from './run-repository.js';
 import { executeSession } from './session-executor.js';
 
@@ -118,12 +117,11 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
       logger.info({ jobId: id, runId, status: result.status }, 'Job finished');
 
       // Send notifications
-      await dispatchNotification(
+      await notifier.dispatchResult(
         result,
         name,
         on_success,
         on_failure,
-        notifier,
         logger,
       );
 
