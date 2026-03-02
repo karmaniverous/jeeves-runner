@@ -1,0 +1,56 @@
+@startuml system-architecture
+title jeeves-runner System Architecture
+
+skinparam componentStyle rectangle
+skinparam backgroundColor white
+skinparam shadowing false
+
+package "Configuration" {
+  [Config File\n(JSON + Zod)] as Config
+  [Schedule File\n(schedule.json)] as Schedule
+}
+
+package "Runner Core" {
+  [Scheduler] as Scheduler
+  [Cron Registry] as Cron
+  [Script Executor] as ScriptExec
+  [Session Executor] as SessionExec
+  [Notification Helper] as Notify
+}
+
+package "Persistence" {
+  database "SQLite" as DB {
+    [jobs]
+    [runs]
+    [state]
+    [queue]
+  }
+}
+
+package "External" {
+  [Fastify API Server] as API
+  [OpenClaw Gateway] as Gateway
+  [Slack API] as Slack
+}
+
+package "Client API" {
+  [State Ops] as StateOps
+  [Queue Ops] as QueueOps
+}
+
+Config --> Scheduler : validates & configures
+Schedule --> DB : upserts jobs on startup
+Scheduler --> Cron : registers schedules
+Cron --> Scheduler : fires triggers
+Scheduler --> ScriptExec : script-type jobs
+Scheduler --> SessionExec : session-type jobs
+ScriptExec --> DB : writes runs
+SessionExec --> Gateway : sessions_spawn
+SessionExec --> DB : writes runs
+Scheduler --> Notify : on completion
+Notify --> Slack : sends alerts
+API --> DB : reads/writes
+StateOps --> DB : state table
+QueueOps --> DB : queue table
+
+@enduml
