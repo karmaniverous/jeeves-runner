@@ -2,7 +2,13 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.2.1](https://github.com/karmaniverous/jeeves-runner/compare/0.2.0...0.2.1)
+
+- chore: change default port from 3100 to 1937 [`#18`](https://github.com/karmaniverous/jeeves-runner/pull/18)
+
 #### [0.2.0](https://github.com/karmaniverous/jeeves-runner/compare/0.1.2...0.2.0)
+
+> 27 February 2026
 
 - fix: remove UTF-16 null bytes from .gitignore [`#17`](https://github.com/karmaniverous/jeeves-runner/pull/17)
 - fix: resolve template literal lint errors [`#16`](https://github.com/karmaniverous/jeeves-runner/pull/16)
@@ -17,6 +23,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - test: comprehensive test coverage [`7b237d7`](https://github.com/karmaniverous/jeeves-runner/commit/7b237d7cc5fdfb2aaaa7323256038e8f4e01ab3d)
 - feat: add state tables and collection API (migration 003) [`fc0e4f5`](https://github.com/karmaniverous/jeeves-runner/commit/fc0e4f5f0ef7265ceec0457125788e2c210ec0fe)
 - feat: implement Phase 2 queue infrastructure with deduplication and retention [`7d1932e`](https://github.com/karmaniverous/jeeves-runner/commit/7d1932e1a9a76358b3e0a9740e8b63e5cb45cc94)
+- chore: release v0.2.0 [`c4d4561`](https://github.com/karmaniverous/jeeves-runner/commit/c4d4561742e02fe4110e7c71ea02d85571b11766)
 - fix: resolve typecheck, lint, and test failures from code review [`7876ea5`](https://github.com/karmaniverous/jeeves-runner/commit/7876ea5f0a1d54dea86afe150e72391b8b63eafd)
 - feat: runtime schedule reconciliation (#6) [`e362781`](https://github.com/karmaniverous/jeeves-runner/commit/e36278198bedef576d65a7eb39d594989926b3d2)
 - docs: add TSDoc for all exported symbols [`4c4be00`](https://github.com/karmaniverous/jeeves-runner/commit/4c4be00491cff6c1633e070ea7493c7c555102b0)
