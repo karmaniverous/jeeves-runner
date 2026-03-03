@@ -2,9 +2,33 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
+#### [0.3.0](https://github.com/karmaniverous/jeeves-runner/compare/0.2.1...0.3.0)
+
+- v0.3.0: Monorepo, OpenClaw plugin, state API, guides, code review cleanup [`#24`](https://github.com/karmaniverous/jeeves-runner/pull/24)
+- refactor: code review cleanup [`#23`](https://github.com/karmaniverous/jeeves-runner/pull/23)
+- docs: add service and plugin guides, architecture diagrams, fix typedoc config [`#22`](https://github.com/karmaniverous/jeeves-runner/pull/22)
+- feat: OpenClaw plugin with 7 runner tools, install CLI, and consumer skill (Phase 3) [`#21`](https://github.com/karmaniverous/jeeves-runner/pull/21)
+- feat: restructure as npm workspaces monorepo (v0.3.0 Phase 1) [`#19`](https://github.com/karmaniverous/jeeves-runner/pull/19)
+- zeroed version [`448cd13`](https://github.com/karmaniverous/jeeves-runner/commit/448cd1375c719febc1dd2e6ae7546e591c945573)
+- merge: resolve conflicts with main (keep next structure) [`367f92b`](https://github.com/karmaniverous/jeeves-runner/commit/367f92bb1efec4c289acd80a75d2dc6fad0c88a3)
+- feat: add OpenClaw plugin with 7 runner tools, install CLI, and consumer skill [`b7eb30b`](https://github.com/karmaniverous/jeeves-runner/commit/b7eb30b46c1cb8123b6fac1d497e6092566c11ff)
+- refactor: code review cleanup — trim trivial tests, merge notification helper, add maintenance coverage [`edb2e92`](https://github.com/karmaniverous/jeeves-runner/commit/edb2e92716682852cccdaf8646f68caeea30f9da)
+- feat: restructure as npm workspaces monorepo [`305c40d`](https://github.com/karmaniverous/jeeves-runner/commit/305c40d172220037011afebf3af695f18e346a2b)
+- chore: update dependencies (eslint-plugin-tsdoc, @types/node) [`6116105`](https://github.com/karmaniverous/jeeves-runner/commit/6116105a3e9d3d31b4e9da27518701b21927b1c2)
+- fix: resolve all tsdoc and typedoc warnings [`3f3232f`](https://github.com/karmaniverous/jeeves-runner/commit/3f3232f4f0502415f81ff8c1e8c9a3bf52b3c007)
+- feat!: remove cursor backward-compat aliases, rename to state API [`43e007e`](https://github.com/karmaniverous/jeeves-runner/commit/43e007e9d4ba9962f31b9cf8c321ae1fd3ba3c07)
+- feat: add validate, init, and config-show CLI commands [`8dac95f`](https://github.com/karmaniverous/jeeves-runner/commit/8dac95f90954b0bb411f60b38b3341a1142020d8)
+- feat: add service install/uninstall CLI command (Linux/Windows/macOS) [`1f353af`](https://github.com/karmaniverous/jeeves-runner/commit/1f353afa81117bd776290d09aea670e284aa50ed)
+- fix: update typedoc, knip, and stan configs for monorepo paths [`aac7017`](https://github.com/karmaniverous/jeeves-runner/commit/aac7017e35bc0bfcbe7d269192ec010ee409b726)
+- fix: knip workspace config - rules at root level, entry points for CLI [`0fcab85`](https://github.com/karmaniverous/jeeves-runner/commit/0fcab856fb7e6bd5a974da6eae619a0b9e7bb27b)
+- feat: change default port from 3100 to 1937 [`605cd58`](https://github.com/karmaniverous/jeeves-runner/commit/605cd58a83a5dc09a948cb54f45f2aa2db46e704)
+
 #### [0.2.1](https://github.com/karmaniverous/jeeves-runner/compare/0.2.0...0.2.1)
 
+> 1 March 2026
+
 - chore: change default port from 3100 to 1937 [`#18`](https://github.com/karmaniverous/jeeves-runner/pull/18)
+- chore: release v0.2.1 [`5ce3b58`](https://github.com/karmaniverous/jeeves-runner/commit/5ce3b585b200b7225fe73783653c19429658fb61)
 
 #### [0.2.0](https://github.com/karmaniverous/jeeves-runner/compare/0.1.2...0.2.0)
 

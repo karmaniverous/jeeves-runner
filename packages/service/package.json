@@ -1,6 +1,6 @@
 {
   "name": "@karmaniverous/jeeves-runner",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": "Jason Williscroft",
   "description": "Graph-aware job execution engine with SQLite state. Part of the Jeeves platform.",
   "license": "BSD-3-Clause",
