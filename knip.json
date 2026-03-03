@@ -1,12 +1,19 @@
 {
-  "entry": ["src/**/index.ts", "scripts/*.ts"],
-  "ignoreBinaries": ["plantuml"],
-  "project": ["*/**", "!docs/**"],
+  "ignore": ["docs/**"],
   "rules": {
+    "binaries": "off",
+    "devDependencies": "off",
     "exports": "off",
     "types": "off"
   },
-  "vitest": {
-    "entry": ["*/**/*.test.!(*.*)"]
+  "workspaces": {
+    "packages/service": {
+      "entry": ["src/**/index.ts", "src/cli/**/index.ts", "scripts/*.ts"],
+      "project": ["*/**", "!docs/**"],
+      "vitest": {
+        "entry": ["*/**/*.test.!(*.*)"]
+      }
+    },
+    "packages/openclaw": {}
   }
 }

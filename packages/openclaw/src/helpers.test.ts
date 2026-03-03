@@ -1,0 +1,54 @@
+/**
+ * Tests for plugin helpers. Focuses on logic with branching:
+ * config resolution and connection error classification.
+ *
+ * ok() and fail() are trivial formatters tested implicitly by runnerTools.test.ts.
+ */
+
+import { describe, expect, it } from 'vitest';
+
+import { connectionFail, getApiUrl, type PluginApi } from './helpers.js';
+
+describe('getApiUrl', () => {
+  it('returns default URL when no config', () => {
+    const api: PluginApi = { registerTool: () => {} };
+    expect(getApiUrl(api)).toBe('http://127.0.0.1:1937');
+  });
+
+  it('returns configured URL', () => {
+    const api: PluginApi = {
+      config: {
+        plugins: {
+          entries: {
+            'jeeves-runner-openclaw': {
+              config: { apiUrl: 'http://localhost:3100' },
+            },
+          },
+        },
+      },
+      registerTool: () => {},
+    };
+    expect(getApiUrl(api)).toBe('http://localhost:3100');
+  });
+});
+
+describe('connectionFail', () => {
+  it('returns actionable message for ECONNREFUSED', () => {
+    const err = new TypeError('fetch failed');
+    Object.defineProperty(err, 'cause', {
+      value: { code: 'ECONNREFUSED' },
+    });
+    const result = connectionFail(err, 'http://localhost:1937');
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toContain('not reachable');
+  });
+
+  it('falls back to generic error for non-connection errors', () => {
+    const result = connectionFail(
+      new Error('bad request'),
+      'http://localhost:1937',
+    );
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toBe('Error: bad request');
+  });
+});

@@ -1,0 +1,55 @@
+@startuml data-flow
+title Data Flow Pipeline
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam activityShape octagon
+
+start
+
+:schedule.json;
+note right: Seed file (optional)
+
+:DB upsert (idempotent);
+note right: jobs table
+
+:Cron Registry;
+note right: Prime-offset schedules
+
+fork
+  :Script Executor;
+  note right
+    Spawns child process
+    Captures stdout/stderr
+  end note
+fork again
+  :Session Executor;
+  note right
+    POST /tools/invoke
+    sessions_spawn
+  end note
+end fork
+
+:Write run record;
+note right: runs table
+
+fork
+  :State table;
+  note right: Cursors, checkpoints
+fork again
+  :Queue table;
+  note right: Inter-process messages
+fork again
+  :File output;
+  note right
+    Domain artifacts
+    (indexed by watcher)
+  end note
+end fork
+
+:Slack Notifications;
+note right: on_failure / on_success
+
+stop
+
+@enduml
