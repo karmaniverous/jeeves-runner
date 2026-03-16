@@ -24,7 +24,11 @@ jeeves-runner is a Node.js job execution engine that schedules and runs process 
 npx @karmaniverous/jeeves-runner-openclaw install
 ```
 
-This copies the plugin to OpenClaw's extensions directory and patches `openclaw.json` to register it. Restart the gateway to load the plugin.
+This copies the plugin to OpenClaw's extensions directory and patches `openclaw.json` to register it. 
+
+**Important:** Add `"jeeves-runner-openclaw"` to the `tools.allow` array in `openclaw.json` so the agent can use the plugin's tools.
+
+Restart the gateway to load the plugin.
 
 To remove:
 ```
