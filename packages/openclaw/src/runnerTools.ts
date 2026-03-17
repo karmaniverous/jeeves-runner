@@ -59,7 +59,7 @@ export function registerRunnerTools(api: PluginApi, baseUrl: string): void {
     {
       name: 'runner_status',
       description:
-        'Get jeeves-runner service health, uptime, job counts, and error statistics.',
+        'Job counts (total, running), failed registrations, ok/error counts last hour',
       parameters: { type: 'object', properties: {} },
       buildRequest: () => ['/stats'],
     },

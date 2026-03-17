@@ -39,6 +39,21 @@ export function getApiUrl(api: PluginApi): string {
   return typeof url === 'string' ? url : DEFAULT_API_URL;
 }
 
+/** Get a plugin config value by key. */
+export function getPluginConfig(api: PluginApi, key: string): unknown {
+  return api.config?.plugins?.entries?.[PLUGIN_ID]?.config?.[key];
+}
+
+/** Resolve the workspace root path. */
+export function resolveWorkspacePath(api: PluginApi): string {
+  const resolvePath = (api as unknown as Record<string, unknown>)
+    .resolvePath as ((input: string) => string) | undefined;
+  if (typeof resolvePath === 'function') {
+    return resolvePath('.');
+  }
+  return process.cwd();
+}
+
 /** Format a successful tool result. */
 export function ok(data: unknown): ToolResult {
   return {
