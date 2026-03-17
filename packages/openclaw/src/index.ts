@@ -3,6 +3,10 @@
  * OpenClaw plugin entry point. Registers runner tools and keeps TOOLS.md in sync.
  */
 
+import { createRequire } from 'node:module';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
 import {
   createAsyncContentCache,
   createComponentWriter,
@@ -20,10 +24,15 @@ import {
   createRunnerServiceCommands,
 } from './serviceCommands.js';
 
+const require = createRequire(import.meta.url);
+const pkg = require(
+  join(dirname(fileURLToPath(import.meta.url)), '..', 'package.json'),
+) as { version: string };
+
 const DEFAULT_CONFIG_ROOT = 'j:/config';
 const REFRESH_INTERVAL_SECONDS = 67;
 const COMPONENT_NAME = 'runner';
-const COMPONENT_VERSION = '0.1.0';
+const COMPONENT_VERSION = pkg.version;
 
 /** Register all runner tools with the OpenClaw plugin API and start TOOLS.md writer. */
 export default function register(api: PluginApi): void {

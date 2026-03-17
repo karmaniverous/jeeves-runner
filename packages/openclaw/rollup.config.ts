@@ -11,7 +11,7 @@ import copy from 'rollup-plugin-copy';
 
 const pluginConfig: RollupOptions = {
   input: 'src/index.ts',
-  external: ['@karmaniverous/jeeves'],
+  external: ['@karmaniverous/jeeves', 'node:module', 'node:path', 'node:url'],
   output: {
     dir: 'dist',
     format: 'esm',
