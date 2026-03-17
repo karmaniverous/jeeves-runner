@@ -1,4 +1,4 @@
-# jeeves-runner
+# jeeves-runner 🎩
 
 [![npm version](https://img.shields.io/npm/v/@karmaniverous/jeeves-runner.svg)](https://www.npmjs.com/package/@karmaniverous/jeeves-runner)
 ![Node Current](https://img.shields.io/node/v/@karmaniverous/jeeves-runner)
@@ -399,3 +399,8 @@ npm run typecheck   # TypeScript (noEmit)
 ## License
 
 BSD-3-Clause
+
+---
+
+Built for you with ❤️ on Bali by [Jason Williscroft](https://github.com/karmaniverous) & [Jeeves](https://github.com/jgs-jeeves).
+
