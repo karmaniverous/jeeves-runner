@@ -1,4 +1,4 @@
-# jeeves-runner 🎩
+# Jeeves Runner 🎩
 
 [![npm version](https://img.shields.io/npm/v/@karmaniverous/jeeves-runner.svg)](https://www.npmjs.com/package/@karmaniverous/jeeves-runner)
 ![Node Current](https://img.shields.io/node/v/@karmaniverous/jeeves-runner)
