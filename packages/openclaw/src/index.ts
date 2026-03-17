@@ -4,15 +4,16 @@
  */
 
 import {
+  createAsyncContentCache,
   createComponentWriter,
   init,
   type JeevesComponent,
   SECTION_IDS,
 } from '@karmaniverous/jeeves';
 
+import { generateRunnerContent } from './generateContent.js';
 import type { PluginApi } from './helpers.js';
 import { getApiUrl, getPluginConfig, resolveWorkspacePath } from './helpers.js';
-import { createRunnerContentCache } from './runnerContentCache.js';
 import { registerRunnerTools } from './runnerTools.js';
 import {
   createRunnerPluginCommands,
@@ -22,7 +23,7 @@ import {
 const DEFAULT_CONFIG_ROOT = 'j:/config';
 const REFRESH_INTERVAL_SECONDS = 67;
 const COMPONENT_NAME = 'runner';
-const COMPONENT_VERSION = '0.3.1';
+const COMPONENT_VERSION = '0.1.0';
 
 /** Register all runner tools with the OpenClaw plugin API and start TOOLS.md writer. */
 export default function register(api: PluginApi): void {
@@ -43,16 +44,18 @@ export default function register(api: PluginApi): void {
 
   init({ workspacePath, configRoot });
 
-  // Synchronous generator backed by async cache
-  const cache = createRunnerContentCache(baseUrl);
-  void cache.refresh(); // prime
+  // Synchronous generator backed by async cache from core
+  const getContent = createAsyncContentCache({
+    fetch: async () => generateRunnerContent(baseUrl),
+    placeholder: '> Initializing runner status...',
+  });
 
   const component: JeevesComponent = {
     name: COMPONENT_NAME,
     version: COMPONENT_VERSION,
     sectionId: SECTION_IDS.Runner,
     refreshIntervalSeconds: REFRESH_INTERVAL_SECONDS,
-    generateToolsContent: () => cache.getContent(),
+    generateToolsContent: getContent,
     serviceCommands: createRunnerServiceCommands(baseUrl),
     pluginCommands: createRunnerPluginCommands(),
   };

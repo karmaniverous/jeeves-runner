@@ -12,6 +12,7 @@ vi.mock('@karmaniverous/jeeves', () => {
   return {
     init: vi.fn(),
     SECTION_IDS: { Runner: 'Runner' },
+    createAsyncContentCache: vi.fn(() => vi.fn(() => 'cached content')),
     createComponentWriter: vi.fn(() => ({ start: vi.fn() })),
   };
 });
