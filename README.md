@@ -159,7 +159,7 @@ The runner exposes a REST API on `localhost` (not externally accessible by defau
 
 ## SQLite Schema
 
-Five tables manage all runner state:
+Six tables manage all runner state:
 
 ### `jobs` — Job Definitions
 
