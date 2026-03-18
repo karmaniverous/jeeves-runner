@@ -12,12 +12,13 @@ import {
   createComponentWriter,
   init,
   type JeevesComponent,
+  resolveWorkspacePath,
   SECTION_IDS,
 } from '@karmaniverous/jeeves';
 
 import { generateRunnerContent } from './generateContent.js';
 import type { PluginApi } from './helpers.js';
-import { getApiUrl, getPluginConfig, resolveWorkspacePath } from './helpers.js';
+import { getApiUrl, getPluginConfig } from './helpers.js';
 import { registerRunnerTools } from './runnerTools.js';
 import {
   createRunnerPluginCommands,
