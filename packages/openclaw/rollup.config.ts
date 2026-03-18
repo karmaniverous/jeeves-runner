@@ -33,13 +33,7 @@ const pluginConfig: RollupOptions = {
       incremental: false,
     }),
     copy({
-      targets: [
-        { src: 'skills/*', dest: 'dist/skills' },
-        {
-          src: '../../node_modules/@karmaniverous/jeeves/content',
-          dest: 'dist',
-        },
-      ],
+      targets: [{ src: 'skills/*', dest: 'dist/skills' }],
     }),
   ],
 };
