@@ -47,22 +47,6 @@ export function getApiUrl(api: PluginApi): string {
   return typeof url === 'string' ? url : DEFAULT_API_URL;
 }
 
-/** Resolve the workspace root path. */
-export function resolveWorkspacePath(api: PluginApi): string {
-  const resolvePath = (api as unknown as Record<string, unknown>)
-    .resolvePath as ((input: string) => string) | undefined;
-  if (typeof resolvePath === 'function') {
-    return resolvePath('.');
-  }
-
-  const configured = api.config?.agents?.defaults?.workspace;
-  if (typeof configured === 'string' && configured.trim()) {
-    return configured;
-  }
-
-  return process.cwd();
-}
-
 /** Format a successful tool result. */
 export function ok(data: unknown): ToolResult {
   return {
