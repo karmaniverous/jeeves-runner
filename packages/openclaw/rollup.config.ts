@@ -5,18 +5,24 @@
  * Skills are copied from skills/ → dist/skills/ via rollup-plugin-copy.
  */
 
+import commonjs from '@rollup/plugin-commonjs';
+import json from '@rollup/plugin-json';
+import resolve from '@rollup/plugin-node-resolve';
 import typescriptPlugin from '@rollup/plugin-typescript';
 import type { RollupOptions } from 'rollup';
 import copy from 'rollup-plugin-copy';
 
 const pluginConfig: RollupOptions = {
   input: 'src/index.ts',
-  external: ['@karmaniverous/jeeves', 'node:module', 'node:path', 'node:url'],
+  external: [/^node:/],
   output: {
     dir: 'dist',
     format: 'esm',
   },
   plugins: [
+    resolve({ preferBuiltins: true }),
+    commonjs(),
+    json(),
     typescriptPlugin({
       tsconfig: './tsconfig.json',
       outputToFilesystem: false,
