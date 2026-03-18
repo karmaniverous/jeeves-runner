@@ -43,4 +43,47 @@ describe('plugin register', () => {
     };
     expect(writer.start).toHaveBeenCalled();
   });
+
+  it('uses configRoot from plugin config when api.getConfig unavailable', async () => {
+    const { default: register } = await import('./index.js');
+    const core = (await import('@karmaniverous/jeeves')) as unknown as {
+      init: MockFn;
+    };
+    core.init.mockClear();
+
+    const api: PluginApi = {
+      config: {
+        plugins: {
+          entries: {
+            'jeeves-runner-openclaw': {
+              config: { configRoot: '/custom/config' },
+            },
+          },
+        },
+      },
+      registerTool() {},
+    };
+
+    register(api);
+
+    expect(core.init).toHaveBeenCalledWith(
+      expect.objectContaining({ configRoot: '/custom/config' }),
+    );
+  });
+
+  it('falls back to default configRoot when not configured', async () => {
+    const { default: register } = await import('./index.js');
+    const core = (await import('@karmaniverous/jeeves')) as unknown as {
+      init: MockFn;
+    };
+    core.init.mockClear();
+
+    const api: PluginApi = { registerTool() {} };
+
+    register(api);
+
+    expect(core.init).toHaveBeenCalledWith(
+      expect.objectContaining({ configRoot: 'j:/config' }),
+    );
+  });
 });

@@ -56,6 +56,34 @@ describe('generateRunnerContent', () => {
     expect(md).toContain('Job B *(disabled)*');
   });
 
+  it('includes failed registrations row when non-zero', async () => {
+    const stats = {
+      totalJobs: 3,
+      running: 0,
+      failedRegistrations: 2,
+      okLastHour: 0,
+      errorsLastHour: 0,
+    };
+
+    vi.spyOn(globalThis, 'fetch').mockImplementation((url: unknown) => {
+      const u = String(url);
+      if (u.endsWith('/stats')) {
+        return Promise.resolve(
+          new Response(JSON.stringify(stats), { status: 200 }),
+        );
+      }
+      if (u.endsWith('/jobs')) {
+        return Promise.resolve(
+          new Response(JSON.stringify({ jobs: [] }), { status: 200 }),
+        );
+      }
+      return Promise.resolve(new Response('not found', { status: 404 }));
+    });
+
+    const md = await generateRunnerContent('http://localhost:1937');
+    expect(md).toContain('| Failed registrations | 2 |');
+  });
+
   it('returns action-required block when unreachable', async () => {
     vi.spyOn(globalThis, 'fetch').mockRejectedValue(new Error('boom'));
 
