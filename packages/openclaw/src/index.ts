@@ -66,6 +66,8 @@ export default function register(api: PluginApi): void {
     sectionId: SECTION_IDS.Runner,
     refreshIntervalSeconds: REFRESH_INTERVAL_SECONDS,
     generateToolsContent: getContent,
+    servicePackage: '@karmaniverous/jeeves-runner',
+    pluginPackage: '@karmaniverous/jeeves-runner-openclaw',
     serviceCommands: createRunnerServiceCommands(baseUrl),
     pluginCommands: createRunnerPluginCommands(),
   };
