@@ -6,6 +6,7 @@
 /** Minimal OpenClaw plugin API surface used for tool registration. */
 export interface PluginApi {
   config?: {
+    agents?: { defaults?: { workspace?: string } };
     plugins?: {
       entries?: Record<string, { config?: Record<string, unknown> }>;
     };
@@ -53,6 +54,12 @@ export function resolveWorkspacePath(api: PluginApi): string {
   if (typeof resolvePath === 'function') {
     return resolvePath('.');
   }
+
+  const configured = api.config?.agents?.defaults?.workspace;
+  if (typeof configured === 'string' && configured.trim()) {
+    return configured;
+  }
+
   return process.cwd();
 }
 
