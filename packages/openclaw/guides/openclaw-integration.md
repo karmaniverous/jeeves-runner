@@ -49,13 +49,36 @@ After install or uninstall, restart the OpenClaw gateway to apply changes.
 
 ## Configuration
 
-The plugin reads the runner's base URL from the environment:
+The plugin is configured via `plugins.entries` in `openclaw.json`:
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `JEEVES_RUNNER_URL` | `http://localhost:1937` | Base URL of the jeeves-runner HTTP API |
+```json
+{
+  "plugins": {
+    "entries": {
+      "@karmaniverous/jeeves-runner-openclaw": {
+        "config": {
+          "apiUrl": "http://127.0.0.1:1937",
+          "configRoot": "J:/jeeves"
+        }
+      }
+    }
+  }
+}
+```
 
-Set this in your OpenClaw environment if the runner is on a non-default port or host.
+| Key | Default | Description |
+|-----|---------|-------------|
+| `apiUrl` | `http://127.0.0.1:1937` | Base URL of the jeeves-runner HTTP API |
+| `configRoot` | — | Root directory for platform content (TOOLS.md, skills) |
+
+## Platform Integration
+
+The plugin uses `@karmaniverous/jeeves` core's `ComponentWriter` to manage platform content:
+
+- **TOOLS.md section** — Writes a `## Runner` section into TOOLS.md with service health, connected status, and tool descriptions. Updated on gateway startup.
+- **Platform content** — Can contribute to SOUL.md, AGENTS.md, and other platform files via the `configRoot` directory.
+
+This replaces the previous `JEEVES_RUNNER_URL` environment variable approach.
 
 ## Available Tools
 
@@ -63,7 +86,7 @@ The plugin registers 7 tools for interacting with the runner:
 
 ### `runner_status`
 
-Get service health, uptime, job counts, and error statistics.
+Get jeeves-runner service health, uptime, job counts, and error statistics.
 
 **Parameters:** None
 
