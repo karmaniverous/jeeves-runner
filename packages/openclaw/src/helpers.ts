@@ -31,17 +31,19 @@ export interface ToolResult {
 }
 
 const DEFAULT_API_URL = 'http://127.0.0.1:1937';
-const PLUGIN_ID = 'jeeves-runner-openclaw';
 
-/** Resolve the runner API base URL from plugin config. */
-export function getApiUrl(api: PluginApi): string {
-  const url = api.config?.plugins?.entries?.[PLUGIN_ID]?.config?.apiUrl;
-  return typeof url === 'string' ? url : DEFAULT_API_URL;
-}
+/** Plugin identifier used for config lookups and error messages. */
+export const PLUGIN_ID = 'jeeves-runner-openclaw';
 
 /** Get a plugin config value by key. */
 export function getPluginConfig(api: PluginApi, key: string): unknown {
   return api.config?.plugins?.entries?.[PLUGIN_ID]?.config?.[key];
+}
+
+/** Resolve the runner API base URL from plugin config. */
+export function getApiUrl(api: PluginApi): string {
+  const url = getPluginConfig(api, 'apiUrl');
+  return typeof url === 'string' ? url : DEFAULT_API_URL;
 }
 
 /** Resolve the workspace root path. */
