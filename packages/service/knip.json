@@ -1,6 +1,5 @@
 {
   "entry": ["src/**/index.ts", "src/cli/**/index.ts", "scripts/*.ts"],
-  "ignoreBinaries": ["plantuml"],
   "project": ["*/**", "!docs/**"],
   "rules": {
     "binaries": "off",
