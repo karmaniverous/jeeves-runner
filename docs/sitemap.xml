@@ -1,187 +1,203 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/index.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/index.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/modules.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/hierarchy.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/hierarchy.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/documents/service_CHANGELOG.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/documents/CHANGELOG.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/documents/service_guides_index.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/modules/index.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/documents/openclaw_guides_index.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.ExecutionOptions.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/modules/index.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.ExecutionResult.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.ExecutionOptions.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.GatewayClient.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.ExecutionResult.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.GatewayClientOptions.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.GatewayClient.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.Maintenance.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.GatewayClientOptions.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.MaintenanceConfig.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.Maintenance.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.Notifier.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.MaintenanceConfig.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.NotifyConfig.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.Notifier.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.QueueItem.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.NotifyConfig.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.Runner.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.NotifyLogger.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.RunnerClient.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.QueueItem.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.Scheduler.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.ResolvedCommand.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.SchedulerDeps.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.Runner.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.SessionExecutionOptions.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.RunnerClient.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.SessionInfo.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.RunnerDeps.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.SessionMessage.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.Scheduler.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.SpawnSessionOptions.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.SchedulerDeps.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/interfaces/index.SpawnSessionResult.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.SessionExecutionOptions.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/types/index.Job.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.SessionInfo.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/types/index.Queue.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.SessionMessage.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/types/index.Run.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.SpawnSessionOptions.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/types/index.RunnerConfig.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.SpawnSessionResult.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/types/index.RunStatus.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/types/index.Job.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/types/index.RunTrigger.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/types/index.Queue.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/variables/index.jobSchema.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/types/index.Run.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/variables/index.queueSchema.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/types/index.RunnerConfig.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/variables/index.runnerConfigSchema.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/types/index.RunStatus.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/variables/index.runSchema.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/types/index.RunTrigger.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/variables/index.runStatusSchema.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/variables/index.jobSchema.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/variables/index.runTriggerSchema.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/variables/index.queueSchema.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/functions/index.closeConnection.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/variables/index.runnerConfigSchema.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/functions/index.createClient.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/variables/index.runSchema.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/functions/index.createConnection.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/variables/index.runStatusSchema.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/functions/index.createGatewayClient.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/variables/index.runTriggerSchema.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/functions/index.createMaintenance.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.closeConnection.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/functions/index.createNotifier.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.createClient.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/functions/index.createRunner.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.createConnection.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/functions/index.createScheduler.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.createGatewayClient.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/functions/index.executeJob.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.createMaintenance.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/functions/index.executeSession.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.createNotifier.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 	<url>
-		<loc>https://docs.karmanivero.us/npm-package-template-ts/functions/index.runMigrations.html</loc>
-		<lastmod>2026-03-01T04:58:39.873Z</lastmod>
+		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.createRunner.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.createScheduler.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.executeJob.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.executeSession.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
+	</url>
+	<url>
+		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.runMigrations.html</loc>
+		<lastmod>2026-03-18T00:40:12.933Z</lastmod>
 	</url>
 </urlset>

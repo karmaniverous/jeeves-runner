@@ -7,8 +7,8 @@ skinparam activityShape octagon
 
 start
 
-:schedule.json;
-note right: Seed file (optional)
+:Job Registration;
+note right: CLI (add-job) or seed script
 
 :DB upsert (idempotent);
 note right: jobs table
@@ -34,10 +34,10 @@ end fork
 note right: runs table
 
 fork
-  :State table;
-  note right: Cursors, checkpoints
+  :State tables;
+  note right: State (scalar + collection)
 fork again
-  :Queue table;
+  :Queue items table;
   note right: Inter-process messages
 fork again
   :File output;

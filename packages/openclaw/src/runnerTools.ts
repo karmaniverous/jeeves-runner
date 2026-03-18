@@ -53,13 +53,22 @@ function registerApiTool(
   );
 }
 
+/** Shared parameter schema for tools that accept a jobId. */
+const JOB_ID_PARAM = {
+  type: 'object',
+  properties: {
+    jobId: { type: 'string', description: 'The job ID.' },
+  },
+  required: ['jobId'],
+} as const;
+
 /** Register all 7 runner_* tools with the OpenClaw plugin API. */
 export function registerRunnerTools(api: PluginApi, baseUrl: string): void {
   const tools: ApiToolConfig[] = [
     {
       name: 'runner_status',
       description:
-        'Get jeeves-runner service health, uptime, job counts, and error statistics.',
+        'Job counts (total, running), failed registrations, ok/error counts last hour',
       parameters: { type: 'object', properties: {} },
       buildRequest: () => ['/stats'],
     },
@@ -74,16 +83,7 @@ export function registerRunnerTools(api: PluginApi, baseUrl: string): void {
       name: 'runner_trigger',
       description:
         'Manually trigger a runner job. Blocks until the job completes and returns the run result.',
-      parameters: {
-        type: 'object',
-        properties: {
-          jobId: {
-            type: 'string',
-            description: 'The job ID to trigger.',
-          },
-        },
-        required: ['jobId'],
-      },
+      parameters: JOB_ID_PARAM,
       buildRequest: (params) => [
         `/jobs/${encodeURIComponent(String(params.jobId))}/run`,
         {},
@@ -94,18 +94,14 @@ export function registerRunnerTools(api: PluginApi, baseUrl: string): void {
       description:
         'Get recent run history for a runner job, including status, duration, exit code, and error details.',
       parameters: {
-        type: 'object',
+        ...JOB_ID_PARAM,
         properties: {
-          jobId: {
-            type: 'string',
-            description: 'The job ID to get runs for.',
-          },
+          ...JOB_ID_PARAM.properties,
           limit: {
             type: 'number',
             description: 'Maximum number of runs to return (default 50).',
           },
         },
-        required: ['jobId'],
       },
       buildRequest: (params) => {
         const limit =
@@ -121,16 +117,7 @@ export function registerRunnerTools(api: PluginApi, baseUrl: string): void {
       name: 'runner_job_detail',
       description:
         'Get full configuration details for a single runner job, including script path, schedule, timeout, and overlap policy.',
-      parameters: {
-        type: 'object',
-        properties: {
-          jobId: {
-            type: 'string',
-            description: 'The job ID to get details for.',
-          },
-        },
-        required: ['jobId'],
-      },
+      parameters: JOB_ID_PARAM,
       buildRequest: (params) => [
         `/jobs/${encodeURIComponent(String(params.jobId))}`,
       ],
@@ -138,16 +125,7 @@ export function registerRunnerTools(api: PluginApi, baseUrl: string): void {
     {
       name: 'runner_enable',
       description: 'Enable a disabled runner job. Takes effect immediately.',
-      parameters: {
-        type: 'object',
-        properties: {
-          jobId: {
-            type: 'string',
-            description: 'The job ID to enable.',
-          },
-        },
-        required: ['jobId'],
-      },
+      parameters: JOB_ID_PARAM,
       buildRequest: (params) => [
         `/jobs/${encodeURIComponent(String(params.jobId))}/enable`,
         {},
@@ -157,16 +135,7 @@ export function registerRunnerTools(api: PluginApi, baseUrl: string): void {
       name: 'runner_disable',
       description:
         'Disable a runner job. The job will not run until re-enabled. Takes effect immediately.',
-      parameters: {
-        type: 'object',
-        properties: {
-          jobId: {
-            type: 'string',
-            description: 'The job ID to disable.',
-          },
-        },
-        required: ['jobId'],
-      },
+      parameters: JOB_ID_PARAM,
       buildRequest: (params) => [
         `/jobs/${encodeURIComponent(String(params.jobId))}/disable`,
         {},

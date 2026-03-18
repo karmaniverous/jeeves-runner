@@ -7,7 +7,6 @@ skinparam shadowing false
 
 package "Configuration" {
   [Config File\n(JSON + Zod)] as Config
-  [Schedule File\n(schedule.json)] as Schedule
 }
 
 package "Runner Core" {
@@ -23,7 +22,9 @@ package "Persistence" {
     [jobs]
     [runs]
     [state]
-    [queue]
+    [state_items]
+    [queues]
+    [queue_items]
   }
 }
 
@@ -39,7 +40,6 @@ package "Client API" {
 }
 
 Config --> Scheduler : validates & configures
-Schedule --> DB : upserts jobs on startup
 Scheduler --> Cron : registers schedules
 Cron --> Scheduler : fires triggers
 Scheduler --> ScriptExec : script-type jobs
@@ -50,7 +50,7 @@ SessionExec --> DB : writes runs
 Scheduler --> Notify : on completion
 Notify --> Slack : sends alerts
 API --> DB : reads/writes
-StateOps --> DB : state table
-QueueOps --> DB : queue table
+StateOps --> DB : state + state_items tables
+QueueOps --> DB : queues + queue_items tables
 
 @enduml

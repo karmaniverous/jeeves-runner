@@ -8,11 +8,11 @@ High-level architectural overview of `jeeves-runner` for contributors and advanc
 
 ## Design Principles
 
-1. **Graph-aware, domain-agnostic** — The runner knows about sources, sinks, datastores, queues, and processes. It does not know about "emails" or "meetings."
-2. **SQLite is the source of truth** — Jobs, runs, state, and queues all live in a single SQLite database.
-3. **Two execution modes** — Script jobs spawn child processes; session jobs dispatch to the OpenClaw Gateway.
-4. **File + table duality** — Datastores that produce artifacts for indexing or serving use the filesystem; operational state uses SQLite.
-5. **Schedule-driven** — All job execution is driven by cron expressions with prime-offset scheduling to spread load.
+1. **Graph-aware, domain-agnostic** â€” The runner knows about sources, sinks, datastores, queues, and processes. It does not know about "emails" or "meetings."
+2. **SQLite is the source of truth** â€” Jobs, runs, state, and queues all live in a single SQLite database.
+3. **Two execution modes** â€” Script jobs spawn child processes; session jobs dispatch to the OpenClaw Gateway.
+4. **File + table duality** â€” Datastores that produce artifacts for indexing or serving use the filesystem; operational state uses SQLite.
+5. **Schedule-driven** â€” All job execution is driven by cron expressions with prime-offset scheduling to spread load.
 
 ---
 
@@ -22,13 +22,13 @@ High-level architectural overview of `jeeves-runner` for contributors and advanc
 
 The runner consists of several layered components:
 
-- **Configuration Layer** — Zod-validated config with sensible defaults
-- **Scheduler Layer** — Cron registry, job reconciliation, and execution dispatching
-- **Execution Layer** — Script executor (child processes) and session executor (Gateway dispatch)
-- **Persistence Layer** — SQLite database with jobs, runs, state, and queue tables
-- **API Layer** — Fastify HTTP server for job management and monitoring
-- **Client API** — Programmatic access to state and queue operations
-- **Notification Layer** — Slack integration for job completion alerts
+- **Configuration Layer** â€” Zod-validated config with sensible defaults
+- **Scheduler Layer** â€” Cron registry, job reconciliation, and execution dispatching
+- **Execution Layer** â€” Script executor (child processes) and session executor (Gateway dispatch)
+- **Persistence Layer** â€” SQLite database with jobs, runs, state, state_items, queues, and queue_items tables
+- **API Layer** â€” Fastify HTTP server for job management and monitoring
+- **Client API** â€” Programmatic access to state and queue operations
+- **Notification Layer** â€” Slack integration for job completion alerts
 
 ---
 
@@ -38,19 +38,19 @@ The runner consists of several layered components:
 
 Jobs transition through these states:
 
-1. **Disabled** — Job exists but will not be scheduled
-2. **Idle** — Job is enabled and waiting for the next cron trigger
-3. **Scheduled** — Cron has fired; job is queued for execution
-4. **Running** — Executor is actively running the job
-5. **OK** — Job completed successfully (exit code 0)
-6. **Error** — Job failed (non-zero exit code or exception)
-7. **Timeout** — Job exceeded its configured timeout
+1. **Disabled** â€” Job exists but will not be scheduled
+2. **Idle** â€” Job is enabled and waiting for the next cron trigger
+3. **Scheduled** â€” Cron has fired; job is queued for execution
+4. **Running** â€” Executor is actively running the job
+5. **OK** â€” Job completed successfully (exit code 0)
+6. **Error** â€” Job failed (non-zero exit code or exception)
+7. **Timeout** â€” Job exceeded its configured timeout
 
 ### Overlap Policy
 
 Each job has an `overlap_policy`:
-- **skip** (default) — If the job is already running when the next cron fires, the new run is skipped
-- **allow** — Multiple instances can run concurrently
+- **skip** (default) â€” If the job is already running when the next cron fires, the new run is skipped
+- **allow** â€” Multiple instances can run concurrently
 
 ---
 
@@ -58,9 +58,9 @@ Each job has an `overlap_policy`:
 
 ![Data Flow](../assets/data-flow.png)
 
-### Schedule Ingestion
+### Job Registration
 
-On startup, the runner reads `schedule.json` (if configured) and upserts jobs into the SQLite `jobs` table. This is an idempotent seed — the database is the live source of truth after startup.
+Jobs are registered via the `jeeves-runner add-job` CLI command or programmatically via a seed script (e.g., `scripts/seed-jobs.ts`). Registration upserts into the SQLite `jobs` table â€” the database is the live source of truth.
 
 ### Execution Pipeline
 
@@ -76,8 +76,8 @@ On startup, the runner reads `schedule.json` (if configured) and upserts jobs in
 
 Scripts can persist state and exchange data through the runner's client API:
 
-- **State table** — Key-value store with optional TTL. Scripts use `getState`/`setState`/`deleteState` to track cursors, checkpoints, or any operational state.
-- **Queue table** — Ordered buffer with claim semantics. Producers enqueue items; consumers claim and complete them. Used for inter-process data passing.
+- **State tables** â€” Scalar key-value store (`state`) with optional TTL, plus collection state (`state_items`) for tracking sets of items. Scripts use `getState`/`setState`/`deleteState` for scalar state and `hasItem`/`getItem`/`setItem`/`deleteItem`/`countItems`/`pruneItems`/`listItemKeys` for collection state.
+- **Queue tables** â€” Queue metadata (`queues`) with dedup config and retention, plus ordered queue items (`queue_items`) with claim semantics. Producers enqueue items; consumers claim and complete them. Used for inter-process data passing.
 
 ---
 
@@ -85,7 +85,7 @@ Scripts can persist state and exchange data through the runner's client API:
 
 ### `jobs` Table
 
-Stores job configuration. Seeded from `schedule.json` on startup, mutable via API.
+Stores job configuration. Registered via CLI or seed script, mutable via API.
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -118,22 +118,45 @@ Stores execution history. Automatically pruned based on `runRetentionDays`.
 
 ### `state` Table
 
-Key-value store for script operational state.
+Scalar key-value store for script operational state.
 
 | Column | Type | Description |
 |--------|------|-------------|
-| `key` | TEXT PK | State key |
+| `namespace` | TEXT | Logical grouping (typically job ID) |
+| `key` | TEXT | State key |
 | `value` | TEXT | JSON-encoded value |
 | `expires_at` | TEXT | Optional TTL timestamp |
 
-### `queue` Table
+### `state_items` Table
+
+Collection state for tracking sets of items within a namespace.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `namespace` | TEXT | Logical grouping (typically job ID) |
+| `key` | TEXT | Collection key |
+| `item_key` | TEXT | Individual item identifier |
+| `value` | TEXT | JSON-encoded value |
+| `expires_at` | TEXT | Optional TTL timestamp |
+
+### `queues` Table
+
+Queue-level metadata including deduplication and retention configuration.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | TEXT PK | Queue identifier |
+| `dedup_config` | TEXT | JSON deduplication configuration |
+| `retention` | TEXT | JSON retention policy |
+
+### `queue_items` Table
 
 Ordered message queue with claim semantics.
 
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | INTEGER PK | Auto-increment |
-| `queue_name` | TEXT | Queue identifier |
+| `queue_id` | TEXT FK | References `queues.id` |
 | `payload` | TEXT | JSON-encoded payload |
 | `status` | TEXT | `pending`, `claimed`, `completed`, `failed` |
 | `created_at` | TEXT | Enqueue timestamp |

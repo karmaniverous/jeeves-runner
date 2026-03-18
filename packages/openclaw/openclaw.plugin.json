@@ -14,6 +14,10 @@
         "type": "string",
         "description": "jeeves-runner API base URL",
         "default": "http://127.0.0.1:1937"
+      },
+      "configRoot": {
+        "type": "string",
+        "description": "Jeeves platform config root directory (e.g., j:/config)"
       }
     }
   },
@@ -21,6 +25,10 @@
     "apiUrl": {
       "label": "Runner API URL",
       "placeholder": "http://127.0.0.1:1937"
+    },
+    "configRoot": {
+      "label": "Config Root",
+      "placeholder": "j:/config"
     }
   }
 }

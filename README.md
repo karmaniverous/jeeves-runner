@@ -6,6 +6,15 @@
 
 Graph-aware job execution engine with SQLite state. Part of the [Jeeves platform](#the-jeeves-platform).
 
+## Monorepo Structure
+
+This repository is a monorepo containing two packages:
+
+| Package | npm | Description |
+|---------|-----|-------------|
+| [`packages/service`](packages/service) | [`@karmaniverous/jeeves-runner`](https://www.npmjs.com/package/@karmaniverous/jeeves-runner) v0.3.1 | Job execution engine |
+| [`packages/openclaw`](packages/openclaw) | [`@karmaniverous/jeeves-runner-openclaw`](https://www.npmjs.com/package/@karmaniverous/jeeves-runner-openclaw) v0.1.0 | OpenClaw plugin |
+
 ## What It Does
 
 jeeves-runner schedules and executes jobs, tracks their state in SQLite, and exposes status via a REST API. It replaces both n8n and Windows Task Scheduler as the substrate for data flow automation.
@@ -13,30 +22,13 @@ jeeves-runner schedules and executes jobs, tracks their state in SQLite, and exp
 **Key properties:**
 
 - **Domain-agnostic.** The runner knows graph primitives (source, sink, datastore, queue, process, auth), not business concepts. "Email polling" and "meeting extraction" are just jobs with scripts.
-- **SQLite-native.** Job definitions, run history, cursors, and queues live in a single SQLite file. No external database, no Redis.
+- **SQLite-native.** Job definitions, run history, state, and queues live in a single SQLite file. No external database, no Redis.
 - **Zero new infrastructure.** One Node.js process, one SQLite file. Runs as a system service via NSSM (Windows) or systemd (Linux).
 - **Scripts as config.** Job scripts live outside the runner repo at configurable absolute paths. The runner is generic; the scripts are instance-specific.
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────┐
-│                  jeeves-runner                   │
-│                                                  │
-│  ┌───────────┐  ┌──────────┐  ┌──────────────┐  │
-│  │ Scheduler │──│ Executor │──│  Notifier    │  │
-│  │  (croner) │  │ (spawn)  │  │  (Slack)     │  │
-│  └───────────┘  └──────────┘  └──────────────┘  │
-│                                                  │
-│  ┌───────────┐  ┌──────────┐  ┌──────────────┐  │
-│  │  SQLite   │  │ REST API │  │ Maintenance  │  │
-│  │   (DB)    │  │(Fastify) │  │ (pruning)    │  │
-│  └───────────┘  └──────────┘  └──────────────┘  │
-└─────────────────────────────────────────────────┘
-         │                │
-         ▼                ▼
-   runner.sqlite    localhost:3100
-```
+![System Architecture](packages/service/assets/system-architecture.png)
 
 ### Stack
 
@@ -64,12 +56,17 @@ Requires Node.js 24+ for `node:sqlite` support.
 
 ```json
 {
-  "port": 3100,
+  "port": 1937,
   "dbPath": "./data/runner.sqlite",
   "maxConcurrency": 4,
   "runRetentionDays": 30,
-  "cursorCleanupIntervalMs": 3600000,
+  "stateCleanupIntervalMs": 3600000,
+  "reconcileIntervalMs": 60000,
   "shutdownGraceMs": 30000,
+  "gateway": {
+    "url": "http://localhost:3000",
+    "tokenPath": "./credentials/gateway-token"
+  },
   "notifications": {
     "slackTokenPath": "./credentials/slack-bot-token",
     "defaultOnFailure": "YOUR_SLACK_CHANNEL_ID",
@@ -90,6 +87,8 @@ npx jeeves-runner start --config ./config.json
 
 ### 3. Add a job
 
+Jobs are registered via the CLI or a seed script — there is no `schedule.json`.
+
 ```bash
 npx jeeves-runner add-job \
   --id my-job \
@@ -98,6 +97,8 @@ npx jeeves-runner add-job \
   --script /absolute/path/to/script.js \
   --config ./config.json
 ```
+
+Or programmatically via `scripts/seed-jobs.ts`.
 
 ### 4. Check status
 
@@ -115,6 +116,11 @@ npx jeeves-runner list-jobs --config ./config.json
 | `list-jobs` | List all configured jobs |
 | `add-job` | Add a new job to the database |
 | `trigger` | Manually trigger a job run (queries the HTTP API) |
+| `validate` | Validate a config file |
+| `init` | Initialize a new runner config and database |
+| `config-show` | Display the resolved config |
+| `service install` | Install as an NSSM service (Windows) |
+| `service uninstall` | Uninstall the NSSM service |
 
 All commands accept `--config <path>` to specify the config file.
 
@@ -153,7 +159,7 @@ The runner exposes a REST API on `localhost` (not externally accessible by defau
 
 ## SQLite Schema
 
-Four tables manage all runner state:
+Six tables manage all runner state:
 
 ### `jobs` — Job Definitions
 
@@ -168,7 +174,7 @@ Each job has an ID, name, cron schedule, script path, and behavioral configurati
 | `type` | TEXT | `script` or `session` (LLM dispatcher) |
 | `enabled` | INTEGER | 1 = active, 0 = paused |
 | `timeout_ms` | INTEGER | Kill after this duration (null = no limit) |
-| `overlap_policy` | TEXT | `skip` (default), `queue`, or `allow` |
+| `overlap_policy` | TEXT | `skip` (default) or `allow` |
 | `on_failure` | TEXT | Slack channel ID for failure alerts |
 | `on_success` | TEXT | Slack channel ID for success alerts |
 
@@ -191,9 +197,9 @@ Every execution is recorded with status, timing, output capture, and optional to
 
 Runs older than `runRetentionDays` are automatically pruned.
 
-### `cursors` — Key-Value State
+### `state` — Scalar State
 
-General-purpose key-value store with optional TTL. Replaces JSONL registry files.
+General-purpose key-value store with optional TTL. Scripts use `getState`/`setState`/`deleteState` to track cursors, checkpoints, or any operational state.
 
 | Column | Type | Description |
 |--------|------|-------------|
@@ -202,14 +208,36 @@ General-purpose key-value store with optional TTL. Replaces JSONL registry files
 | `value` | TEXT | State value (string or JSON) |
 | `expires_at` | TEXT | Optional TTL (ISO timestamp, auto-cleaned) |
 
-### `queues` — Work Queues
+### `state_items` — Collection State
+
+Collection-oriented state store for tracking sets of items (e.g., seen thread IDs, processed message IDs).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `namespace` | TEXT | Logical grouping (typically job ID) |
+| `key` | TEXT | Collection key |
+| `item_key` | TEXT | Individual item identifier |
+| `value` | TEXT | Item value (string or JSON) |
+| `expires_at` | TEXT | Optional TTL (ISO timestamp, auto-cleaned) |
+
+### `queues` — Queue Metadata
+
+Queue-level configuration including deduplication and retention policies.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | TEXT PK | Queue identifier |
+| `dedup_config` | TEXT | JSON deduplication configuration |
+| `retention` | TEXT | JSON retention policy |
+
+### `queue_items` — Work Queue Items
 
 Priority-ordered work queues with claim semantics. SQLite's serialized writes prevent double-claims.
 
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | INTEGER PK | Auto-incrementing item ID |
-| `queue` | TEXT | Queue name |
+| `queue_id` | TEXT FK | References `queues.id` |
 | `payload` | TEXT | JSON blob |
 | `status` | TEXT | `pending`, `claimed`, `done`, `error` |
 | `priority` | INTEGER | Higher = more urgent |
@@ -238,18 +266,27 @@ The runner parses this and stores the data in the `runs` table.
 
 ### Client library
 
-Job scripts can import the runner client for cursor and queue operations:
+Job scripts can import the runner client for state and queue operations:
 
 ```typescript
 import { createClient } from '@karmaniverous/jeeves-runner';
 
 const jr = createClient(); // reads JR_DB_PATH from env
 
-// Cursors (key-value state)
-const lastId = jr.getCursor('email-poll', 'last_history_id');
-jr.setCursor('email-poll', 'last_history_id', newId);
-jr.setCursor('email-poll', `seen:${threadId}`, '1', { ttl: '30d' });
-jr.deleteCursor('email-poll', 'old_key');
+// Scalar state (key-value with optional TTL)
+const lastId = jr.getState('email-poll', 'last_history_id');
+jr.setState('email-poll', 'last_history_id', newId);
+jr.setState('email-poll', 'checkpoint', value, { ttl: '30d' });
+jr.deleteState('email-poll', 'old_key');
+
+// Collection state (tracking sets of items)
+jr.setItem('email-poll', 'seen-threads', threadId, '1', { ttl: '30d' });
+const seen = jr.hasItem('email-poll', 'seen-threads', threadId);
+const item = jr.getItem('email-poll', 'seen-threads', threadId);
+jr.deleteItem('email-poll', 'seen-threads', threadId);
+const count = jr.countItems('email-poll', 'seen-threads');
+const keys = jr.listItemKeys('email-poll', 'seen-threads');
+jr.pruneItems('email-poll', 'seen-threads'); // remove expired
 
 // Queues
 jr.enqueue('email-updates', { threadId, action: 'label' });
@@ -262,24 +299,13 @@ jr.close();
 
 ## Job Lifecycle
 
-```
-Cron fires
-  → Check overlap policy (skip if running & policy = 'skip')
-  → INSERT run (status = 'running')
-  → spawn('node', [script], { env: JR_* })
-  → Capture stdout/stderr (ring buffer, last 100 lines)
-  → Parse JR_RESULT lines → extract tokens + result_meta
-  → On timeout: kill process, status = 'timeout', notify
-  → On exit 0: status = 'ok', notify if on_success configured
-  → On exit ≠ 0: status = 'error', notify if on_failure configured
-```
+![Job Lifecycle](packages/service/assets/job-lifecycle.png)
 
 ### Overlap policies
 
 | Policy | Behavior |
 |--------|----------|
 | `skip` | Don't start if already running (default) |
-| `queue` | Wait for current run to finish, then start |
 | `allow` | Run concurrently |
 
 ### Concurrency
@@ -300,9 +326,10 @@ Notifications require a Slack bot token (file path in config). Each job can over
 The runner automatically performs periodic maintenance:
 
 - **Run pruning:** Deletes run records older than `runRetentionDays` (default: 30).
-- **Cursor cleanup:** Deletes expired cursor entries (runs every `cursorCleanupIntervalMs`, default: 1 hour).
+- **State cleanup:** Deletes expired state entries (runs every `stateCleanupIntervalMs`, default: 1 hour).
+- **Job reconciliation:** Reconciles job schedules with the database (runs every `reconcileIntervalMs`, default: 60 seconds).
 
-Both tasks run on startup and at the configured interval.
+All tasks run on startup and at the configured interval.
 
 ## Programmatic Usage
 
@@ -310,7 +337,7 @@ Both tasks run on startup and at the configured interval.
 import { createRunner, runnerConfigSchema } from '@karmaniverous/jeeves-runner';
 
 const config = runnerConfigSchema.parse({
-  port: 3100,
+  port: 1937,
   dbPath: './data/runner.sqlite',
 });
 
@@ -325,17 +352,24 @@ process.on('SIGTERM', () => runner.stop());
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| `port` | number | `3100` | HTTP API port |
+| `port` | number | `1937` | HTTP API port |
 | `dbPath` | string | `./data/runner.sqlite` | SQLite database path |
 | `maxConcurrency` | number | `4` | Max concurrent jobs |
 | `runRetentionDays` | number | `30` | Days to keep run history |
-| `cursorCleanupIntervalMs` | number | `3600000` | Cursor cleanup interval (ms) |
+| `stateCleanupIntervalMs` | number | `3600000` | State cleanup interval (ms) |
+| `reconcileIntervalMs` | number | `60000` | Job reconciliation interval (ms) |
 | `shutdownGraceMs` | number | `30000` | Grace period for running jobs on shutdown |
+| `gateway.url` | string | — | OpenClaw Gateway URL (for session jobs) |
+| `gateway.tokenPath` | string | — | Path to gateway auth token file |
 | `notifications.slackTokenPath` | string | — | Path to Slack bot token file |
 | `notifications.defaultOnFailure` | string \| null | `null` | Default Slack channel for failures |
 | `notifications.defaultOnSuccess` | string \| null | `null` | Default Slack channel for successes |
 | `log.level` | string | `info` | Log level (trace/debug/info/warn/error/fatal) |
 | `log.file` | string | — | Log file path (stdout if omitted) |
+
+## OpenClaw Plugin
+
+The `@karmaniverous/jeeves-runner-openclaw` package provides an OpenClaw plugin that exposes runner management tools to your agent. See the [OpenClaw Integration Guide](packages/openclaw/guides/openclaw-integration.md) for setup and usage.
 
 ## The Jeeves Platform
 
@@ -350,25 +384,27 @@ jeeves-runner is one component of a four-part platform:
 
 ## Project Status
 
-**Phase 1** (current): Replicate existing job scheduling and status reporting. Replace n8n and the Notion Process Dashboard.
+**Phase 1: Complete.** Job scheduling, status reporting, state management, and queue operations are fully functional. NSSM service deployed. OpenClaw plugin shipped.
 
 ### What's built
 
-- ✅ SQLite schema (jobs, runs, cursors, queues)
+- ✅ SQLite schema (jobs, runs, state, state_items, queues, queue_items)
 - ✅ Cron scheduler with overlap policies and concurrency limits
 - ✅ Job executor with output capture, timeout enforcement, and `JR_RESULT` parsing
-- ✅ Client library for cursor/queue operations from job scripts
+- ✅ Client library for state and queue operations from job scripts
 - ✅ Slack notifications for job success/failure
 - ✅ REST API (Fastify) for job management and monitoring
 - ✅ CLI for daemon management and job operations
-- ✅ Maintenance tasks (run pruning, cursor cleanup)
+- ✅ Maintenance tasks (run pruning, state cleanup, job reconciliation)
 - ✅ Zod-validated configuration
 - ✅ Seed script for 27 existing n8n workflows
-- ✅ 75 passing tests
+- ✅ NSSM service deployment
+- ✅ OpenClaw plugin (`@karmaniverous/jeeves-runner-openclaw` v0.1.0)
+- ✅ Monorepo restructure complete
+- ✅ 103 passing tests (83 service + 20 plugin)
 
-### What's next (Phase 1 remaining)
+### What's next
 
-- [ ] NSSM service setup
 - [ ] jeeves-server dashboard page (`/runner`)
 - [ ] Migrate jobs from n8n one by one
 - [ ] Retire n8n
@@ -380,7 +416,6 @@ jeeves-runner is one component of a four-part platform:
 | Graph topology (nodes/edges schema) | 2 |
 | Credential/auth management | 2 |
 | REST API for graph mutations | 2 |
-| OpenClaw plugin & Jeeves skill | 3 |
 | Container packaging | 3 |
 
 ## Development
