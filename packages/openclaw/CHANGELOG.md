@@ -2,8 +2,9 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [0.2.1](https://github.com/karmaniverous/jeeves-runner/compare/0.2.1...0.2.1)
+#### [0.3.0](https://github.com/karmaniverous/jeeves-runner/compare/0.2.1...0.3.0)
 
+- chore: adopt @karmaniverous/jeeves ^0.2.0 core SDK [`#33`](https://github.com/karmaniverous/jeeves-runner/pull/33)
 - chore: upgrade @karmaniverous/jeeves to 0.1.4 [`#30`](https://github.com/karmaniverous/jeeves-runner/pull/30)
 - bugfix: bundle @karmaniverous/jeeves into plugin dist [`#29`](https://github.com/karmaniverous/jeeves-runner/pull/29)
 - feat: adopt @karmaniverous/jeeves core in openclaw plugin [`#28`](https://github.com/karmaniverous/jeeves-runner/pull/28)
@@ -30,6 +31,65 @@ All notable changes to this project will be documented in this file. Dates are d
 - refactor: use createAsyncContentCache from core, fix version to plugin version [`1248f89`](https://github.com/karmaniverous/jeeves-runner/commit/1248f89589b42c6c0dd7dd3429acc052d6736f6c)
 - chore: release @karmaniverous/jeeves-runner-openclaw v0.2.0 [`4e1355f`](https://github.com/karmaniverous/jeeves-runner/commit/4e1355fbd2032ea24f0ecb9bc0293c840e84b630)
 - refactor: DRY - getApiUrl via getPluginConfig, extract shared jobId param schema [`b8380c3`](https://github.com/karmaniverous/jeeves-runner/commit/b8380c34d657878e098d272ad87d291c03bda2c9)
+- chore: release @karmaniverous/jeeves-runner-openclaw v0.2.1 [`676cfbd`](https://github.com/karmaniverous/jeeves-runner/commit/676cfbd66aac1a764c2f3a4e54d4db8dd6741ae9)
+- fix: update typedoc, knip, and stan configs for monorepo paths [`aac7017`](https://github.com/karmaniverous/jeeves-runner/commit/aac7017e35bc0bfcbe7d269192ec010ee409b726)
+- chore: release @karmaniverous/jeeves-runner v0.4.0 [`0fc0eb6`](https://github.com/karmaniverous/jeeves-runner/commit/0fc0eb64a6824cceef72ef7c67497d0a88c51c45)
+- chore: release @karmaniverous/jeeves-runner v0.3.0 [`648fb51`](https://github.com/karmaniverous/jeeves-runner/commit/648fb5158da8ae07a776dce0efea3cfdbc95d7c7)
+- chore: release @karmaniverous/jeeves-runner v0.4.1 [`f3e1fc6`](https://github.com/karmaniverous/jeeves-runner/commit/f3e1fc6f6409fe5ac32a77fe10f7da15fd8242bb)
+- chore: release @karmaniverous/jeeves-runner v0.5.0 [`6f8c847`](https://github.com/karmaniverous/jeeves-runner/commit/6f8c8473e1526cd5821f12b50b88f95ed617c0fb)
+- chore: upgrade @karmaniverous/jeeves to 0.1.3, remove content copy (now inlined at build) [`31cf31f`](https://github.com/karmaniverous/jeeves-runner/commit/31cf31fca980740012f3af13b9ba6b701dd50604)
+- bugfix: remove dead local resolveWorkspacePath from helpers.ts (use core export) [`3730824`](https://github.com/karmaniverous/jeeves-runner/commit/373082490e4a9528dc99243863eb62dec1303743)
+- fix: knip workspace config - rules at root level, entry points for CLI [`0fcab85`](https://github.com/karmaniverous/jeeves-runner/commit/0fcab856fb7e6bd5a974da6eae619a0b9e7bb27b)
+- fix: derive component version from package.json instead of hard-coding [`3d9c839`](https://github.com/karmaniverous/jeeves-runner/commit/3d9c839f914a25c7185372603abc94fd4240f239)
+- chore: upgrade @karmaniverous/jeeves to 0.1.6, add servicePackage + pluginPackage [`e479820`](https://github.com/karmaniverous/jeeves-runner/commit/e479820b66382ec7b2562f247b7f8e2aa535e822)
+- chore: upgrade @karmaniverous/jeeves to 0.1.5 (workspace resolution fix) [`54eecb1`](https://github.com/karmaniverous/jeeves-runner/commit/54eecb1493ffedfa40febf5393b2e33ea46e1dca)
+- fix: add tagPrefix to auto-changelog config for monorepo tags [`f1b510a`](https://github.com/karmaniverous/jeeves-runner/commit/f1b510a766b39545e26bf1bfca7bf44e928afecb)
+- chore: release @karmaniverous/jeeves-runner v0.3.1 [`c29f12f`](https://github.com/karmaniverous/jeeves-runner/commit/c29f12f80aab26848429485b1cc4b9381f4decc0)
+- chore: upgrade @karmaniverous/jeeves to 0.1.5 (workspace resolution fix) [`7a8c0bd`](https://github.com/karmaniverous/jeeves-runner/commit/7a8c0bd1ea8761ff6b8e5bd9f113ffb5fc72dfd7)
+- Enhance README with personal acknowledgment [`4baced5`](https://github.com/karmaniverous/jeeves-runner/commit/4baced5d241ad2b07052fdeef146fb63906370ac)
+- feat: change default port from 3100 to 1937 [`605cd58`](https://github.com/karmaniverous/jeeves-runner/commit/605cd58a83a5dc09a948cb54f45f2aa2db46e704)
+- docs: fix table count (five → six) [`906befd`](https://github.com/karmaniverous/jeeves-runner/commit/906befd5986d0bdbd9e3d60aec112d9ad82cc76d)
+- Update README.md [`778bb0c`](https://github.com/karmaniverous/jeeves-runner/commit/778bb0c485c3f435f0a28189f6ae549372490a16)
+- zeroed version [`448cd13`](https://github.com/karmaniverous/jeeves-runner/commit/448cd1375c719febc1dd2e6ae7546e591c945573)
+- merge: resolve conflicts with main (keep next structure) [`367f92b`](https://github.com/karmaniverous/jeeves-runner/commit/367f92bb1efec4c289acd80a75d2dc6fad0c88a3)
+
+#### [0.2.1](https://github.com/karmaniverous/jeeves-runner/compare/openclaw/0.2.1...0.2.1)
+
+> 1 March 2026
+
+#### [openclaw/0.2.1](https://github.com/karmaniverous/jeeves-runner/compare/0.2.0...openclaw/0.2.1)
+
+> 19 March 2026
+
+- chore: upgrade @karmaniverous/jeeves to 0.1.4 [`#30`](https://github.com/karmaniverous/jeeves-runner/pull/30)
+- bugfix: bundle @karmaniverous/jeeves into plugin dist [`#29`](https://github.com/karmaniverous/jeeves-runner/pull/29)
+- feat: adopt @karmaniverous/jeeves core in openclaw plugin [`#28`](https://github.com/karmaniverous/jeeves-runner/pull/28)
+- fix: add PRAGMA busy_timeout=5000 to prevent SQLITE_BUSY errors [`#25`](https://github.com/karmaniverous/jeeves-runner/pull/25)
+- v0.3.0: Monorepo, OpenClaw plugin, state API, guides, code review cleanup [`#24`](https://github.com/karmaniverous/jeeves-runner/pull/24)
+- refactor: code review cleanup [`#23`](https://github.com/karmaniverous/jeeves-runner/pull/23)
+- docs: add service and plugin guides, architecture diagrams, fix typedoc config [`#22`](https://github.com/karmaniverous/jeeves-runner/pull/22)
+- feat: OpenClaw plugin with 7 runner tools, install CLI, and consumer skill (Phase 3) [`#21`](https://github.com/karmaniverous/jeeves-runner/pull/21)
+- feat: restructure as npm workspaces monorepo (v0.3.0 Phase 1) [`#19`](https://github.com/karmaniverous/jeeves-runner/pull/19)
+- chore: change default port from 3100 to 1937 [`#18`](https://github.com/karmaniverous/jeeves-runner/pull/18)
+- feat: add OpenClaw plugin with 7 runner tools, install CLI, and consumer skill [`b7eb30b`](https://github.com/karmaniverous/jeeves-runner/commit/b7eb30b46c1cb8123b6fac1d497e6092566c11ff)
+- chore: remove stale plantuml from knip ignoreBinaries [`c9e0db8`](https://github.com/karmaniverous/jeeves-runner/commit/c9e0db8f17b7d121c118d0d4f9213c5856c44a9f)
+- refactor: code review cleanup — trim trivial tests, merge notification helper, add maintenance coverage [`edb2e92`](https://github.com/karmaniverous/jeeves-runner/commit/edb2e92716682852cccdaf8646f68caeea30f9da)
+- feat: restructure as npm workspaces monorepo [`305c40d`](https://github.com/karmaniverous/jeeves-runner/commit/305c40d172220037011afebf3af695f18e346a2b)
+- chore: upgrade @karmaniverous/jeeves to 0.1.4, use core resolveWorkspacePath [`41a7337`](https://github.com/karmaniverous/jeeves-runner/commit/41a73376f58fb723e1ae7a1b38d4e1bf832780b9)
+- chore: release v0.2.1 [`5ce3b58`](https://github.com/karmaniverous/jeeves-runner/commit/5ce3b585b200b7225fe73783653c19429658fb61)
+- docs: sync documentation with v0.3.1 implementation [`3062c26`](https://github.com/karmaniverous/jeeves-runner/commit/3062c26c8432b4697ca241f78a1f3cb68c0be4c7)
+- chore: update dependencies (eslint-plugin-tsdoc, @types/node) [`6116105`](https://github.com/karmaniverous/jeeves-runner/commit/6116105a3e9d3d31b4e9da27518701b21927b1c2)
+- npm audit fix [`079c5c4`](https://github.com/karmaniverous/jeeves-runner/commit/079c5c4a5e3fd40c92001c04464def977209b72d)
+- fix: resolve all tsdoc and typedoc warnings [`3f3232f`](https://github.com/karmaniverous/jeeves-runner/commit/3f3232f4f0502415f81ff8c1e8c9a3bf52b3c007)
+- feat!: remove cursor backward-compat aliases, rename to state API [`43e007e`](https://github.com/karmaniverous/jeeves-runner/commit/43e007e9d4ba9962f31b9cf8c321ae1fd3ba3c07)
+- feat: add validate, init, and config-show CLI commands [`8dac95f`](https://github.com/karmaniverous/jeeves-runner/commit/8dac95f90954b0bb411f60b38b3341a1142020d8)
+- test: add serviceCommands tests, strengthen generateContent + index coverage [`c6d8345`](https://github.com/karmaniverous/jeeves-runner/commit/c6d83458bff0b97b6f7bd7f0794d216e9c967c1a)
+- feat: add service install/uninstall CLI command (Linux/Windows/macOS) [`1f353af`](https://github.com/karmaniverous/jeeves-runner/commit/1f353afa81117bd776290d09aea670e284aa50ed)
+- chore: release @karmaniverous/jeeves-runner-openclaw v0.1.0 [`8fb818d`](https://github.com/karmaniverous/jeeves-runner/commit/8fb818d52f967e0c23473f944a9d3ced8675cfaf)
+- refactor: use createAsyncContentCache from core, fix version to plugin version [`1248f89`](https://github.com/karmaniverous/jeeves-runner/commit/1248f89589b42c6c0dd7dd3429acc052d6736f6c)
+- chore: release @karmaniverous/jeeves-runner-openclaw v0.2.0 [`4e1355f`](https://github.com/karmaniverous/jeeves-runner/commit/4e1355fbd2032ea24f0ecb9bc0293c840e84b630)
+- refactor: DRY - getApiUrl via getPluginConfig, extract shared jobId param schema [`b8380c3`](https://github.com/karmaniverous/jeeves-runner/commit/b8380c34d657878e098d272ad87d291c03bda2c9)
+- chore: release @karmaniverous/jeeves-runner-openclaw v0.2.1 [`676cfbd`](https://github.com/karmaniverous/jeeves-runner/commit/676cfbd66aac1a764c2f3a4e54d4db8dd6741ae9)
 - fix: update typedoc, knip, and stan configs for monorepo paths [`aac7017`](https://github.com/karmaniverous/jeeves-runner/commit/aac7017e35bc0bfcbe7d269192ec010ee409b726)
 - chore: release @karmaniverous/jeeves-runner v0.4.0 [`0fc0eb6`](https://github.com/karmaniverous/jeeves-runner/commit/0fc0eb64a6824cceef72ef7c67497d0a88c51c45)
 - chore: release @karmaniverous/jeeves-runner v0.3.0 [`648fb51`](https://github.com/karmaniverous/jeeves-runner/commit/648fb5158da8ae07a776dce0efea3cfdbc95d7c7)
@@ -49,13 +109,6 @@ All notable changes to this project will be documented in this file. Dates are d
 - Update README.md [`778bb0c`](https://github.com/karmaniverous/jeeves-runner/commit/778bb0c485c3f435f0a28189f6ae549372490a16)
 - zeroed version [`448cd13`](https://github.com/karmaniverous/jeeves-runner/commit/448cd1375c719febc1dd2e6ae7546e591c945573)
 - merge: resolve conflicts with main (keep next structure) [`367f92b`](https://github.com/karmaniverous/jeeves-runner/commit/367f92bb1efec4c289acd80a75d2dc6fad0c88a3)
-
-#### [0.2.1](https://github.com/karmaniverous/jeeves-runner/compare/0.2.0...0.2.1)
-
-> 1 March 2026
-
-- chore: change default port from 3100 to 1937 [`#18`](https://github.com/karmaniverous/jeeves-runner/pull/18)
-- chore: release v0.2.1 [`5ce3b58`](https://github.com/karmaniverous/jeeves-runner/commit/5ce3b585b200b7225fe73783653c19429658fb61)
 
 #### [0.2.0](https://github.com/karmaniverous/jeeves-runner/compare/openclaw/0.2.0...0.2.0)
 
