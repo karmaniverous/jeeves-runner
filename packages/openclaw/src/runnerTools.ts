@@ -1,6 +1,7 @@
 /**
- * @module plugin/runnerTools
  * Runner tool registrations (runner_* tools) for the OpenClaw plugin.
+ *
+ * @module runnerTools
  */
 
 import {
@@ -10,7 +11,9 @@ import {
   type PluginApi,
   postJson,
   type ToolResult,
-} from './helpers.js';
+} from '@karmaniverous/jeeves';
+
+import { PLUGIN_ID } from './constants.js';
 
 /** Config for a runner API tool. */
 interface ApiToolConfig {
@@ -45,7 +48,7 @@ function registerApiTool(
               : await fetchJson(url);
           return ok(data);
         } catch (error) {
-          return connectionFail(error, baseUrl);
+          return connectionFail(error, baseUrl, PLUGIN_ID);
         }
       },
     },
@@ -61,6 +64,11 @@ const JOB_ID_PARAM = {
   },
   required: ['jobId'],
 } as const;
+
+/** URL-encode the jobId param for safe path interpolation. */
+function jobPath(params: Record<string, unknown>, suffix = ''): string {
+  return `/jobs/${encodeURIComponent(String(params.jobId))}${suffix}`;
+}
 
 /** Register all 7 runner_* tools with the OpenClaw plugin API. */
 export function registerRunnerTools(api: PluginApi, baseUrl: string): void {
@@ -84,10 +92,7 @@ export function registerRunnerTools(api: PluginApi, baseUrl: string): void {
       description:
         'Manually trigger a runner job. Blocks until the job completes and returns the run result.',
       parameters: JOB_ID_PARAM,
-      buildRequest: (params) => [
-        `/jobs/${encodeURIComponent(String(params.jobId))}/run`,
-        {},
-      ],
+      buildRequest: (params) => [jobPath(params, '/run'), {}],
     },
     {
       name: 'runner_runs',
@@ -104,13 +109,11 @@ export function registerRunnerTools(api: PluginApi, baseUrl: string): void {
         },
       },
       buildRequest: (params) => {
-        const limit =
+        const query =
           params.limit !== undefined
             ? `?limit=${String(Number(params.limit))}`
             : '';
-        return [
-          `/jobs/${encodeURIComponent(String(params.jobId))}/runs${limit}`,
-        ];
+        return [jobPath(params, `/runs${query}`)];
       },
     },
     {
@@ -118,28 +121,20 @@ export function registerRunnerTools(api: PluginApi, baseUrl: string): void {
       description:
         'Get full configuration details for a single runner job, including script path, schedule, timeout, and overlap policy.',
       parameters: JOB_ID_PARAM,
-      buildRequest: (params) => [
-        `/jobs/${encodeURIComponent(String(params.jobId))}`,
-      ],
+      buildRequest: (params) => [jobPath(params)],
     },
     {
       name: 'runner_enable',
       description: 'Enable a disabled runner job. Takes effect immediately.',
       parameters: JOB_ID_PARAM,
-      buildRequest: (params) => [
-        `/jobs/${encodeURIComponent(String(params.jobId))}/enable`,
-        {},
-      ],
+      buildRequest: (params) => [jobPath(params, '/enable'), {}],
     },
     {
       name: 'runner_disable',
       description:
         'Disable a runner job. The job will not run until re-enabled. Takes effect immediately.',
       parameters: JOB_ID_PARAM,
-      buildRequest: (params) => [
-        `/jobs/${encodeURIComponent(String(params.jobId))}/disable`,
-        {},
-      ],
+      buildRequest: (params) => [jobPath(params, '/disable'), {}],
     },
   ];
 

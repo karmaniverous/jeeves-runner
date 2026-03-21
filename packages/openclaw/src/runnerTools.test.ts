@@ -2,9 +2,9 @@
  * Tests for runner tool registrations.
  */
 
+import { type PluginApi, type ToolResult } from '@karmaniverous/jeeves';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { PluginApi, ToolResult } from './helpers.js';
 import { registerRunnerTools } from './runnerTools.js';
 
 /** Create a mock PluginApi that captures registered tools. */

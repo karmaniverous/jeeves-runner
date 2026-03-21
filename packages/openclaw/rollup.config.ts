@@ -40,25 +40,19 @@ const pluginConfig: RollupOptions = {
 
 const cliConfig: RollupOptions = {
   input: 'src/cli.ts',
-  external: [
-    'fs',
-    'path',
-    'os',
-    'url',
-    'node:fs',
-    'node:path',
-    'node:os',
-    'node:url',
-  ],
+  external: [/^node:/],
   output: {
     file: 'dist/cli.js',
     format: 'esm',
     banner: '#!/usr/bin/env node',
   },
   plugins: [
+    resolve({ preferBuiltins: true }),
+    commonjs(),
     typescriptPlugin({
       tsconfig: './tsconfig.json',
       outputToFilesystem: false,
+      outDir: 'dist',
       noEmit: false,
       declaration: false,
       incremental: false,
