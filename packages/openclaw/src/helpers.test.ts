@@ -1,13 +1,12 @@
 /**
- * Tests for plugin helpers. Focuses on logic with branching:
- * config resolution and connection error classification.
- *
- * ok() and fail() are trivial formatters tested implicitly by runnerTools.test.ts.
+ * Tests for plugin helpers. Validates getApiUrl and getConfigRoot resolve
+ * via plugin config, environment, and defaults.
  */
 
+import { type PluginApi } from '@karmaniverous/jeeves';
 import { describe, expect, it } from 'vitest';
 
-import { connectionFail, getApiUrl, type PluginApi } from './helpers.js';
+import { getApiUrl, getConfigRoot } from './helpers.js';
 
 describe('getApiUrl', () => {
   it('returns default URL when no config', () => {
@@ -32,23 +31,25 @@ describe('getApiUrl', () => {
   });
 });
 
-describe('connectionFail', () => {
-  it('returns actionable message for ECONNREFUSED', () => {
-    const err = new TypeError('fetch failed');
-    Object.defineProperty(err, 'cause', {
-      value: { code: 'ECONNREFUSED' },
-    });
-    const result = connectionFail(err, 'http://localhost:1937');
-    expect(result.isError).toBe(true);
-    expect(result.content[0].text).toContain('not reachable');
+describe('getConfigRoot', () => {
+  it('returns default config root when no config', () => {
+    const api: PluginApi = { registerTool: () => {} };
+    expect(getConfigRoot(api)).toBe('j:/config');
   });
 
-  it('falls back to generic error for non-connection errors', () => {
-    const result = connectionFail(
-      new Error('bad request'),
-      'http://localhost:1937',
-    );
-    expect(result.isError).toBe(true);
-    expect(result.content[0].text).toBe('Error: bad request');
+  it('returns configured config root', () => {
+    const api: PluginApi = {
+      config: {
+        plugins: {
+          entries: {
+            'jeeves-runner-openclaw': {
+              config: { configRoot: '/custom/config' },
+            },
+          },
+        },
+      },
+      registerTool: () => {},
+    };
+    expect(getConfigRoot(api)).toBe('/custom/config');
   });
 });

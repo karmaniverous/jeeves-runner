@@ -6,6 +6,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { Scheduler } from '../scheduler/scheduler.js';
+import { runnerConfigSchema } from '../schemas/config.js';
 import type { TestDb } from '../test-utils/db.js';
 import { createTestDb } from '../test-utils/db.js';
 import { registerRoutes } from './routes.js';
@@ -46,7 +47,12 @@ describe('API routes', () => {
     };
 
     app = Fastify({ logger: false });
-    registerRoutes(app, { db: testDb.db, scheduler: mockScheduler });
+    const defaultConfig = runnerConfigSchema.parse({});
+    registerRoutes(app, {
+      db: testDb.db,
+      scheduler: mockScheduler,
+      getConfig: () => defaultConfig,
+    });
     await app.ready();
   });
 
@@ -234,5 +240,31 @@ describe('API routes', () => {
     });
 
     expect(response.statusCode).toBe(404);
+  });
+
+  it('GET /config should return full config', async () => {
+    const response = await app.inject({
+      method: 'GET',
+      url: '/config',
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = JSON.parse(response.body) as { port: number };
+    expect(body.port).toBe(1937);
+  });
+
+  it('GET /config?path=$.port should return query result envelope', async () => {
+    const response = await app.inject({
+      method: 'GET',
+      url: '/config?path=$.port',
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = JSON.parse(response.body) as {
+      result: unknown[];
+      count: number;
+    };
+    expect(body.count).toBe(1);
+    expect(body.result).toEqual([1937]);
   });
 });

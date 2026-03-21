@@ -1,6 +1,7 @@
 /**
- * @module plugin/runnerTools
  * Runner tool registrations (runner_* tools) for the OpenClaw plugin.
+ *
+ * @module runnerTools
  */
 
 import {
@@ -10,7 +11,9 @@ import {
   type PluginApi,
   postJson,
   type ToolResult,
-} from './helpers.js';
+} from '@karmaniverous/jeeves';
+
+import { PLUGIN_ID } from './constants.js';
 
 /** Config for a runner API tool. */
 interface ApiToolConfig {
@@ -45,7 +48,7 @@ function registerApiTool(
               : await fetchJson(url);
           return ok(data);
         } catch (error) {
-          return connectionFail(error, baseUrl);
+          return connectionFail(error, baseUrl, PLUGIN_ID);
         }
       },
     },

@@ -114,6 +114,7 @@ export function createRunner(config: RunnerConfig, deps?: RunnerDeps): Runner {
       server = createServer({
         db,
         scheduler,
+        getConfig: () => config,
         loggerConfig: { level: config.log.level, file: config.log.file },
       });
       await server.listen({ port: config.port, host: '127.0.0.1' });

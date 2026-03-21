@@ -1,10 +1,9 @@
 /**
- * @module plugin/index.test
+ * @module index.test
  */
 
+import { type PluginApi } from '@karmaniverous/jeeves';
 import { describe, expect, it, vi } from 'vitest';
-
-import type { PluginApi } from './helpers.js';
 
 type MockFn = ReturnType<typeof vi.fn>;
 
@@ -13,6 +12,33 @@ vi.mock('@karmaniverous/jeeves', () => {
     init: vi.fn(),
     SECTION_IDS: { Runner: 'Runner' },
     resolveWorkspacePath: vi.fn(() => '/mock/workspace'),
+    resolvePluginSetting: vi.fn(
+      (
+        _api: unknown,
+        _pluginId: string,
+        key: string,
+        _envVar: string,
+        fallback: string,
+      ) => {
+        if (key === 'apiUrl') {
+          const api = _api as PluginApi;
+          const val =
+            api.config?.plugins?.entries?.['jeeves-runner-openclaw']?.config?.[
+              key
+            ];
+          return typeof val === 'string' ? val : fallback;
+        }
+        if (key === 'configRoot') {
+          const api = _api as PluginApi;
+          const val =
+            api.config?.plugins?.entries?.['jeeves-runner-openclaw']?.config?.[
+              key
+            ];
+          return typeof val === 'string' ? val : fallback;
+        }
+        return fallback;
+      },
+    ),
     createAsyncContentCache: vi.fn(() => vi.fn(() => 'cached content')),
     createComponentWriter: vi.fn(() => ({ start: vi.fn() })),
   };
@@ -45,7 +71,7 @@ describe('plugin register', () => {
     expect(writer.start).toHaveBeenCalled();
   });
 
-  it('uses configRoot from plugin config when api.getConfig unavailable', async () => {
+  it('uses configRoot from plugin config', async () => {
     const { default: register } = await import('./index.js');
     const core = (await import('@karmaniverous/jeeves')) as unknown as {
       init: MockFn;
