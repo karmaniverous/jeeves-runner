@@ -2,16 +2,24 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [0.4.1](https://github.com/karmaniverous/jeeves-runner/compare/service/0.4.0...0.4.1)
+#### [0.5.0](https://github.com/karmaniverous/jeeves-runner/compare/service/0.4.1...0.5.0)
+
+- chore: adopt @karmaniverous/jeeves ^0.2.0 core SDK [`#33`](https://github.com/karmaniverous/jeeves-runner/pull/33)
+- chore: release @karmaniverous/jeeves-runner-openclaw v0.2.1 [`676cfbd`](https://github.com/karmaniverous/jeeves-runner/commit/676cfbd66aac1a764c2f3a4e54d4db8dd6741ae9)
+
+#### [service/0.4.1](https://github.com/karmaniverous/jeeves-runner/compare/service/0.4.0...service/0.4.1)
+
+> 19 March 2026
 
 - chore: upgrade @karmaniverous/jeeves to 0.1.4 [`#30`](https://github.com/karmaniverous/jeeves-runner/pull/30)
 - bugfix: bundle @karmaniverous/jeeves into plugin dist [`#29`](https://github.com/karmaniverous/jeeves-runner/pull/29)
+- chore: upgrade @karmaniverous/jeeves to 0.1.4, use core resolveWorkspacePath [`41a7337`](https://github.com/karmaniverous/jeeves-runner/commit/41a73376f58fb723e1ae7a1b38d4e1bf832780b9)
+- chore: release @karmaniverous/jeeves-runner-openclaw v0.2.0 [`4e1355f`](https://github.com/karmaniverous/jeeves-runner/commit/4e1355fbd2032ea24f0ecb9bc0293c840e84b630)
+- chore: release @karmaniverous/jeeves-runner v0.4.1 [`f3e1fc6`](https://github.com/karmaniverous/jeeves-runner/commit/f3e1fc6f6409fe5ac32a77fe10f7da15fd8242bb)
+- chore: upgrade @karmaniverous/jeeves to 0.1.3, remove content copy (now inlined at build) [`31cf31f`](https://github.com/karmaniverous/jeeves-runner/commit/31cf31fca980740012f3af13b9ba6b701dd50604)
 - bugfix: remove dead local resolveWorkspacePath from helpers.ts (use core export) [`3730824`](https://github.com/karmaniverous/jeeves-runner/commit/373082490e4a9528dc99243863eb62dec1303743)
 - chore: upgrade @karmaniverous/jeeves to 0.1.6, add servicePackage + pluginPackage [`e479820`](https://github.com/karmaniverous/jeeves-runner/commit/e479820b66382ec7b2562f247b7f8e2aa535e822)
 - chore: upgrade @karmaniverous/jeeves to 0.1.5 (workspace resolution fix) [`54eecb1`](https://github.com/karmaniverous/jeeves-runner/commit/54eecb1493ffedfa40febf5393b2e33ea46e1dca)
-- chore: upgrade @karmaniverous/jeeves to 0.1.4, use core resolveWorkspacePath [`41a7337`](https://github.com/karmaniverous/jeeves-runner/commit/41a73376f58fb723e1ae7a1b38d4e1bf832780b9)
-- chore: release @karmaniverous/jeeves-runner-openclaw v0.2.0 [`4e1355f`](https://github.com/karmaniverous/jeeves-runner/commit/4e1355fbd2032ea24f0ecb9bc0293c840e84b630)
-- chore: upgrade @karmaniverous/jeeves to 0.1.3, remove content copy (now inlined at build) [`31cf31f`](https://github.com/karmaniverous/jeeves-runner/commit/31cf31fca980740012f3af13b9ba6b701dd50604)
 - chore: upgrade @karmaniverous/jeeves to 0.1.5 (workspace resolution fix) [`7a8c0bd`](https://github.com/karmaniverous/jeeves-runner/commit/7a8c0bd1ea8761ff6b8e5bd9f113ffb5fc72dfd7)
 
 #### [service/0.4.0](https://github.com/karmaniverous/jeeves-runner/compare/service/0.3.1...service/0.4.0)
