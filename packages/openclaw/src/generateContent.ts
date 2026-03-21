@@ -1,9 +1,10 @@
 /**
- * @module plugin/generateContent
  * Generates the runner's TOOLS.md section content by querying the runner API.
+ *
+ * @module generateContent
  */
 
-import { fetchJson } from './helpers.js';
+import { fetchJson } from '@karmaniverous/jeeves';
 
 /** Stats response from GET /stats. */
 interface RunnerStats {

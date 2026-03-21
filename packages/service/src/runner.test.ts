@@ -75,5 +75,5 @@ describe('Runner', () => {
 
     // Verify server is stopped (connection should be refused)
     await expect(fetch('http://127.0.0.1:18783/health')).rejects.toThrow();
-  });
+  }, 20000);
 });

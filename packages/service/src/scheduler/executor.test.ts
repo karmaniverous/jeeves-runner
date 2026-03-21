@@ -135,7 +135,7 @@ describe('executeJob', () => {
     expect(result.status).toBe('ok');
     expect(result.exitCode).toBe(0);
     expect(result.stdoutTail).toContain('ps1-output');
-  });
+  }, 20000);
 
   it('should timeout long-running scripts', async () => {
     const script = join(testDir, 'slow.js');

@@ -1,24 +1,30 @@
 /**
- * Fastify API routes for job management and monitoring. Provides endpoints for job CRUD, run history, manual triggers, and system stats.
+ * Fastify API routes for job management and monitoring. Provides endpoints for job CRUD, run history, manual triggers, system stats, and config queries.
+ *
+ * @module routes
  */
 
 import type { DatabaseSync } from 'node:sqlite';
 
+import { createConfigQueryHandler } from '@karmaniverous/jeeves';
 import type { FastifyInstance } from 'fastify';
 
 import type { Scheduler } from '../scheduler/scheduler.js';
+import type { RunnerConfig } from '../schemas/config.js';
 
 /** Route dependencies. */
 interface RouteDeps {
   db: DatabaseSync;
   scheduler: Scheduler;
+  /** Getter for the current effective configuration. */
+  getConfig: () => RunnerConfig;
 }
 
 /**
  * Register all API routes on the Fastify instance.
  */
 export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
-  const { db, scheduler } = deps;
+  const { db, scheduler, getConfig } = deps;
 
   /** GET /health — Health check. */
   app.get('/health', () => {
@@ -139,4 +145,16 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
       errorsLastHour: errorsLastHour.count,
     };
   });
+
+  /** GET /config — Query effective configuration via JSONPath. */
+  const configHandler = createConfigQueryHandler(getConfig);
+  app.get<{ Querystring: { path?: string } }>(
+    '/config',
+    async (request, reply) => {
+      const result = await configHandler({
+        path: request.query.path,
+      });
+      return reply.status(result.status).send(result.body);
+    },
+  );
 }

@@ -1,15 +1,15 @@
 /**
- * @module plugin/serviceCommands
  * Service and plugin lifecycle commands for the runner component.
+ *
+ * @module serviceCommands
  */
 
-import type {
-  PluginCommands,
-  ServiceCommands,
-  ServiceStatus,
+import {
+  fetchJson,
+  type PluginCommands,
+  type ServiceCommands,
+  type ServiceStatus,
 } from '@karmaniverous/jeeves';
-
-import { fetchJson } from './helpers.js';
 
 /** Health response from GET /health. */
 interface HealthResponse {

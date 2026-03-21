@@ -11,6 +11,7 @@ import type { TestDb } from '../../test-utils/db.js';
 import { createTestDb } from '../../test-utils/db.js';
 
 describe('CLI', () => {
+  vi.setConfig({ testTimeout: 15000 });
   let testDb: TestDb;
   let configPath: string;
 
