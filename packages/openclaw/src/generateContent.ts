@@ -21,10 +21,36 @@ interface JobSummary {
   name: string;
   enabled: boolean;
   schedule: string;
+  source_type?: string;
   lastRun?: {
     status: string;
     finished_at?: string;
   };
+}
+
+/** Detect whether a schedule string is rrstack JSON or cron. */
+function scheduleFormat(schedule: string): 'rrstack' | 'cron' {
+  try {
+    const parsed: unknown = JSON.parse(schedule);
+    if (
+      typeof parsed === 'object' &&
+      parsed !== null &&
+      !Array.isArray(parsed)
+    ) {
+      return 'rrstack';
+    }
+  } catch {
+    // Not JSON — treat as cron
+  }
+  return 'cron';
+}
+
+/** Format a schedule for display: backtick-wrap cron, label rrstack. */
+function formatSchedule(schedule: string): string {
+  if (scheduleFormat(schedule) === 'rrstack') {
+    return '*(rrstack)*';
+  }
+  return `\`${schedule}\``;
 }
 
 /**
@@ -84,8 +110,10 @@ export async function generateRunnerContent(baseUrl: string): Promise<string> {
         const lastRun = job.lastRun?.finished_at
           ? new Date(job.lastRun.finished_at).toISOString()
           : '—';
+        const sched = formatSchedule(job.schedule);
+        const sourceTag = job.source_type === 'inline' ? ' *(inline)*' : '';
         lines.push(
-          `| ${job.name}${enabled} | \`${job.schedule}\` | ${status} | ${lastRun} |`,
+          `| ${job.name}${enabled}${sourceTag} | ${sched} | ${status} | ${lastRun} |`,
         );
       }
 
