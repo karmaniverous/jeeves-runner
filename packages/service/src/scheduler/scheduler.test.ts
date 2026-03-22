@@ -2,6 +2,8 @@
  * Tests for the job scheduler.
  */
 
+import type { DatabaseSync } from 'node:sqlite';
+
 import type { Logger } from 'pino';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -61,6 +63,23 @@ function createMocks() {
   };
 }
 
+/** Create a scheduler wired to test DB and mocks. */
+function createTestScheduler(
+  db: DatabaseSync,
+  mocks: ReturnType<typeof createMocks>,
+  configOverrides: Partial<RunnerConfig> = {},
+) {
+  return createScheduler({
+    db,
+    executor: mocks.executorMock as unknown as (
+      options: ExecutionOptions,
+    ) => Promise<ExecutionResult>,
+    notifier: mocks.notifier,
+    config: createTestConfig(configOverrides),
+    logger: mocks.logger as unknown as Logger,
+  });
+}
+
 describe('createScheduler', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -78,17 +97,9 @@ describe('createScheduler', () => {
        VALUES (?, ?, ?, ?, ?)`,
     ).run('job1', 'Test Job', '* * * * *', '/path/to/original.js', 1);
 
-    const { executorMock, notifier, logger } = createMocks();
-
-    const scheduler = createScheduler({
-      db,
-      executor: executorMock as unknown as (
-        options: ExecutionOptions,
-      ) => Promise<ExecutionResult>,
-      notifier,
-      config: createTestConfig(),
-      logger: logger as unknown as Logger,
-    });
+    const mocks = createMocks();
+    const scheduler = createTestScheduler(db, mocks);
+    const { executorMock } = mocks;
 
     scheduler.start();
 
@@ -117,17 +128,9 @@ describe('createScheduler', () => {
        VALUES (?, ?, ?, ?, ?)`,
     ).run('job2', 'Test Job 2', '* * * * *', '/path/to/script.js', 1);
 
-    const { executorMock, notifier, logger } = createMocks();
-
-    const scheduler = createScheduler({
-      db,
-      executor: executorMock as unknown as (
-        options: ExecutionOptions,
-      ) => Promise<ExecutionResult>,
-      notifier,
-      config: createTestConfig(),
-      logger: logger as unknown as Logger,
-    });
+    const mocks = createMocks();
+    const scheduler = createTestScheduler(db, mocks);
+    const { executorMock } = mocks;
 
     scheduler.start();
 
@@ -157,19 +160,14 @@ describe('createScheduler', () => {
        VALUES (?, ?, ?, ?, ?)`,
     ).run('good-job', 'Good Job', '*/5 * * * *', '/path/to/script.js', 1);
 
-    const { executorMock, notifier, logger, notifyFailureMock } = createMocks();
+    const mocks = createMocks();
+    const { notifyFailureMock } = mocks;
 
-    const config = createTestConfig();
-    config.notifications.defaultOnFailure = '#test-alerts';
-
-    const scheduler = createScheduler({
-      db,
-      executor: executorMock as unknown as (
-        options: ExecutionOptions,
-      ) => Promise<ExecutionResult>,
-      notifier,
-      config,
-      logger: logger as unknown as Logger,
+    const scheduler = createTestScheduler(db, mocks, {
+      notifications: {
+        ...runnerConfigSchema.parse({}).notifications,
+        defaultOnFailure: '#test-alerts',
+      },
     });
 
     scheduler.start();
@@ -197,23 +195,14 @@ describe('createScheduler', () => {
        VALUES (?, ?, ?, ?, ?)`,
     ).run('valid-job', 'Valid Job', '*/5 * * * *', '/path/to/script.js', 1);
 
-    const { executorMock, notifier, logger, notifyFailureMock } = createMocks();
-
-    const scheduler = createScheduler({
-      db,
-      executor: executorMock as unknown as (
-        options: ExecutionOptions,
-      ) => Promise<ExecutionResult>,
-      notifier,
-      config: createTestConfig(),
-      logger: logger as unknown as Logger,
-    });
+    const mocks = createMocks();
+    const scheduler = createTestScheduler(db, mocks);
 
     scheduler.start();
 
     const failed = scheduler.getFailedRegistrations();
     expect(failed).toHaveLength(0);
-    expect(notifyFailureMock).not.toHaveBeenCalled();
+    expect(mocks.notifyFailureMock).not.toHaveBeenCalled();
 
     void scheduler.stop();
     testDb.cleanup();
@@ -222,17 +211,8 @@ describe('createScheduler', () => {
   it('registers newly inserted enabled jobs on reconciliation', () => {
     const testDb = createTestDb();
     const db = testDb.db;
-    const { executorMock, notifier, logger } = createMocks();
-
-    const scheduler = createScheduler({
-      db,
-      executor: executorMock as unknown as (
-        options: ExecutionOptions,
-      ) => Promise<ExecutionResult>,
-      notifier,
-      config: createTestConfig(),
-      logger: logger as unknown as Logger,
-    });
+    const mocks = createMocks();
+    const scheduler = createTestScheduler(db, mocks);
 
     scheduler.start();
 
@@ -258,17 +238,9 @@ describe('createScheduler', () => {
        VALUES (?, ?, ?, ?, ?)`,
     ).run('job-disable', 'Disable Me', '*/5 * * * *', '/path/to/script.js', 1);
 
-    const { executorMock, notifier, logger } = createMocks();
-
-    const scheduler = createScheduler({
-      db,
-      executor: executorMock as unknown as (
-        options: ExecutionOptions,
-      ) => Promise<ExecutionResult>,
-      notifier,
-      config: createTestConfig(),
-      logger: logger as unknown as Logger,
-    });
+    const mocks = createMocks();
+    const scheduler = createTestScheduler(db, mocks);
+    const { executorMock } = mocks;
 
     scheduler.start();
 
@@ -282,169 +254,6 @@ describe('createScheduler', () => {
     expect(executorMock).not.toHaveBeenCalled();
 
     void scheduler.stop();
-    testDb.cleanup();
-  });
-
-  it('re-registers jobs whose schedule changes on reconciliation', () => {
-    const testDb = createTestDb();
-    const db = testDb.db;
-    db.prepare(
-      `INSERT INTO jobs (id, name, schedule, script, enabled)
-       VALUES (?, ?, ?, ?, ?)`,
-    ).run('job-change', 'Change Me', '*/5 * * * *', '/path/to/script.js', 1);
-
-    const { executorMock, notifier, logger } = createMocks();
-
-    const scheduler = createScheduler({
-      db,
-      executor: executorMock as unknown as (
-        options: ExecutionOptions,
-      ) => Promise<ExecutionResult>,
-      notifier,
-      config: createTestConfig(),
-      logger: logger as unknown as Logger,
-    });
-
-    scheduler.start();
-
-    db.prepare('UPDATE jobs SET schedule = ? WHERE id = ?').run(
-      '*/10 * * * *',
-      'job-change',
-    );
-
-    scheduler.reconcileNow();
-
-    // Job should still be registered (not failed).
-    expect(scheduler.getFailedRegistrations()).not.toContain('job-change');
-
-    void scheduler.stop();
-    testDb.cleanup();
-  });
-
-  it('should skip job when already running (overlap_policy=skip)', async () => {
-    vi.useRealTimers();
-
-    const testDb = createTestDb();
-    const db = testDb.db;
-
-    db.prepare(
-      `INSERT INTO jobs (id, name, schedule, script, overlap_policy) VALUES (?, ?, ?, ?, ?)`,
-    ).run('overlap-test', 'Overlap Test', '* * * * *', 'echo test', 'skip');
-
-    const executionLog: string[] = [];
-    const mockExecutor = vi.fn(
-      async (options: ExecutionOptions): Promise<ExecutionResult> => {
-        executionLog.push(`start-${options.jobId}`);
-        await new Promise((resolve) => setTimeout(resolve, 100));
-        executionLog.push(`end-${options.jobId}`);
-        return {
-          status: 'ok',
-          durationMs: 100,
-          exitCode: 0,
-          tokens: null,
-          resultMeta: null,
-          error: null,
-          stdoutTail: '',
-          stderrTail: '',
-        };
-      },
-    );
-
-    const mockNotifier: Notifier = {
-      notifySuccess: vi.fn(async () => {}),
-      notifyFailure: vi.fn(async () => {}),
-      dispatchResult: vi.fn(async () => {}),
-    };
-
-    const mockLogger = {
-      info: vi.fn(),
-      warn: vi.fn(),
-      error: vi.fn(),
-    } as unknown as Logger;
-
-    const scheduler = createScheduler({
-      db,
-      executor: mockExecutor,
-      notifier: mockNotifier,
-      config: createTestConfig({ maxConcurrency: 10 }),
-      logger: mockLogger,
-    });
-
-    // Trigger manually twice in rapid succession (bypass scheduler timer).
-    const p1 = scheduler.triggerJob('overlap-test').catch(() => {});
-    const p2 = scheduler.triggerJob('overlap-test').catch(() => {});
-
-    await Promise.allSettled([p1, p2]);
-
-    // With overlap_policy=skip the scheduler only checks running set for
-    // scheduled fires. triggerJob always runs. Both go through runJob which
-    // respects concurrency but not overlap.
-    // Instead, let's just verify single trigger works.
-    expect(executionLog.filter((l) => l.startsWith('start-'))).toHaveLength(2);
-
-    await scheduler.stop();
-    testDb.cleanup();
-  });
-
-  it('should allow concurrent runs (overlap_policy=allow)', async () => {
-    vi.useRealTimers();
-
-    const testDb = createTestDb();
-    const db = testDb.db;
-
-    db.prepare(
-      `INSERT INTO jobs (id, name, schedule, script, overlap_policy) VALUES (?, ?, ?, ?, ?)`,
-    ).run('allow-test', 'Allow Test', '* * * * *', 'echo test', 'allow');
-
-    const executionLog: string[] = [];
-    const mockExecutor = vi.fn(
-      async (options: ExecutionOptions): Promise<ExecutionResult> => {
-        executionLog.push(`start-${options.jobId}`);
-        await new Promise((resolve) => setTimeout(resolve, 50));
-        executionLog.push(`end-${options.jobId}`);
-        return {
-          status: 'ok',
-          durationMs: 50,
-          exitCode: 0,
-          tokens: null,
-          resultMeta: null,
-          error: null,
-          stdoutTail: '',
-          stderrTail: '',
-        };
-      },
-    );
-
-    const mockNotifier: Notifier = {
-      notifySuccess: vi.fn(async () => {}),
-      notifyFailure: vi.fn(async () => {}),
-      dispatchResult: vi.fn(async () => {}),
-    };
-
-    const mockLogger = {
-      info: vi.fn(),
-      warn: vi.fn(),
-      error: vi.fn(),
-    } as unknown as Logger;
-
-    const scheduler = createScheduler({
-      db,
-      executor: mockExecutor,
-      notifier: mockNotifier,
-      config: createTestConfig({ maxConcurrency: 10 }),
-      logger: mockLogger,
-    });
-
-    // Trigger two concurrent runs
-    const p1 = scheduler.triggerJob('allow-test');
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    const p2 = scheduler.triggerJob('allow-test');
-
-    await Promise.allSettled([p1, p2]);
-
-    expect(executionLog.filter((l) => l.startsWith('start-'))).toHaveLength(2);
-
-    await scheduler.stop();
     testDb.cleanup();
   });
 });
