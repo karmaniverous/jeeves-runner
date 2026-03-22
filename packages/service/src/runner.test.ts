@@ -67,14 +67,15 @@ describe('Runner', () => {
     await runner.start();
 
     // Verify API server is listening
-    const response = await fetch('http://127.0.0.1:18783/health');
+    const response = await fetch('http://127.0.0.1:18783/status');
     expect(response.status).toBe(200);
-    const body = (await response.json()) as { ok: boolean };
-    expect(body.ok).toBe(true);
+    const body = (await response.json()) as { status: string; version: string };
+    expect(body.status).toBe('ok');
+    expect(body.version).toBeDefined();
 
     await runner.stop();
 
     // Verify server is stopped (connection should be refused)
-    await expect(fetch('http://127.0.0.1:18783/health')).rejects.toThrow();
+    await expect(fetch('http://127.0.0.1:18783/status')).rejects.toThrow();
   }, 20000);
 });

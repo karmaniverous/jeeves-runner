@@ -25,7 +25,7 @@ export function registerRunnerTools(api: PluginApi, baseUrl: string): void {
       description:
         'Job counts (total, running), failed registrations, ok/error counts last hour',
       parameters: { type: 'object', properties: {} },
-      buildRequest: () => ['/stats'],
+      buildRequest: () => ['/status'],
     },
     {
       name: 'runner_jobs',
