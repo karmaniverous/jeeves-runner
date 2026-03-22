@@ -34,6 +34,17 @@ export { executeJob } from './scheduler/executor.js';
 export type { Scheduler, SchedulerDeps } from './scheduler/scheduler.js';
 export { createScheduler } from './scheduler/scheduler.js';
 
+// Schedule utilities
+export type {
+  ScheduleInvalid,
+  ScheduleValid,
+  ScheduleValidation,
+} from './scheduler/schedule-utils.js';
+export {
+  getNextFireTime,
+  validateSchedule,
+} from './scheduler/schedule-utils.js';
+
 // Gateway
 export type {
   GatewayClient,

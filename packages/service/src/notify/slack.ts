@@ -1,5 +1,7 @@
 /**
  * Slack notification module. Sends job completion/failure messages via Slack Web API (chat.postMessage). Falls back gracefully if no token.
+ *
+ * @module
  */
 
 import { httpPost } from '../lib/http.js';
@@ -72,12 +74,12 @@ export function createNotifier(config: NotifyConfig): Notifier {
     ): Promise<void> {
       if (!slackToken) {
         console.warn(
-          `No Slack token configured � skipping success notification for ${jobName}`,
+          `No Slack token configured \u2014 skipping success notification for ${jobName}`,
         );
         return;
       }
       const durationSec = (durationMs / 1000).toFixed(1);
-      const text = `?? *${jobName}* completed (${durationSec}s)`;
+      const text = `\u2705 *${jobName}* completed (${durationSec}s)`;
       await postToSlack(slackToken, channel, text);
     },
 
@@ -89,13 +91,13 @@ export function createNotifier(config: NotifyConfig): Notifier {
     ): Promise<void> {
       if (!slackToken) {
         console.warn(
-          `No Slack token configured � skipping failure notification for ${jobName}`,
+          `No Slack token configured \u2014 skipping failure notification for ${jobName}`,
         );
         return;
       }
       const durationSec = (durationMs / 1000).toFixed(1);
       const errorMsg = error ? `: ${error}` : '';
-      const text = `?? *${jobName}* failed (${durationSec}s)${errorMsg}`;
+      const text = `\u274c *${jobName}* failed (${durationSec}s)${errorMsg}`;
       await postToSlack(slackToken, channel, text);
     },
 

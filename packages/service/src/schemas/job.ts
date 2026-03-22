@@ -24,8 +24,8 @@ export const jobSchema = z.object({
   enabled: z.boolean().default(true),
   /** Optional execution timeout in milliseconds. */
   timeoutMs: z.number().optional(),
-  /** Policy for handling overlapping job executions (skip, queue, or allow). */
-  overlapPolicy: z.enum(['skip', 'queue', 'allow']).default('skip'),
+  /** Policy for handling overlapping job executions (skip or allow). */
+  overlapPolicy: z.enum(['skip', 'allow']).default('skip'),
   /** Slack channel ID for failure notifications. */
   onFailure: z.string().nullable().default(null),
   /** Slack channel ID for success notifications. */

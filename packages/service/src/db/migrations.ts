@@ -1,5 +1,7 @@
 /**
  * Schema migration runner. Tracks applied migrations via schema_version table, applies pending migrations idempotently.
+ *
+ * @module
  */
 
 import type { DatabaseSync } from 'node:sqlite';
@@ -139,11 +141,17 @@ CREATE TABLE state_items (
 CREATE INDEX idx_state_items_ns_key ON state_items(namespace, key);
 `;
 
+/** Migration 004: Add source_type column to jobs. */
+const MIGRATION_004 = `
+ALTER TABLE jobs ADD COLUMN source_type TEXT DEFAULT 'path';
+`;
+
 /** Registry of all migrations keyed by version number. */
 const MIGRATIONS: Record<number, string> = {
   1: MIGRATION_001,
   2: MIGRATION_002,
   3: MIGRATION_003,
+  4: MIGRATION_004,
 };
 
 /**

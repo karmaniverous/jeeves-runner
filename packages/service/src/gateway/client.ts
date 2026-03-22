@@ -1,5 +1,7 @@
 /**
  * OpenClaw Gateway HTTP client for spawning and monitoring sessions.
+ *
+ * @module
  */
 
 import { httpPost } from '../lib/http.js';
@@ -146,7 +148,7 @@ export function createGatewayClient(
 
     async getSessionInfo(sessionKey: string): Promise<SessionInfo | null> {
       // TODO: Replace with a direct session lookup when Gateway adds sessions_get.
-      // Currently fetches up to 500 sessions and searches client-side — O(n) and
+      // Currently fetches up to 500 sessions and searches client-side ï¿½ O(n) and
       // and search client-side. Consider using sessions_history with limit 1 as alternative,
       // or request a sessions_get tool from Gateway for more efficient single-session lookup.
       const response = (await invokeGateway(

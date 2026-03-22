@@ -1,5 +1,7 @@
 /**
  * Queue operations module for runner client. Provides enqueue, dequeue, done, and fail operations.
+ *
+ * @module
  */
 
 import type { DatabaseSync } from 'node:sqlite';

@@ -1,5 +1,7 @@
 /**
  * SQLite connection manager. Creates DB file with parent directories, enables WAL mode for concurrency.
+ *
+ * @module
  */
 
 import { mkdirSync } from 'node:fs';

@@ -1,5 +1,7 @@
 /**
  * Shared test utilities for database setup and teardown.
+ *
+ * @module
  */
 
 import { mkdtempSync, rmSync } from 'node:fs';

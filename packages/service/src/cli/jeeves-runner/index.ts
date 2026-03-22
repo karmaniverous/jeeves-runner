@@ -8,11 +8,11 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 import { Command } from 'commander';
-import { CronPattern } from 'croner';
 
 import { createConnection } from '../../db/connection.js';
 import { runMigrations } from '../../db/migrations.js';
 import { createRunner } from '../../runner.js';
+import { validateSchedule } from '../../scheduler/schedule-utils.js';
 import { runnerConfigSchema } from '../../schemas/config.js';
 import { registerConfigCommands } from './commands/config.js';
 import { registerServiceCommand } from './commands/service.js';
@@ -106,13 +106,10 @@ program
   .action((options: AddJobOptions) => {
     const config = loadConfig(options.config);
 
-    // Validate schedule expression before inserting
-    try {
-      new CronPattern(options.schedule);
-    } catch (err) {
-      console.error(
-        `Invalid schedule expression: ${err instanceof Error ? err.message : String(err)}`,
-      );
+    // Validate schedule expression (cron or rrstack) before inserting
+    const scheduleValidation = validateSchedule(options.schedule);
+    if (!scheduleValidation.valid) {
+      console.error(`Invalid schedule: ${scheduleValidation.error}`);
       process.exit(1);
     }
 

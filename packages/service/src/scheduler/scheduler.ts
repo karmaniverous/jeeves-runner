@@ -1,5 +1,7 @@
 /**
- * Croner-based job scheduler. Loads enabled jobs, creates cron instances, manages execution, respects overlap policies and concurrency limits.
+ * Job scheduler. Loads enabled jobs, registers schedules (cron or rrstack), manages execution, respects overlap policies and concurrency limits.
+ *
+ * @module
  */
 
 import type { DatabaseSync } from 'node:sqlite';
@@ -74,7 +76,16 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
     job: JobRow,
     trigger: string,
   ): Promise<ExecutionResult> {
-    const { id, name, script, type, timeout_ms, on_success, on_failure } = job;
+    const {
+      id,
+      name,
+      script,
+      type,
+      timeout_ms,
+      on_success,
+      on_failure,
+      source_type,
+    } = job;
 
     // Check concurrency limit
     if (runningJobs.size >= config.maxConcurrency) {
@@ -110,6 +121,7 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
           jobId: id,
           runId,
           timeoutMs: timeout_ms ?? undefined,
+          sourceType: source_type ?? 'path',
         });
       }
 

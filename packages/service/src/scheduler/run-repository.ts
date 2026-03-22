@@ -1,5 +1,7 @@
 /**
  * Run record repository for managing job execution records.
+ *
+ * @module
  */
 
 import type { DatabaseSync } from 'node:sqlite';

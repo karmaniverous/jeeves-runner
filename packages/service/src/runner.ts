@@ -1,5 +1,7 @@
 /**
  * Main runner orchestrator. Wires up database, scheduler, API server, and handles graceful shutdown on SIGTERM/SIGINT.
+ *
+ * @module
  */
 
 import { readFileSync } from 'node:fs';
@@ -117,7 +119,7 @@ export function createRunner(config: RunnerConfig, deps?: RunnerDeps): Runner {
         getConfig: () => config,
         loggerConfig: { level: config.log.level, file: config.log.file },
       });
-      await server.listen({ port: config.port, host: '127.0.0.1' });
+      await server.listen({ port: config.port, host: config.host });
       logger.info({ port: config.port }, 'API server listening');
 
       // Graceful shutdown

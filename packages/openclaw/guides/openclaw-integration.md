@@ -4,7 +4,7 @@ title: OpenClaw Integration Guide
 
 # OpenClaw Integration Guide
 
-The `@karmaniverous/jeeves-runner-openclaw` plugin gives your OpenClaw agent access to jeeves-runner's job management and monitoring capabilities.
+The `@karmaniverous/jeeves-runner-openclaw` plugin gives your OpenClaw agent access to jeeves-runner's job management, monitoring, and inspection capabilities.
 
 ## Installation
 
@@ -82,25 +82,23 @@ This replaces the previous `JEEVES_RUNNER_URL` environment variable approach.
 
 ## Available Tools
 
-The plugin registers 7 tools for interacting with the runner:
+The plugin registers 17 tools across three tiers: monitoring, management, and inspection.
 
-### `runner_status`
+### Monitoring Tools
+
+#### `runner_status`
 
 Get jeeves-runner service health, uptime, job counts, and error statistics.
 
 **Parameters:** None
 
-**Returns:** Uptime, total jobs, running count, ok/error counts for the last hour.
-
-### `runner_jobs`
+#### `runner_jobs`
 
 List all jobs with enabled state, schedule, last run status, and last run time.
 
 **Parameters:** None
 
-**Returns:** Array of all registered jobs with their current state.
-
-### `runner_trigger`
+#### `runner_trigger`
 
 Manually trigger a job. Blocks until the job completes.
 
@@ -108,20 +106,16 @@ Manually trigger a job. Blocks until the job completes.
 |-----------|------|----------|-------------|
 | `jobId` | `string` | Yes | The job ID to trigger |
 
-**Returns:** Run result including status, duration, exit code, and output.
-
-### `runner_runs`
+#### `runner_runs`
 
 Get recent run history for a job.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `jobId` | `string` | Yes | The job ID to get runs for |
+| `jobId` | `string` | Yes | The job ID |
 | `limit` | `number` | No | Maximum runs to return (default 50) |
 
-**Returns:** Array of recent runs with status, duration, exit code, and error details.
-
-### `runner_job_detail`
+#### `runner_job_detail`
 
 Get full configuration for a single job.
 
@@ -129,9 +123,7 @@ Get full configuration for a single job.
 |-----------|------|----------|-------------|
 | `jobId` | `string` | Yes | The job ID |
 
-**Returns:** Complete job config including script path, schedule, timeout, and overlap policy.
-
-### `runner_enable`
+#### `runner_enable`
 
 Enable a disabled job. Takes effect immediately.
 
@@ -139,7 +131,7 @@ Enable a disabled job. Takes effect immediately.
 |-----------|------|----------|-------------|
 | `jobId` | `string` | Yes | The job ID to enable |
 
-### `runner_disable`
+#### `runner_disable`
 
 Disable a job. It will not run until re-enabled.
 
@@ -147,6 +139,123 @@ Disable a job. It will not run until re-enabled.
 |-----------|------|----------|-------------|
 | `jobId` | `string` | Yes | The job ID to disable |
 
+### Management Tools
+
+#### `runner_create_job`
+
+Create a new runner job.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | `string` | Yes | Unique job identifier |
+| `name` | `string` | Yes | Human-readable name |
+| `schedule` | `string` | Yes | Cron expression or RRStack JSON |
+| `script` | `string` | Yes | Script path or inline content |
+| `source_type` | `string` | No | `"path"` (default) or `"inline"` |
+| `type` | `string` | No | `"script"` (default) or `"session"` |
+| `timeout_seconds` | `number` | No | Kill after N seconds |
+| `overlap_policy` | `string` | No | `"skip"` (default) or `"allow"` |
+| `enabled` | `boolean` | No | Default: true |
+| `description` | `string` | No | Job description |
+| `on_failure` | `string` | No | Slack channel ID for failure alerts |
+| `on_success` | `string` | No | Slack channel ID for success alerts |
+
+**Example:**
+```json
+{
+  "id": "poll-email",
+  "name": "Poll Email",
+  "schedule": "*/11 * * * *",
+  "script": "/path/to/scripts/poll-email.js",
+  "on_failure": "C0123456789"
+}
+```
+
+#### `runner_update_job`
+
+Update an existing job. Only supplied fields are changed.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `jobId` | `string` | Yes | The job to update |
+| *(others)* | | No | Any field from `runner_create_job` except `id` |
+
+**Example:** Change schedule and timeout:
+```json
+{
+  "jobId": "poll-email",
+  "schedule": "*/5 * * * *",
+  "timeout_seconds": 120
+}
+```
+
+#### `runner_delete_job`
+
+Delete a job and all its run history. **Irreversible.**
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `jobId` | `string` | Yes | The job to delete |
+
+#### `runner_update_script`
+
+Update a job's script content or path without changing other fields.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `jobId` | `string` | Yes | The job to update |
+| `script` | `string` | Yes | New script path or inline content |
+| `source_type` | `string` | No | `"path"` or `"inline"` |
+
+### Inspection Tools
+
+#### `runner_list_queues`
+
+List all queues that have items.
+
+**Parameters:** None
+
+#### `runner_queue_status`
+
+Get queue depth, claimed count, failed count, and oldest item age.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `queueName` | `string` | Yes | Queue name |
+
+#### `runner_queue_peek`
+
+Non-claiming read of pending queue items.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `queueName` | `string` | Yes | Queue name |
+| `limit` | `number` | No | Max items (default 10) |
+
+#### `runner_list_namespaces`
+
+List all state namespaces.
+
+**Parameters:** None
+
+#### `runner_query_state`
+
+Read all scalar state for a namespace with optional JSONPath filtering.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `namespace` | `string` | Yes | State namespace |
+| `path` | `string` | No | JSONPath expression |
+
+#### `runner_query_collection`
+
+Read collection items for a state key within a namespace.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `namespace` | `string` | Yes | State namespace |
+| `key` | `string` | Yes | Collection key |
+
 ## Skill
 
-The plugin includes a consumer skill that teaches the agent how to operate the runner: checking status, investigating failures, triggering jobs, and interpreting run history. The skill is automatically loaded when the plugin is installed.
+The plugin includes a consumer skill that teaches the agent how to operate the runner: checking status, investigating failures, triggering jobs, managing job lifecycle, and inspecting queues and state. The skill is automatically loaded when the plugin is installed.

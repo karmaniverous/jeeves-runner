@@ -1,9 +1,13 @@
 /**
  * Job executor. Spawns job scripts as child processes, captures output, parses result metadata, enforces timeouts.
+ *
+ * @module
  */
 
 import { spawn } from 'node:child_process';
-import { extname } from 'node:path';
+import { mkdtempSync, unlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { extname, join } from 'node:path';
 
 /** Result of a job execution. */
 export interface ExecutionResult {
@@ -47,6 +51,8 @@ export interface ExecutionOptions {
   timeoutMs?: number;
   /** Optional custom command resolver (for extensibility). */
   commandResolver?: (script: string) => ResolvedCommand;
+  /** Source type: 'path' uses script as file path, 'inline' writes script content to a temp file. */
+  sourceType?: 'path' | 'inline';
 }
 
 /** Ring buffer for capturing last N lines of output. */
@@ -118,16 +124,34 @@ function resolveCommand(script: string): ResolvedCommand {
 export function executeJob(
   options: ExecutionOptions,
 ): Promise<ExecutionResult> {
-  const { script, dbPath, jobId, runId, timeoutMs, commandResolver } = options;
+  const {
+    script,
+    dbPath,
+    jobId,
+    runId,
+    timeoutMs,
+    commandResolver,
+    sourceType = 'path',
+  } = options;
   const startTime = Date.now();
+
+  // For inline scripts, write to a temp file and clean up after.
+  let tempFile: string | null = null;
+  let effectiveScript = script;
+  if (sourceType === 'inline') {
+    const tempDir = mkdtempSync(join(tmpdir(), 'jr-inline-'));
+    tempFile = join(tempDir, 'inline.js');
+    writeFileSync(tempFile, script);
+    effectiveScript = tempFile;
+  }
 
   return new Promise((resolve) => {
     const stdoutBuffer = new RingBuffer(100);
     const stderrBuffer = new RingBuffer(100);
 
     const { command, args } = commandResolver
-      ? commandResolver(script)
-      : resolveCommand(script);
+      ? commandResolver(effectiveScript)
+      : resolveCommand(effectiveScript);
     const child = spawn(command, args, {
       env: {
         ...process.env,
@@ -165,6 +189,7 @@ export function executeJob(
 
     child.on('close', (exitCode) => {
       if (timeoutHandle) clearTimeout(timeoutHandle);
+      cleanupTempFile(tempFile);
 
       const durationMs = Date.now() - startTime;
       const stdoutTail = stdoutBuffer.getAll();
@@ -209,6 +234,7 @@ export function executeJob(
 
     child.on('error', (err) => {
       if (timeoutHandle) clearTimeout(timeoutHandle);
+      cleanupTempFile(tempFile);
       const durationMs = Date.now() - startTime;
       resolve({
         status: 'error',
@@ -222,4 +248,14 @@ export function executeJob(
       });
     });
   });
+}
+
+/** Remove a temp file created for inline script execution. */
+function cleanupTempFile(tempFile: string | null): void {
+  if (!tempFile) return;
+  try {
+    unlinkSync(tempFile);
+  } catch {
+    // Ignore cleanup errors
+  }
 }

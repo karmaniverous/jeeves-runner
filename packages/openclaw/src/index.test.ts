@@ -61,7 +61,7 @@ describe('plugin register', () => {
 
     register(api);
 
-    expect(tools.size).toBe(7);
+    expect(tools.size).toBe(17);
     expect(core.init).toHaveBeenCalled();
     expect(core.createComponentWriter).toHaveBeenCalled();
 

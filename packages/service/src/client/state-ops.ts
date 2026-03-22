@@ -1,5 +1,7 @@
 /**
  * State operations module for runner client. Provides scalar state (key-value) and collection state (grouped items).
+ *
+ * @module
  */
 
 import type { DatabaseSync } from 'node:sqlite';

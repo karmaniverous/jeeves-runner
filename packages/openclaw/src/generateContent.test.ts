@@ -6,16 +6,38 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { generateRunnerContent } from './generateContent.js';
 
+/** Default stats fixture. */
+const defaultStats = {
+  totalJobs: 2,
+  running: 1,
+  failedRegistrations: 0,
+  okLastHour: 5,
+  errorsLastHour: 1,
+};
+
+/** Mock fetch to return stats and jobs payloads. */
+function mockApi(
+  stats: Record<string, unknown>,
+  jobs: Record<string, unknown>[],
+): void {
+  vi.spyOn(globalThis, 'fetch').mockImplementation((url: unknown) => {
+    const u = String(url);
+    if (u.endsWith('/stats')) {
+      return Promise.resolve(
+        new Response(JSON.stringify(stats), { status: 200 }),
+      );
+    }
+    if (u.endsWith('/jobs')) {
+      return Promise.resolve(
+        new Response(JSON.stringify({ jobs }), { status: 200 }),
+      );
+    }
+    return Promise.resolve(new Response('not found', { status: 404 }));
+  });
+}
+
 describe('generateRunnerContent', () => {
   it('renders stats + jobs', async () => {
-    const stats = {
-      totalJobs: 2,
-      running: 1,
-      failedRegistrations: 0,
-      okLastHour: 5,
-      errorsLastHour: 1,
-    };
-
     const jobs = [
       {
         id: 'a',
@@ -32,20 +54,7 @@ describe('generateRunnerContent', () => {
       },
     ];
 
-    vi.spyOn(globalThis, 'fetch').mockImplementation((url: unknown) => {
-      const u = String(url);
-      if (u.endsWith('/stats')) {
-        return Promise.resolve(
-          new Response(JSON.stringify(stats), { status: 200 }),
-        );
-      }
-      if (u.endsWith('/jobs')) {
-        return Promise.resolve(
-          new Response(JSON.stringify({ jobs }), { status: 200 }),
-        );
-      }
-      return Promise.resolve(new Response('not found', { status: 404 }));
-    });
+    mockApi(defaultStats, jobs);
 
     const md = await generateRunnerContent('http://localhost:1937');
 
@@ -57,28 +66,8 @@ describe('generateRunnerContent', () => {
   });
 
   it('includes failed registrations row when non-zero', async () => {
-    const stats = {
-      totalJobs: 3,
-      running: 0,
-      failedRegistrations: 2,
-      okLastHour: 0,
-      errorsLastHour: 0,
-    };
-
-    vi.spyOn(globalThis, 'fetch').mockImplementation((url: unknown) => {
-      const u = String(url);
-      if (u.endsWith('/stats')) {
-        return Promise.resolve(
-          new Response(JSON.stringify(stats), { status: 200 }),
-        );
-      }
-      if (u.endsWith('/jobs')) {
-        return Promise.resolve(
-          new Response(JSON.stringify({ jobs: [] }), { status: 200 }),
-        );
-      }
-      return Promise.resolve(new Response('not found', { status: 404 }));
-    });
+    const stats = { ...defaultStats, failedRegistrations: 2 };
+    mockApi(stats, []);
 
     const md = await generateRunnerContent('http://localhost:1937');
     expect(md).toContain('| Failed registrations | 2 |');
@@ -90,5 +79,73 @@ describe('generateRunnerContent', () => {
     const md = await generateRunnerContent('http://localhost:1937');
     expect(md).toContain('ACTION REQUIRED');
     expect(md).toContain('unreachable');
+  });
+
+  it('shows rrstack label for JSON schedule', async () => {
+    const jobs = [
+      {
+        id: 'rr',
+        name: 'RRStack Job',
+        enabled: true,
+        schedule: '{"freq":"daily","interval":1}',
+      },
+    ];
+
+    mockApi(defaultStats, jobs);
+
+    const md = await generateRunnerContent('http://localhost:1937');
+    expect(md).toContain('*(rrstack)*');
+    expect(md).not.toContain('`{"freq"');
+  });
+
+  it('shows cron schedule in backticks', async () => {
+    const jobs = [
+      {
+        id: 'c',
+        name: 'Cron Job',
+        enabled: true,
+        schedule: '*/5 * * * *',
+      },
+    ];
+
+    mockApi(defaultStats, jobs);
+
+    const md = await generateRunnerContent('http://localhost:1937');
+    expect(md).toContain('`*/5 * * * *`');
+  });
+
+  it('tags inline source_type jobs', async () => {
+    const jobs = [
+      {
+        id: 'inl',
+        name: 'Inline Job',
+        enabled: true,
+        schedule: '* * * * *',
+        source_type: 'inline',
+      },
+    ];
+
+    mockApi(defaultStats, jobs);
+
+    const md = await generateRunnerContent('http://localhost:1937');
+    expect(md).toContain('*(inline)*');
+  });
+
+  it('does not tag path source_type jobs', async () => {
+    const jobs = [
+      {
+        id: 'p',
+        name: 'Path Job',
+        enabled: true,
+        schedule: '* * * * *',
+        source_type: 'path',
+      },
+    ];
+
+    mockApi(defaultStats, jobs);
+
+    const md = await generateRunnerContent('http://localhost:1937');
+    expect(md).not.toContain('*(inline)*');
+    expect(md).toContain('| Path Job |');
   });
 });

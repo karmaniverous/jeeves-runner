@@ -17,7 +17,7 @@ This repository is a monorepo containing two packages:
 
 ## What It Does
 
-jeeves-runner schedules and executes jobs, tracks their state in SQLite, and exposes status via a REST API. It replaces both n8n and Windows Task Scheduler as the substrate for data flow automation.
+jeeves-runner schedules and executes jobs, tracks their state in SQLite, and exposes full CRUD management and monitoring via a REST API. It replaces both n8n and Windows Task Scheduler as the substrate for data flow automation.
 
 **Key properties:**
 
@@ -135,8 +135,18 @@ The runner exposes a REST API on `localhost` (not externally accessible by defau
 | `GET` | `/jobs/:id` | Single job detail |
 | `GET` | `/jobs/:id/runs` | Run history (paginated via `?limit=N`) |
 | `POST` | `/jobs/:id/run` | Trigger manual run |
-| `POST` | `/jobs/:id/enable` | Enable a job |
-| `POST` | `/jobs/:id/disable` | Disable a job |
+| `POST` | `/jobs` | Create a new job |
+| `PUT` | `/jobs/:id` | Update an existing job |
+| `DELETE` | `/jobs/:id` | Delete a job and its run history |
+| `PATCH` | `/jobs/:id/enable` | Enable a job |
+| `PATCH` | `/jobs/:id/disable` | Disable a job |
+| `PUT` | `/jobs/:id/script` | Update job script content or path |
+| `GET` | `/queues` | List all queues with items |
+| `GET` | `/queues/:name/status` | Queue depth, claimed/failed counts |
+| `GET` | `/queues/:name/peek` | Non-claiming read of pending items |
+| `GET` | `/state` | List all state namespaces |
+| `GET` | `/state/:namespace` | Read scalar state (optional `?path=` JSONPath) |
+| `GET` | `/state/:namespace/:key` | Read collection items |
 | `GET` | `/stats` | Aggregate stats (jobs ok/error/running counts) |
 
 ### Example response
@@ -399,9 +409,12 @@ jeeves-runner is one component of a four-part platform:
 - ✅ Zod-validated configuration
 - ✅ Seed script for 27 existing n8n workflows
 - ✅ NSSM service deployment
-- ✅ OpenClaw plugin (`@karmaniverous/jeeves-runner-openclaw` v0.1.0)
+- ✅ OpenClaw plugin (`@karmaniverous/jeeves-runner-openclaw`) with 17 tools (monitoring, management, inspection)
+- ✅ Job management API (create, update, delete, script update, enable/disable)
+- ✅ Queue and state inspection API (list queues, peek, query state/collections)
+- ✅ Dual-format scheduling (cron + RRStack)
 - ✅ Monorepo restructure complete
-- ✅ 103 passing tests (83 service + 20 plugin)
+- ✅ 158 passing tests (126 service + 32 plugin)
 
 ### What's next
 

@@ -5,7 +5,7 @@
 import { execSync } from 'node:child_process';
 import { unlinkSync, writeFileSync } from 'node:fs';
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { TestDb } from '../../test-utils/db.js';
 import { createTestDb } from '../../test-utils/db.js';

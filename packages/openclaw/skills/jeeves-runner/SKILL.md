@@ -9,7 +9,7 @@ description: Operate and troubleshoot the jeeves-runner job execution engine. Us
 
 ## Architecture
 
-jeeves-runner is a Node.js job execution engine that schedules and runs process scripts via cron expressions, tracks state in SQLite, and exposes an HTTP API. It typically runs as a system service.
+jeeves-runner is a Node.js job execution engine that schedules and runs process scripts via cron or RRStack expressions, tracks state in SQLite, and exposes an HTTP API. It typically runs as a system service.
 
 | Component | Detail |
 |-----------|--------|
@@ -227,7 +227,7 @@ Or use `runner_status` if the plugin tools are available.
 
 ### Step 7: Add Initial Jobs
 
-Guide the user through adding their first job. Use the CLI:
+Use `runner_create_job` to create jobs via the plugin, or the CLI:
 
 ```bash
 jeeves-runner add-job \
@@ -238,34 +238,19 @@ jeeves-runner add-job \
   -c /path/to/config.json
 ```
 
-Or insert directly via SQLite (useful for bulk setup):
-```sql
-INSERT INTO jobs (id, name, schedule, script, type, enabled, overlap_policy)
-VALUES ('my-first-job', 'My First Job', '*/5 * * * *', '/path/to/script.js', 'script', 1, 'skip');
-```
-
 **Job parameters:**
 | Parameter | Required | Default | Description |
 |-----------|----------|---------|-------------|
 | `id` | Yes | — | Unique job identifier (kebab-case recommended) |
 | `name` | Yes | — | Human-readable name |
-| `schedule` | Yes | — | Cron expression (5 or 6 fields; 6th = seconds) |
-| `script` | Yes | — | Absolute path to the process script |
+| `schedule` | Yes | — | Cron expression or RRStack JSON |
+| `script` | Yes | — | Absolute path to script, or inline script content |
+| `source_type` | No | `path` | `path` (file reference) or `inline` (script content in DB) |
 | `type` | No | `script` | `script` or `session` |
-| `timeout_ms` | No | — | Kill the job after this many ms |
+| `timeout_seconds` | No | — | Kill the job after this many seconds |
 | `overlap_policy` | No | `skip` | `skip` (don't start if already running) or `allow` |
 | `on_failure` | No | config default | Slack channel ID for failure alerts |
 | `on_success` | No | config default | Slack channel ID for success alerts |
-
-**A starter process script:**
-```javascript
-// /path/to/script.js
-// Simple example: log the current time and exit
-console.log(JSON.stringify({
-  timestamp: new Date().toISOString(),
-  message: 'Hello from jeeves-runner!'
-}));
-```
 
 After adding the job, trigger it manually to verify:
 ```bash
@@ -282,8 +267,6 @@ If jeeves-watcher is also deployed, the runner's process scripts and their outpu
 - Script output directories (wherever your scripts write domain data)
 - Log files (if you want runner logs searchable)
 
-**Create watcher inference rules** for runner-produced data (e.g., domain-specific JSON files, markdown reports).
-
 **The runner and watcher are complementary:** the runner executes data pipeline jobs; the watcher indexes the outputs for retrieval. Together they form a collect → process → index pipeline.
 
 ### On Subsequent Sessions
@@ -293,8 +276,6 @@ On sessions after bootstrap is complete:
 1. Call `runner_status` silently to check health
 2. If the service is down, report it immediately
 3. If there are failed registrations or recent errors, proactively surface them
-
-**Key principle:** The agent drives discovery. After initial setup, monitor health and surface problems before the user has to ask.
 
 ---
 
@@ -306,57 +287,127 @@ On sessions after bootstrap is complete:
 | `GET` | `/jobs` | List all jobs with last run status |
 | `GET` | `/jobs/:id` | Single job detail |
 | `GET` | `/jobs/:id/runs` | Run history (`?limit=N`, default 50) |
-| `POST` | `/jobs/:id/run` | Trigger manual run (synchronous — blocks until complete) |
-| `POST` | `/jobs/:id/enable` | Enable a job |
-| `POST` | `/jobs/:id/disable` | Disable a job |
+| `POST` | `/jobs/:id/run` | Trigger manual run (synchronous) |
+| `POST` | `/jobs` | Create a new job |
+| `PUT` | `/jobs/:id` | Update an existing job |
+| `DELETE` | `/jobs/:id` | Delete a job and its run history |
+| `PATCH` | `/jobs/:id/enable` | Enable a job |
+| `PATCH` | `/jobs/:id/disable` | Disable a job |
+| `PUT` | `/jobs/:id/script` | Update job script content or path |
+| `GET` | `/queues` | List all queues with items |
+| `GET` | `/queues/:name/status` | Queue depth, claimed/failed counts |
+| `GET` | `/queues/:name/peek` | Non-claiming read of pending items |
+| `GET` | `/state` | List all state namespaces |
+| `GET` | `/state/:namespace` | Read scalar state (optional `?path=` JSONPath) |
+| `GET` | `/state/:namespace/:key` | Read collection items |
 | `GET` | `/stats` | Aggregate stats (total, running, ok/errors last hour) |
-
-### Common Operations
-
-```javascript
-// Trigger a job manually
-await fetch('http://localhost:1937/jobs/poll-email/run', { method: 'POST' });
-
-// Check job status
-const { jobs } = await (await fetch('http://localhost:1937/jobs')).json();
-
-// Get recent runs for a job
-const { runs } = await (await fetch('http://localhost:1937/jobs/poll-email/runs?limit=5')).json();
-
-// Disable a job
-await fetch('http://localhost:1937/jobs/poll-email/disable', { method: 'POST' });
-```
-
-**If the runner is unreachable:** Check the service status (`nssm status jeeves-runner` on Windows, `systemctl status jeeves-runner` on Linux), check the configured port, and check logs for startup errors.
 
 ## Tools
 
-### `runner_status`
+The plugin registers 17 tools across three tiers: monitoring, management, and inspection.
+
+### Monitoring Tools
+
+#### `runner_status`
 Service health check. Returns total jobs, running count, failed registrations, ok/error counts for last hour.
 
-### `runner_jobs`
+#### `runner_jobs`
 List all jobs with enabled state, schedule, last run status, and last run time.
 
-### `runner_trigger`
+#### `runner_trigger`
 Manually trigger a job by ID. Blocks until the job completes and returns the run result (status, duration, exit code).
-- `jobId` (string, required) — The job ID to trigger
+- `jobId` (string, required)
 
-### `runner_runs`
+#### `runner_runs`
 Get recent run history for a job.
-- `jobId` (string, required) — The job ID
+- `jobId` (string, required)
 - `limit` (number, optional) — Max results, default 50
 
-### `runner_job_detail`
-Get full configuration for a single job, including script path, schedule, timeout, overlap policy, and notification channels.
-- `jobId` (string, required) — The job ID
+#### `runner_job_detail`
+Get full configuration for a single job.
+- `jobId` (string, required)
 
-### `runner_enable`
-Enable a disabled job. Takes effect immediately (triggers scheduler reconciliation).
-- `jobId` (string, required) — The job ID
+#### `runner_enable`
+Enable a disabled job. Takes effect immediately (PATCH method).
+- `jobId` (string, required)
 
-### `runner_disable`
-Disable a job. It will not run until re-enabled. Takes effect immediately.
-- `jobId` (string, required) — The job ID
+#### `runner_disable`
+Disable a job. Takes effect immediately (PATCH method).
+- `jobId` (string, required)
+
+### Management Tools
+
+#### `runner_create_job`
+Create a new runner job. Requires `id`, `name`, `schedule`, and `script`.
+- `id` (string, required) — Unique job identifier
+- `name` (string, required) — Human-readable name
+- `schedule` (string, required) — Cron expression or RRStack JSON
+- `script` (string, required) — Script path or inline content
+- `source_type` (string, optional) — `"path"` or `"inline"` (default: `"path"`)
+- `type` (string, optional) — `"script"` or `"session"` (default: `"script"`)
+- `timeout_seconds` (number, optional) — Kill after N seconds
+- `overlap_policy` (string, optional) — `"skip"` or `"allow"`
+- `enabled` (boolean, optional) — Default: true
+- `description` (string, optional)
+- `on_failure`, `on_success` (string, optional) — Slack channel IDs
+
+#### `runner_update_job`
+Update an existing job. Only supplied fields are changed (PUT with partial body).
+- `jobId` (string, required) — The job to update
+- All fields from `runner_create_job` except `id` are accepted as optional updates
+
+#### `runner_delete_job`
+Delete a job and all its run history. **Irreversible.**
+- `jobId` (string, required)
+
+#### `runner_update_script`
+Update a job's script content or path without changing other job fields.
+- `jobId` (string, required)
+- `script` (string, required) — New script path or inline content
+- `source_type` (string, optional) — `"path"` or `"inline"`
+
+### Queue & State Inspection
+
+#### `runner_list_queues`
+List all queues that have items. No parameters.
+
+#### `runner_queue_status`
+Get queue depth, claimed count, failed count, and oldest item age.
+- `queueName` (string, required)
+
+#### `runner_queue_peek`
+Non-claiming read of pending queue items (does not consume them).
+- `queueName` (string, required)
+- `limit` (number, optional) — Max items, default 10
+
+#### `runner_list_namespaces`
+List all state namespaces. No parameters.
+
+#### `runner_query_state`
+Read all scalar state for a namespace. Supports optional JSONPath filtering.
+- `namespace` (string, required)
+- `path` (string, optional) — JSONPath expression to filter results
+
+#### `runner_query_collection`
+Read collection items for a state key within a namespace.
+- `namespace` (string, required)
+- `key` (string, required)
+
+## RRStack Scheduling
+
+Jobs support two schedule formats:
+
+**Cron expressions** (traditional): `*/5 * * * *`, `0 23 * * *`
+
+**RRStack JSON** (recurring rule stacks): For complex schedules that cron cannot express, such as "every 2nd Tuesday" or "last Friday of the month". Pass a JSON object string as the schedule:
+
+```json
+{"freq":"weekly","interval":2,"byDay":["TU"]}
+```
+
+The runner auto-detects the format. RRStack schedules display as `*(rrstack)*` in the TOOLS.md job table; cron schedules display in backtick-wrapped format.
+
+See [`@karmaniverous/rrstack`](https://www.npmjs.com/package/@karmaniverous/rrstack) for the full RRStack specification.
 
 ## SQLite Direct Access
 
@@ -381,7 +432,7 @@ db.prepare('UPDATE jobs SET script = ? WHERE id = ?').run('/path/to/new-script.j
 
 ## Tables
 
-- **jobs** — Job definitions (id, name, schedule, script, type, enabled, timeout_ms, overlap_policy, on_failure, on_success)
+- **jobs** — Job definitions (id, name, schedule, script, source_type, type, enabled, timeout_ms, overlap_policy, description, on_failure, on_success)
 - **runs** — Run history (job_id, status, started_at, duration_ms, exit_code, tokens, error, stdout_tail, stderr_tail, trigger)
 - **state** — Key-value state store with namespaces and optional expiry
 - **state_items** — Collection state (namespace, key, item_key, value)
@@ -396,7 +447,7 @@ db.prepare('UPDATE jobs SET script = ? WHERE id = ?').run('/path/to/new-script.j
 ## Troubleshooting
 
 ### Job failing with module not found
-Check the `script` column in the `jobs` table. If pointing to a stale path, update it directly in SQLite. Changes take effect on next scheduled fire.
+Check the `script` column in the `jobs` table. If pointing to a stale path, update it with `runner_update_script` or directly in SQLite.
 
 ### All jobs failing after service restart
 The runner seeds from the schedule file on startup (upsert). If the schedule file has stale paths, they'll overwrite DB values. Fix the schedule file first, then restart.
@@ -412,7 +463,7 @@ Common causes:
 
 ### High error rate
 Use `runner_runs` on failing jobs to see error messages. Common patterns:
-- Script path changed → update `script` in the jobs table
+- Script path changed → use `runner_update_script` to fix
 - External API rate limited → add backoff/retry in the script
 - File permissions → check the service user has access to script paths and output directories
 

@@ -1,5 +1,7 @@
 /**
  * Shared HTTP utility for making POST requests.
+ *
+ * @module
  */
 
 import type { IncomingMessage } from 'node:http';
