@@ -12,6 +12,8 @@ import type { FastifyInstance } from 'fastify';
 import type { Scheduler } from '../scheduler/scheduler.js';
 import type { RunnerConfig } from '../schemas/config.js';
 import { registerJobRoutes } from './job-routes.js';
+import { registerQueueRoutes } from './queue-routes.js';
+import { registerStateRoutes } from './state-routes.js';
 
 /** Route dependencies. */
 interface RouteDeps {
@@ -161,4 +163,8 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
 
   // Register job CRUD routes (POST, PUT, DELETE, PATCH enable/disable, PUT script)
   registerJobRoutes(app, { db, scheduler });
+
+  // Register queue and state inspection routes
+  registerQueueRoutes(app, { db });
+  registerStateRoutes(app, { db });
 }
