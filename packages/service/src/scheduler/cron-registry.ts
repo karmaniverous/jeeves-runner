@@ -1,11 +1,14 @@
 /**
- * Cron registration and reconciliation utilities.
+ * Schedule registration and reconciliation. Supports cron (croner) and RRStack schedule formats via unified setTimeout-based scheduling.
+ *
+ * @module
  */
 
 import type { DatabaseSync } from 'node:sqlite';
 
-import { Cron } from 'croner';
 import type { Logger } from 'pino';
+
+import { getNextFireTime } from './schedule-utils.js';
 
 /** Job record from database (shape used by scheduler). */
 export interface JobRow {
@@ -18,6 +21,13 @@ export interface JobRow {
   overlap_policy: 'skip' | 'allow';
   on_failure: string | null;
   on_success: string | null;
+  source_type?: 'path' | 'inline';
+}
+
+/** Handle for a scheduled job (timeout-based). */
+interface ScheduleHandle {
+  /** Cancel the pending timeout. */
+  cancel: () => void;
 }
 
 export interface CronRegistry {
@@ -32,32 +42,68 @@ export interface CronRegistryDeps {
   onScheduledRun: (job: JobRow) => void;
 }
 
+/** Maximum setTimeout delay (Node.js limit: ~24.8 days). */
+const MAX_TIMEOUT_MS = 2_147_483_647;
+
 export function createCronRegistry(deps: CronRegistryDeps): CronRegistry {
   const { db, logger, onScheduledRun } = deps;
 
-  const crons = new Map<string, Cron>();
-  const cronSchedules = new Map<string, string>();
+  const handles = new Map<string, ScheduleHandle>();
+  const scheduleStrings = new Map<string, string>();
   const failedRegistrations = new Set<string>();
 
-  function registerCron(job: JobRow): boolean {
+  /**
+   * Schedule the next fire for a job. Computes next fire time, sets a
+   * setTimeout, and re-arms after each fire.
+   */
+  function scheduleNext(jobId: string, schedule: string): void {
+    const nextDate = getNextFireTime(schedule);
+    if (!nextDate) {
+      logger.warn({ jobId }, 'No upcoming fire time, job will not fire');
+      return;
+    }
+
+    const delayMs = Math.max(0, nextDate.getTime() - Date.now());
+
+    // Node.js setTimeout max is ~24.8 days. If delay exceeds that,
+    // set an intermediate wakeup and re-check.
+    const effectiveDelay = Math.min(delayMs, MAX_TIMEOUT_MS);
+    const isIntermediate = delayMs > MAX_TIMEOUT_MS;
+
+    const timeout = setTimeout(() => {
+      if (isIntermediate) {
+        // Woke up early just to re-check; schedule again.
+        scheduleNext(jobId, schedule);
+        return;
+      }
+
+      // Re-read job from DB to get current configuration
+      const currentJob = db
+        .prepare('SELECT * FROM jobs WHERE id = ? AND enabled = 1')
+        .get(jobId) as JobRow | undefined;
+
+      if (!currentJob) {
+        logger.warn({ jobId }, 'Job no longer exists or disabled, skipping');
+        return;
+      }
+
+      onScheduledRun(currentJob);
+
+      // Re-arm for the next occurrence
+      scheduleNext(jobId, schedule);
+    }, effectiveDelay);
+
+    handles.set(jobId, {
+      cancel: () => {
+        clearTimeout(timeout);
+      },
+    });
+  }
+
+  function registerSchedule(job: JobRow): boolean {
     try {
-      const jobId = job.id;
-      const cron = new Cron(job.schedule, () => {
-        // Re-read job from DB to get current configuration
-        const currentJob = db
-          .prepare('SELECT * FROM jobs WHERE id = ? AND enabled = 1')
-          .get(jobId) as JobRow | undefined;
-
-        if (!currentJob) {
-          logger.warn({ jobId }, 'Job no longer exists or disabled, skipping');
-          return;
-        }
-
-        onScheduledRun(currentJob);
-      });
-
-      crons.set(job.id, cron);
-      cronSchedules.set(job.id, job.schedule);
+      scheduleNext(job.id, job.schedule);
+      scheduleStrings.set(job.id, job.schedule);
       failedRegistrations.delete(job.id);
       logger.info({ jobId: job.id, schedule: job.schedule }, 'Scheduled job');
       return true;
@@ -76,11 +122,11 @@ export function createCronRegistry(deps: CronRegistryDeps): CronRegistry {
     const enabledById = new Map(enabledJobs.map((j) => [j.id, j] as const));
 
     // Remove disabled/deleted jobs
-    for (const [jobId, cron] of crons.entries()) {
+    for (const [jobId, handle] of handles.entries()) {
       if (!enabledById.has(jobId)) {
-        cron.stop();
-        crons.delete(jobId);
-        cronSchedules.delete(jobId);
+        handle.cancel();
+        handles.delete(jobId);
+        scheduleStrings.delete(jobId);
       }
     }
 
@@ -88,19 +134,19 @@ export function createCronRegistry(deps: CronRegistryDeps): CronRegistry {
 
     // Add or update enabled jobs
     for (const job of enabledJobs) {
-      const existingCron = crons.get(job.id);
-      const existingSchedule = cronSchedules.get(job.id);
+      const existingHandle = handles.get(job.id);
+      const existingSchedule = scheduleStrings.get(job.id);
 
-      if (!existingCron) {
-        if (!registerCron(job)) failedIds.push(job.id);
+      if (!existingHandle) {
+        if (!registerSchedule(job)) failedIds.push(job.id);
         continue;
       }
 
       if (existingSchedule !== job.schedule) {
-        existingCron.stop();
-        crons.delete(job.id);
-        cronSchedules.delete(job.id);
-        if (!registerCron(job)) failedIds.push(job.id);
+        existingHandle.cancel();
+        handles.delete(job.id);
+        scheduleStrings.delete(job.id);
+        if (!registerSchedule(job)) failedIds.push(job.id);
       }
     }
 
@@ -108,11 +154,11 @@ export function createCronRegistry(deps: CronRegistryDeps): CronRegistry {
   }
 
   function stopAll(): void {
-    for (const cron of crons.values()) {
-      cron.stop();
+    for (const handle of handles.values()) {
+      handle.cancel();
     }
-    crons.clear();
-    cronSchedules.clear();
+    handles.clear();
+    scheduleStrings.clear();
   }
 
   return {
