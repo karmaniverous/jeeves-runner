@@ -93,8 +93,8 @@ export function registerJobRoutes(
     return { ok: true, id: data.id };
   });
 
-  /** PUT /jobs/:id — Update an existing job. */
-  app.put<{ Params: { id: string } }>('/jobs/:id', (request, reply) => {
+  /** PATCH /jobs/:id — Partial update of an existing job. */
+  app.patch<{ Params: { id: string } }>('/jobs/:id', (request, reply) => {
     const parsed = updateJobSchema.safeParse(request.body);
     if (!parsed.success) {
       reply.code(400);

@@ -98,7 +98,7 @@ export function registerManagementTools(api: PluginApi, baseUrl: string): void {
         },
         required: ['jobId'],
       },
-      method: 'PUT',
+      method: 'PATCH',
       buildRequest: (params) => [jobPath(params), buildJobBody(params)],
     },
     {

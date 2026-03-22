@@ -337,7 +337,7 @@ describe('API routes', () => {
     expect(response.statusCode).toBe(400);
   });
 
-  it('PUT /jobs/:id should update an existing job', async () => {
+  it('PATCH /jobs/:id should update an existing job', async () => {
     testDb.db
       .prepare(
         `INSERT INTO jobs (id, name, schedule, script, enabled)
@@ -346,7 +346,7 @@ describe('API routes', () => {
       .run('update-me', 'Original', '0 0 * * *', 'echo test', 1);
 
     const response = await app.inject({
-      method: 'PUT',
+      method: 'PATCH',
       url: '/jobs/update-me',
       payload: { name: 'Updated Name' },
     });
@@ -360,9 +360,9 @@ describe('API routes', () => {
     expect(job.name).toBe('Updated Name');
   });
 
-  it('PUT /jobs/:id should return 404 for missing job', async () => {
+  it('PATCH /jobs/:id should return 404 for missing job', async () => {
     const response = await app.inject({
-      method: 'PUT',
+      method: 'PATCH',
       url: '/jobs/nonexistent',
       payload: { name: 'Nope' },
     });
