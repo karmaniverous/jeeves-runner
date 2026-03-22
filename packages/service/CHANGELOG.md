@@ -2,10 +2,34 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [0.5.0](https://github.com/karmaniverous/jeeves-runner/compare/service/0.4.1...0.5.0)
+#### [0.6.0](https://github.com/karmaniverous/jeeves-runner/compare/service/0.5.0...0.6.0)
+
+- feat: v0.6.0 — Runner Management Tools & RRStack Scheduling [`#35`](https://github.com/karmaniverous/jeeves-runner/pull/35)
+- test: split large test files (routes, scheduler) to respect 300 LOC limit [`396818d`](https://github.com/karmaniverous/jeeves-runner/commit/396818d8d473ca8b9298f5cf910edacb2f7163a1)
+- feat(openclaw): add 10 management & inspection tools, update enable/disable to PATCH [`141e6df`](https://github.com/karmaniverous/jeeves-runner/commit/141e6dfdfefd4a5b2c3224a9486443a70d3ec202)
+- feat(service): Phase 1 — scheduling foundation with RRStack support [`3837917`](https://github.com/karmaniverous/jeeves-runner/commit/3837917990fc36470d917f24c18a14fdeb605e76)
+- feat(service): Phase 2 — job management endpoints and inline scripts [`363f52a`](https://github.com/karmaniverous/jeeves-runner/commit/363f52a671da5f8cae4fc9968d104e9ccf9af420)
+- feat(service): Phase 3 — queue and state inspection endpoints [`9f38ca5`](https://github.com/karmaniverous/jeeves-runner/commit/9f38ca528be83a9452f07b0f86c5ae7199f32081)
+- docs: update SKILL.md, guides, and README for v0.6.0 tools [`cef7cdc`](https://github.com/karmaniverous/jeeves-runner/commit/cef7cdc38c53274098a813347d54f8ba7fb47fe8)
+- refactor: complete SOLID/DRY sweep — field-map update builder, single-query queue status, shared test fixtures, fix unimplemented overlap policy, CLI rrstack validation [`d9b8e25`](https://github.com/karmaniverous/jeeves-runner/commit/d9b8e25d597a2a0799d968527fc6d2049177e9ec)
+- refactor: extract shared route test harness, fix corrupted emoji in slack notifier [`3bd0f6a`](https://github.com/karmaniverous/jeeves-runner/commit/3bd0f6a0bcaa0e836e02469993f3626e4aa6e56e)
+- feat(openclaw): show schedule format and source type in TOOLS.md content [`64f5358`](https://github.com/karmaniverous/jeeves-runner/commit/64f5358cf5eb1b17cd4361b6cabb133d0534e58b)
+- refactor: DRY toggle route and harden tool helper [`ac82338`](https://github.com/karmaniverous/jeeves-runner/commit/ac82338fe9f62f46b070d00727041afc39e89ceb)
+- refactor: remove deprecated POST enable/disable aliases [`0c71fd2`](https://github.com/karmaniverous/jeeves-runner/commit/0c71fd21e9b97944fe9101ab97c6e1bd14d2bc41)
+- chore: release @karmaniverous/jeeves-runner-openclaw v0.3.0 [`475afce`](https://github.com/karmaniverous/jeeves-runner/commit/475afce32499ec1fc4679b04032c4f6b4b8263e9)
+- refactor: DRY job-not-found constant, eliminate SELECT-before-UPDATE, add @module tags [`68d953b`](https://github.com/karmaniverous/jeeves-runner/commit/68d953bec0d850493ff744ffca08a19070bcac21)
+- docs: add @module TSDoc tags to all source modules [`59efba3`](https://github.com/karmaniverous/jeeves-runner/commit/59efba3d5298f4d8d4af3b531f749b6e1ba6ae1a)
+- fix(service): add JSONPath support to GET /state/:namespace/:key [`089f8f2`](https://github.com/karmaniverous/jeeves-runner/commit/089f8f2b7f5e290de6f51a6a08ce2f379043803a)
+- refactor: change PUT /jobs/:id to PATCH (partial update semantics) [`5a60f23`](https://github.com/karmaniverous/jeeves-runner/commit/5a60f236fb32d21bc0c5d09f83f70a13b37147d0)
+- feat(service): add configurable bind address (#34) [`1603103`](https://github.com/karmaniverous/jeeves-runner/commit/160310306a9154aae5a20ade38003389f7a4d021)
+
+#### [service/0.5.0](https://github.com/karmaniverous/jeeves-runner/compare/service/0.4.1...service/0.5.0)
+
+> 21 March 2026
 
 - chore: adopt @karmaniverous/jeeves ^0.2.0 core SDK [`#33`](https://github.com/karmaniverous/jeeves-runner/pull/33)
 - chore: release @karmaniverous/jeeves-runner-openclaw v0.2.1 [`676cfbd`](https://github.com/karmaniverous/jeeves-runner/commit/676cfbd66aac1a764c2f3a4e54d4db8dd6741ae9)
+- chore: release @karmaniverous/jeeves-runner v0.5.0 [`6f8c847`](https://github.com/karmaniverous/jeeves-runner/commit/6f8c8473e1526cd5821f12b50b88f95ed617c0fb)
 
 #### [service/0.4.1](https://github.com/karmaniverous/jeeves-runner/compare/service/0.4.0...service/0.4.1)
 
