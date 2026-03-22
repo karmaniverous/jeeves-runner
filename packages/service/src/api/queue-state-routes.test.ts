@@ -2,50 +2,20 @@
  * Tests for queue and state inspection routes.
  */
 
-import Fastify, { type FastifyInstance } from 'fastify';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { FastifyInstance } from 'fastify';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import type { Scheduler } from '../scheduler/scheduler.js';
-import { runnerConfigSchema } from '../schemas/config.js';
 import type { TestDb } from '../test-utils/db.js';
-import { createTestDb } from '../test-utils/db.js';
-import { registerRoutes } from './routes.js';
+import { createRouteTestHarness } from '../test-utils/routes.js';
 
 describe('Queue & State routes', () => {
   let testDb: TestDb;
   let app: FastifyInstance;
 
   beforeEach(async () => {
-    testDb = createTestDb();
-
-    const mockScheduler: Scheduler = {
-      start: vi.fn(),
-      stop: vi.fn(() => Promise.resolve()),
-      triggerJob: vi.fn(() =>
-        Promise.resolve({
-          status: 'ok' as const,
-          durationMs: 100,
-          exitCode: 0,
-          tokens: null,
-          resultMeta: null,
-          error: null,
-          stdoutTail: '',
-          stderrTail: '',
-        }),
-      ),
-      reconcileNow: vi.fn(),
-      getRunningJobs: vi.fn(() => []),
-      getFailedRegistrations: vi.fn(() => []),
-    };
-
-    app = Fastify({ logger: false });
-    const defaultConfig = runnerConfigSchema.parse({});
-    registerRoutes(app, {
-      db: testDb.db,
-      scheduler: mockScheduler,
-      getConfig: () => defaultConfig,
-    });
-    await app.ready();
+    const harness = await createRouteTestHarness();
+    testDb = harness.testDb;
+    app = harness.app;
   });
 
   afterEach(async () => {

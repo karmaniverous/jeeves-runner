@@ -2,58 +2,23 @@
  * Tests for API routes using fastify.inject().
  */
 
-import Fastify, { type FastifyInstance } from 'fastify';
+import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { Scheduler } from '../scheduler/scheduler.js';
-import { runnerConfigSchema } from '../schemas/config.js';
 import type { TestDb } from '../test-utils/db.js';
-import { createTestDb } from '../test-utils/db.js';
-import { registerRoutes } from './routes.js';
+import type { createMockScheduler } from '../test-utils/routes.js';
+import { createRouteTestHarness } from '../test-utils/routes.js';
 
 describe('API routes', () => {
   let testDb: TestDb;
   let app: FastifyInstance;
-  let mockScheduler: Scheduler;
-  let triggerJobMock: Scheduler['triggerJob'];
-  let reconcileNowMock: Scheduler['reconcileNow'];
+  let scheduler: ReturnType<typeof createMockScheduler>;
 
   beforeEach(async () => {
-    testDb = createTestDb();
-
-    // Create mock functions
-    triggerJobMock = vi.fn(() =>
-      Promise.resolve({
-        status: 'ok' as const,
-        durationMs: 100,
-        exitCode: 0,
-        tokens: null,
-        resultMeta: null,
-        error: null,
-        stdoutTail: '',
-        stderrTail: '',
-      }),
-    );
-    reconcileNowMock = vi.fn();
-
-    // Create mock scheduler
-    mockScheduler = {
-      start: vi.fn(),
-      stop: vi.fn(() => Promise.resolve()),
-      triggerJob: triggerJobMock,
-      reconcileNow: reconcileNowMock,
-      getRunningJobs: vi.fn(() => []),
-      getFailedRegistrations: vi.fn(() => []),
-    };
-
-    app = Fastify({ logger: false });
-    const defaultConfig = runnerConfigSchema.parse({});
-    registerRoutes(app, {
-      db: testDb.db,
-      scheduler: mockScheduler,
-      getConfig: () => defaultConfig,
-    });
-    await app.ready();
+    const harness = await createRouteTestHarness();
+    testDb = harness.testDb;
+    app = harness.app;
+    scheduler = harness.scheduler;
   });
 
   afterEach(async () => {
@@ -146,14 +111,13 @@ describe('API routes', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(triggerJobMock).toHaveBeenCalledWith('test-job');
+    expect(scheduler.triggerJobMock).toHaveBeenCalledWith('test-job');
   });
 
   it('POST /jobs/:id/run should return 404 for missing job', async () => {
-    triggerJobMock = vi.fn(() =>
+    scheduler.triggerJob = vi.fn(() =>
       Promise.reject(new Error('Job not found: nonexistent')),
     );
-    mockScheduler.triggerJob = triggerJobMock;
 
     const response = await app.inject({
       method: 'POST',
@@ -221,7 +185,7 @@ describe('API routes', () => {
     });
 
     expect(response.statusCode).toBe(201);
-    expect(reconcileNowMock).toHaveBeenCalled();
+    expect(scheduler.reconcileNowMock).toHaveBeenCalled();
 
     const job = testDb.db
       .prepare('SELECT * FROM jobs WHERE id = ?')
@@ -290,7 +254,7 @@ describe('API routes', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(reconcileNowMock).toHaveBeenCalled();
+    expect(scheduler.reconcileNowMock).toHaveBeenCalled();
 
     const job = testDb.db
       .prepare('SELECT name FROM jobs WHERE id = ?')
@@ -328,7 +292,7 @@ describe('API routes', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect(reconcileNowMock).toHaveBeenCalled();
+    expect(scheduler.reconcileNowMock).toHaveBeenCalled();
 
     const runs = testDb.db
       .prepare('SELECT COUNT(*) as count FROM runs WHERE job_id = ?')
