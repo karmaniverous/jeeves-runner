@@ -122,52 +122,41 @@ export function registerJobRoutes(
       }
     }
 
+    /** Map input field → DB column + value transform. */
+    const fieldMap: Array<{
+      input: keyof typeof data;
+      column: string;
+      transform?: (v: unknown) => unknown;
+    }> = [
+      { input: 'name', column: 'name' },
+      { input: 'schedule', column: 'schedule' },
+      { input: 'script', column: 'script' },
+      { input: 'source_type', column: 'source_type' },
+      { input: 'type', column: 'type' },
+      {
+        input: 'timeout_seconds',
+        column: 'timeout_ms',
+        transform: (v) => (v as number) * 1000,
+      },
+      { input: 'overlap_policy', column: 'overlap_policy' },
+      {
+        input: 'enabled',
+        column: 'enabled',
+        transform: (v) => (v ? 1 : 0),
+      },
+      { input: 'description', column: 'description' },
+      { input: 'on_failure', column: 'on_failure' },
+      { input: 'on_success', column: 'on_success' },
+    ];
+
     const sets: string[] = [];
     const values: unknown[] = [];
 
-    if (data.name !== undefined) {
-      sets.push('name = ?');
-      values.push(data.name);
-    }
-    if (data.schedule !== undefined) {
-      sets.push('schedule = ?');
-      values.push(data.schedule);
-    }
-    if (data.script !== undefined) {
-      sets.push('script = ?');
-      values.push(data.script);
-    }
-    if (data.source_type !== undefined) {
-      sets.push('source_type = ?');
-      values.push(data.source_type);
-    }
-    if (data.type !== undefined) {
-      sets.push('type = ?');
-      values.push(data.type);
-    }
-    if (data.timeout_seconds !== undefined) {
-      sets.push('timeout_ms = ?');
-      values.push(data.timeout_seconds * 1000);
-    }
-    if (data.overlap_policy !== undefined) {
-      sets.push('overlap_policy = ?');
-      values.push(data.overlap_policy);
-    }
-    if (data.enabled !== undefined) {
-      sets.push('enabled = ?');
-      values.push(data.enabled ? 1 : 0);
-    }
-    if (data.description !== undefined) {
-      sets.push('description = ?');
-      values.push(data.description);
-    }
-    if (data.on_failure !== undefined) {
-      sets.push('on_failure = ?');
-      values.push(data.on_failure);
-    }
-    if (data.on_success !== undefined) {
-      sets.push('on_success = ?');
-      values.push(data.on_success);
+    for (const { input, column, transform } of fieldMap) {
+      if (data[input] !== undefined) {
+        sets.push(`${column} = ?`);
+        values.push(transform ? transform(data[input]) : data[input]);
+      }
     }
 
     if (sets.length > 0) {

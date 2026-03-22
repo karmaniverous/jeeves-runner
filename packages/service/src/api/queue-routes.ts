@@ -32,42 +32,29 @@ export function registerQueueRoutes(
 
   /** GET /queues/:name/status — Queue depth, claimed count, failed count, oldest age. */
   app.get<{ Params: { name: string } }>('/queues/:name/status', (request) => {
-    const name = request.params.name;
-
-    const depth = db
+    const row = db
       .prepare(
-        `SELECT COUNT(*) as count FROM queue_items
-           WHERE queue_id = ? AND status = 'pending'`,
+        `SELECT
+           SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) AS depth,
+           SUM(CASE WHEN status = 'processing' THEN 1 ELSE 0 END) AS claimed,
+           SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed,
+           MIN(CASE WHEN status = 'pending' THEN created_at END) AS oldest
+         FROM queue_items
+         WHERE queue_id = ?`,
       )
-      .get(name) as { count: number };
-
-    const claimed = db
-      .prepare(
-        `SELECT COUNT(*) as count FROM queue_items
-           WHERE queue_id = ? AND status = 'processing'`,
-      )
-      .get(name) as { count: number };
-
-    const failed = db
-      .prepare(
-        `SELECT COUNT(*) as count FROM queue_items
-           WHERE queue_id = ? AND status = 'failed'`,
-      )
-      .get(name) as { count: number };
-
-    const oldest = db
-      .prepare(
-        `SELECT MIN(created_at) as oldest FROM queue_items
-           WHERE queue_id = ? AND status = 'pending'`,
-      )
-      .get(name) as { oldest: string | null };
+      .get(request.params.name) as {
+      depth: number | null;
+      claimed: number | null;
+      failed: number | null;
+      oldest: string | null;
+    };
 
     return {
-      depth: depth.count,
-      claimedCount: claimed.count,
-      failedCount: failed.count,
-      oldestAge: oldest.oldest
-        ? Date.now() - new Date(oldest.oldest).getTime()
+      depth: row.depth ?? 0,
+      claimedCount: row.claimed ?? 0,
+      failedCount: row.failed ?? 0,
+      oldestAge: row.oldest
+        ? Date.now() - new Date(row.oldest).getTime()
         : null,
     };
   });

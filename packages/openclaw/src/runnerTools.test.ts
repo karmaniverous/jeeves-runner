@@ -3,7 +3,7 @@
  */
 
 import { type PluginApi, type ToolResult } from '@karmaniverous/jeeves';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { registerRunnerTools } from './runnerTools.js';
 
@@ -28,10 +28,14 @@ function createMockApi(): PluginApi & {
 }
 
 describe('registerRunnerTools', () => {
-  it('registers all 17 tools', () => {
-    const api = createMockApi();
-    registerRunnerTools(api, 'http://localhost:1937');
+  let api: ReturnType<typeof createMockApi>;
 
+  beforeEach(() => {
+    api = createMockApi();
+    registerRunnerTools(api, 'http://localhost:1937');
+  });
+
+  it('registers all 17 tools', () => {
     expect(api.tools.size).toBe(17);
 
     const expected = [
@@ -60,9 +64,6 @@ describe('registerRunnerTools', () => {
   });
 
   it('runner_status calls GET /stats', async () => {
-    const api = createMockApi();
-    registerRunnerTools(api, 'http://localhost:1937');
-
     const mockResponse = {
       totalJobs: 28,
       running: 0,
@@ -87,9 +88,6 @@ describe('registerRunnerTools', () => {
   });
 
   it('runner_trigger calls POST /jobs/:id/run', async () => {
-    const api = createMockApi();
-    registerRunnerTools(api, 'http://localhost:1937');
-
     const mockResult = { result: { status: 'ok', duration_ms: 1234 } };
 
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
@@ -107,9 +105,6 @@ describe('registerRunnerTools', () => {
   });
 
   it('runner_runs appends limit query param', async () => {
-    const api = createMockApi();
-    registerRunnerTools(api, 'http://localhost:1937');
-
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
       new Response(JSON.stringify({ runs: [] }), { status: 200 }),
     );
@@ -124,9 +119,6 @@ describe('registerRunnerTools', () => {
   });
 
   it('runner_enable calls PATCH /jobs/:id/enable', async () => {
-    const api = createMockApi();
-    registerRunnerTools(api, 'http://localhost:1937');
-
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
       new Response(JSON.stringify({ ok: true }), { status: 200 }),
     );
@@ -141,9 +133,6 @@ describe('registerRunnerTools', () => {
   });
 
   it('runner_disable calls PATCH /jobs/:id/disable', async () => {
-    const api = createMockApi();
-    registerRunnerTools(api, 'http://localhost:1937');
-
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
       new Response(JSON.stringify({ ok: true }), { status: 200 }),
     );
@@ -158,9 +147,6 @@ describe('registerRunnerTools', () => {
   });
 
   it('runner_create_job calls POST /jobs', async () => {
-    const api = createMockApi();
-    registerRunnerTools(api, 'http://localhost:1937');
-
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
       new Response(JSON.stringify({ ok: true, id: 'new-job' }), {
         status: 201,
@@ -187,9 +173,6 @@ describe('registerRunnerTools', () => {
   });
 
   it('runner_delete_job calls DELETE /jobs/:id', async () => {
-    const api = createMockApi();
-    registerRunnerTools(api, 'http://localhost:1937');
-
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
       new Response(JSON.stringify({ ok: true }), { status: 200 }),
     );
@@ -205,9 +188,6 @@ describe('registerRunnerTools', () => {
   });
 
   it('runner_query_state calls GET /state/:namespace', async () => {
-    const api = createMockApi();
-    registerRunnerTools(api, 'http://localhost:1937');
-
     const stateData = { cursor: '12345', checkpoint: 'abc' };
 
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
@@ -225,9 +205,6 @@ describe('registerRunnerTools', () => {
   });
 
   it('runner_query_state appends path query param', async () => {
-    const api = createMockApi();
-    registerRunnerTools(api, 'http://localhost:1937');
-
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
       new Response(JSON.stringify({ result: '12345', count: 1 }), {
         status: 200,
@@ -244,9 +221,6 @@ describe('registerRunnerTools', () => {
   });
 
   it('runner_queue_peek calls GET /queues/:name/peek', async () => {
-    const api = createMockApi();
-    registerRunnerTools(api, 'http://localhost:1937');
-
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
       new Response(
         JSON.stringify({
@@ -270,9 +244,6 @@ describe('registerRunnerTools', () => {
   });
 
   it('returns connection error for new tools when service unreachable', async () => {
-    const api = createMockApi();
-    registerRunnerTools(api, 'http://localhost:1937');
-
     const connError = new TypeError('fetch failed');
     Object.defineProperty(connError, 'cause', {
       value: { code: 'ECONNREFUSED' },
@@ -287,9 +258,6 @@ describe('registerRunnerTools', () => {
   });
 
   it('returns connection error when service unreachable', async () => {
-    const api = createMockApi();
-    registerRunnerTools(api, 'http://localhost:1937');
-
     const connError = new TypeError('fetch failed');
     Object.defineProperty(connError, 'cause', {
       value: { code: 'ECONNREFUSED' },

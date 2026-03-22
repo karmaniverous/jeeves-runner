@@ -2,72 +2,21 @@
  * Tests for the job scheduler.
  */
 
-import { DatabaseSync } from 'node:sqlite';
-
 import type { Logger } from 'pino';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { Notifier } from '../notify/slack.js';
-import type { RunnerConfig } from '../schemas/config.js';
+import { type RunnerConfig, runnerConfigSchema } from '../schemas/config.js';
+import { createTestDb } from '../test-utils/db.js';
 import type { ExecutionOptions, ExecutionResult } from './executor.js';
 import { createScheduler } from './scheduler.js';
 
-function createTestConfig(): RunnerConfig {
+function createTestConfig(overrides: Partial<RunnerConfig> = {}): RunnerConfig {
   return {
-    port: 1937,
-    dbPath: ':memory:',
-    maxConcurrency: 5,
-    runRetentionDays: 30,
-    stateCleanupIntervalMs: 3600000,
-    shutdownGraceMs: 5000,
+    ...runnerConfigSchema.parse({}),
     reconcileIntervalMs: 0,
-    notifications: {
-      defaultOnFailure: null,
-      defaultOnSuccess: null,
-    },
-    gateway: {
-      url: 'http://127.0.0.1:18789',
-    },
-    log: {
-      level: 'info',
-    },
+    ...overrides,
   };
-}
-
-function createDb(): DatabaseSync {
-  const db = new DatabaseSync(':memory:');
-  db.exec(`
-    CREATE TABLE jobs (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      schedule TEXT NOT NULL,
-      script TEXT NOT NULL,
-      type TEXT DEFAULT 'script',
-      enabled INTEGER NOT NULL DEFAULT 1,
-      timeout_ms INTEGER,
-      overlap_policy TEXT NOT NULL DEFAULT 'skip',
-      on_success TEXT,
-      on_failure TEXT
-    );
-
-    CREATE TABLE runs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      job_id TEXT NOT NULL,
-      status TEXT NOT NULL,
-      started_at TEXT NOT NULL,
-      finished_at TEXT,
-      duration_ms INTEGER,
-      exit_code INTEGER,
-      tokens INTEGER,
-      result_meta TEXT,
-      error TEXT,
-      stdout_tail TEXT,
-      stderr_tail TEXT,
-      trigger TEXT NOT NULL,
-      FOREIGN KEY (job_id) REFERENCES jobs(id)
-    );
-  `);
-  return db;
 }
 
 function createMocks() {
@@ -122,7 +71,8 @@ describe('createScheduler', () => {
   });
 
   it('re-reads job from database on scheduled execution (avoids stale closure)', async () => {
-    const db = createDb();
+    const testDb = createTestDb();
+    const db = testDb.db;
     db.prepare(
       `INSERT INTO jobs (id, name, schedule, script, enabled)
        VALUES (?, ?, ?, ?, ?)`,
@@ -156,11 +106,12 @@ describe('createScheduler', () => {
     );
 
     void scheduler.stop();
-    db.close();
+    testDb.cleanup();
   });
 
   it('skips scheduled execution if job is disabled after startup', async () => {
-    const db = createDb();
+    const testDb = createTestDb();
+    const db = testDb.db;
     db.prepare(
       `INSERT INTO jobs (id, name, schedule, script, enabled)
        VALUES (?, ?, ?, ?, ?)`,
@@ -188,11 +139,12 @@ describe('createScheduler', () => {
     expect(executorMock).not.toHaveBeenCalled();
 
     void scheduler.stop();
-    db.close();
+    testDb.cleanup();
   });
 
   it('tracks jobs that fail to register', () => {
-    const db = createDb();
+    const testDb = createTestDb();
+    const db = testDb.db;
     // Insert a job with an invalid schedule
     db.prepare(
       `INSERT INTO jobs (id, name, schedule, script, enabled)
@@ -234,11 +186,12 @@ describe('createScheduler', () => {
     );
 
     void scheduler.stop();
-    db.close();
+    testDb.cleanup();
   });
 
   it('does not include valid schedules in failed registrations', () => {
-    const db = createDb();
+    const testDb = createTestDb();
+    const db = testDb.db;
     db.prepare(
       `INSERT INTO jobs (id, name, schedule, script, enabled)
        VALUES (?, ?, ?, ?, ?)`,
@@ -263,11 +216,12 @@ describe('createScheduler', () => {
     expect(notifyFailureMock).not.toHaveBeenCalled();
 
     void scheduler.stop();
-    db.close();
+    testDb.cleanup();
   });
 
   it('registers newly inserted enabled jobs on reconciliation', () => {
-    const db = createDb();
+    const testDb = createTestDb();
+    const db = testDb.db;
     const { executorMock, notifier, logger } = createMocks();
 
     const scheduler = createScheduler({
@@ -293,11 +247,12 @@ describe('createScheduler', () => {
     expect(scheduler.getFailedRegistrations()).not.toContain('new-job');
 
     void scheduler.stop();
-    db.close();
+    testDb.cleanup();
   });
 
   it('removes disabled jobs on reconciliation', async () => {
-    const db = createDb();
+    const testDb = createTestDb();
+    const db = testDb.db;
     db.prepare(
       `INSERT INTO jobs (id, name, schedule, script, enabled)
        VALUES (?, ?, ?, ?, ?)`,
@@ -327,11 +282,12 @@ describe('createScheduler', () => {
     expect(executorMock).not.toHaveBeenCalled();
 
     void scheduler.stop();
-    db.close();
+    testDb.cleanup();
   });
 
   it('re-registers jobs whose schedule changes on reconciliation', () => {
-    const db = createDb();
+    const testDb = createTestDb();
+    const db = testDb.db;
     db.prepare(
       `INSERT INTO jobs (id, name, schedule, script, enabled)
        VALUES (?, ?, ?, ?, ?)`,
@@ -362,18 +318,14 @@ describe('createScheduler', () => {
     expect(scheduler.getFailedRegistrations()).not.toContain('job-change');
 
     void scheduler.stop();
-    db.close();
+    testDb.cleanup();
   });
 
   it('should skip job when already running (overlap_policy=skip)', async () => {
     vi.useRealTimers();
 
-    const db = createDb();
-    // Add type column
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS jobs2 (id TEXT);
-      DROP TABLE IF EXISTS jobs2;
-    `);
+    const testDb = createTestDb();
+    const db = testDb.db;
 
     db.prepare(
       `INSERT INTO jobs (id, name, schedule, script, overlap_policy) VALUES (?, ?, ?, ?, ?)`,
@@ -410,27 +362,11 @@ describe('createScheduler', () => {
       error: vi.fn(),
     } as unknown as Logger;
 
-    const mockConfig: RunnerConfig = {
-      dbPath: ':memory:',
-      port: 18780,
-      maxConcurrency: 10,
-      reconcileIntervalMs: 0,
-      shutdownGraceMs: 5000,
-      runRetentionDays: 30,
-      stateCleanupIntervalMs: 3600000,
-      log: { level: 'info' },
-      notifications: {
-        defaultOnSuccess: null,
-        defaultOnFailure: null,
-      },
-      gateway: { url: 'http://127.0.0.1:18789' },
-    };
-
     const scheduler = createScheduler({
       db,
       executor: mockExecutor,
       notifier: mockNotifier,
-      config: mockConfig,
+      config: createTestConfig({ maxConcurrency: 10 }),
       logger: mockLogger,
     });
 
@@ -447,13 +383,14 @@ describe('createScheduler', () => {
     expect(executionLog.filter((l) => l.startsWith('start-'))).toHaveLength(2);
 
     await scheduler.stop();
-    db.close();
+    testDb.cleanup();
   });
 
   it('should allow concurrent runs (overlap_policy=allow)', async () => {
     vi.useRealTimers();
 
-    const db = createDb();
+    const testDb = createTestDb();
+    const db = testDb.db;
 
     db.prepare(
       `INSERT INTO jobs (id, name, schedule, script, overlap_policy) VALUES (?, ?, ?, ?, ?)`,
@@ -490,27 +427,11 @@ describe('createScheduler', () => {
       error: vi.fn(),
     } as unknown as Logger;
 
-    const mockConfig: RunnerConfig = {
-      dbPath: ':memory:',
-      port: 18780,
-      maxConcurrency: 10,
-      reconcileIntervalMs: 0,
-      shutdownGraceMs: 5000,
-      runRetentionDays: 30,
-      stateCleanupIntervalMs: 3600000,
-      log: { level: 'info' },
-      notifications: {
-        defaultOnSuccess: null,
-        defaultOnFailure: null,
-      },
-      gateway: { url: 'http://127.0.0.1:18789' },
-    };
-
     const scheduler = createScheduler({
       db,
       executor: mockExecutor,
       notifier: mockNotifier,
-      config: mockConfig,
+      config: createTestConfig({ maxConcurrency: 10 }),
       logger: mockLogger,
     });
 
@@ -524,6 +445,6 @@ describe('createScheduler', () => {
     expect(executionLog.filter((l) => l.startsWith('start-'))).toHaveLength(2);
 
     await scheduler.stop();
-    db.close();
+    testDb.cleanup();
   });
 });
