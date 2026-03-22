@@ -180,7 +180,7 @@ describe('API routes', () => {
     expect(body).toHaveProperty('failedRegistrations');
   });
 
-  it('PUT /jobs/:id/enable should enable job', async () => {
+  it('PATCH /jobs/:id/enable should enable job', async () => {
     testDb.db
       .prepare(
         `INSERT INTO jobs (id, name, schedule, script, enabled) VALUES (?, ?, ?, ?, ?)`,
@@ -188,7 +188,7 @@ describe('API routes', () => {
       .run('test-job', 'Test Job', '0 0 * * *', 'echo test', 0);
 
     const response = await app.inject({
-      method: 'POST',
+      method: 'PATCH',
       url: '/jobs/test-job/enable',
     });
 
@@ -202,7 +202,7 @@ describe('API routes', () => {
     expect(job.enabled).toBe(1);
   });
 
-  it('PUT /jobs/:id/disable should disable job', async () => {
+  it('PATCH /jobs/:id/disable should disable job', async () => {
     testDb.db
       .prepare(
         `INSERT INTO jobs (id, name, schedule, script, enabled) VALUES (?, ?, ?, ?, ?)`,
@@ -210,7 +210,7 @@ describe('API routes', () => {
       .run('test-job', 'Test Job', '0 0 * * *', 'echo test', 1);
 
     const response = await app.inject({
-      method: 'POST',
+      method: 'PATCH',
       url: '/jobs/test-job/disable',
     });
 
@@ -224,18 +224,18 @@ describe('API routes', () => {
     expect(job.enabled).toBe(0);
   });
 
-  it('PUT /jobs/:id/enable should return 404 for missing job', async () => {
+  it('PATCH /jobs/:id/enable should return 404 for missing job', async () => {
     const response = await app.inject({
-      method: 'POST',
+      method: 'PATCH',
       url: '/jobs/nonexistent/enable',
     });
 
     expect(response.statusCode).toBe(404);
   });
 
-  it('PUT /jobs/:id/disable should return 404 for missing job', async () => {
+  it('PATCH /jobs/:id/disable should return 404 for missing job', async () => {
     const response = await app.inject({
-      method: 'POST',
+      method: 'PATCH',
       url: '/jobs/nonexistent/disable',
     });
 
@@ -447,22 +447,6 @@ describe('API routes', () => {
       .prepare('SELECT enabled FROM jobs WHERE id = ?')
       .get('patch-disable') as { enabled: number };
     expect(job.enabled).toBe(0);
-  });
-
-  it('POST /jobs/:id/enable should still work (deprecated alias)', async () => {
-    testDb.db
-      .prepare(
-        `INSERT INTO jobs (id, name, schedule, script, enabled)
-         VALUES (?, ?, ?, ?, ?)`,
-      )
-      .run('post-enable', 'Post', '0 0 * * *', 'echo test', 0);
-
-    const response = await app.inject({
-      method: 'POST',
-      url: '/jobs/post-enable/enable',
-    });
-
-    expect(response.statusCode).toBe(200);
   });
 
   it('PUT /jobs/:id/script should update script path', async () => {

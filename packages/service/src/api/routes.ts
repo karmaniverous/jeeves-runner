@@ -91,35 +91,6 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
     },
   );
 
-  /** POST /jobs/:id/enable — Enable a job. */
-  app.post<{ Params: { id: string } }>('/jobs/:id/enable', (request, reply) => {
-    const result = db
-      .prepare('UPDATE jobs SET enabled = 1 WHERE id = ?')
-      .run(request.params.id);
-    if (result.changes === 0) {
-      reply.code(404);
-      return { error: 'Job not found' };
-    }
-    scheduler.reconcileNow();
-    return { ok: true };
-  });
-
-  /** POST /jobs/:id/disable — Disable a job. */
-  app.post<{ Params: { id: string } }>(
-    '/jobs/:id/disable',
-    (request, reply) => {
-      const result = db
-        .prepare('UPDATE jobs SET enabled = 0 WHERE id = ?')
-        .run(request.params.id);
-      if (result.changes === 0) {
-        reply.code(404);
-        return { error: 'Job not found' };
-      }
-      scheduler.reconcileNow();
-      return { ok: true };
-    },
-  );
-
   /** GET /stats — Aggregate job statistics. */
   app.get('/stats', () => {
     const totalJobs = db
