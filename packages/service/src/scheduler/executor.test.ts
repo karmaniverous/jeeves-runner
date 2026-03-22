@@ -152,4 +152,32 @@ describe('executeJob', () => {
     expect(result.status).toBe('timeout');
     expect(result.error).toContain('timed out');
   }, 10000);
+
+  it('should execute an inline script', async () => {
+    const result = await executeJob({
+      script: 'console.log("inline-output"); process.exit(0);',
+      dbPath: ':memory:',
+      jobId: 'inline-test',
+      runId: 1,
+      sourceType: 'inline',
+    });
+
+    expect(result.status).toBe('ok');
+    expect(result.exitCode).toBe(0);
+    expect(result.stdoutTail).toContain('inline-output');
+  });
+
+  it('should capture errors from inline scripts', async () => {
+    const result = await executeJob({
+      script: 'console.error("inline-error"); process.exit(1);',
+      dbPath: ':memory:',
+      jobId: 'inline-fail',
+      runId: 1,
+      sourceType: 'inline',
+    });
+
+    expect(result.status).toBe('error');
+    expect(result.exitCode).toBe(1);
+    expect(result.stderrTail).toContain('inline-error');
+  });
 });

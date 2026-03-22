@@ -35,7 +35,11 @@ export type { Scheduler, SchedulerDeps } from './scheduler/scheduler.js';
 export { createScheduler } from './scheduler/scheduler.js';
 
 // Schedule utilities
-export type { ScheduleValidation } from './scheduler/schedule-utils.js';
+export type {
+  ScheduleInvalid,
+  ScheduleValid,
+  ScheduleValidation,
+} from './scheduler/schedule-utils.js';
 export {
   getNextFireTime,
   validateSchedule,

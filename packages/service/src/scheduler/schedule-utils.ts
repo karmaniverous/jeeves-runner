@@ -7,10 +7,24 @@
 import { RRStack, type RRStackOptions } from '@karmaniverous/rrstack';
 import { Cron } from 'croner';
 
+/** Successful schedule validation result. */
+export interface ScheduleValid {
+  /** Whether the schedule is valid. */
+  valid: true;
+  /** Detected schedule format. */
+  format: 'cron' | 'rrstack';
+}
+
+/** Failed schedule validation result. */
+export interface ScheduleInvalid {
+  /** Whether the schedule is valid. */
+  valid: false;
+  /** Descriptive error message. */
+  error: string;
+}
+
 /** Validation result for a schedule string. */
-export type ScheduleValidation =
-  | { valid: true; format: 'cron' | 'rrstack' }
-  | { valid: false; error: string };
+export type ScheduleValidation = ScheduleValid | ScheduleInvalid;
 
 /**
  * Attempt to parse a schedule string as RRStack JSON (non-null, non-array

@@ -74,7 +74,16 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
     job: JobRow,
     trigger: string,
   ): Promise<ExecutionResult> {
-    const { id, name, script, type, timeout_ms, on_success, on_failure } = job;
+    const {
+      id,
+      name,
+      script,
+      type,
+      timeout_ms,
+      on_success,
+      on_failure,
+      source_type,
+    } = job;
 
     // Check concurrency limit
     if (runningJobs.size >= config.maxConcurrency) {
@@ -110,6 +119,7 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
           jobId: id,
           runId,
           timeoutMs: timeout_ms ?? undefined,
+          sourceType: source_type ?? 'path',
         });
       }
 
