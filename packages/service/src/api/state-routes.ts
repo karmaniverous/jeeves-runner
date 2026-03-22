@@ -64,7 +64,7 @@ export function registerStateRoutes(
   /** GET /state/:namespace/:key — Read collection items for a state key. */
   app.get<{
     Params: { namespace: string; key: string };
-    Querystring: { limit?: string; order?: string };
+    Querystring: { limit?: string; order?: string; path?: string };
   }>('/state/:namespace/:key', (request) => {
     const { namespace, key } = request.params;
     const limit = parseInt(request.query.limit ?? '100', 10);
@@ -93,14 +93,26 @@ export function registerStateRoutes(
       updated_at: string;
     }>;
 
-    return {
+    const mappedItems = items.map((item) => ({
+      itemKey: item.item_key,
+      value: item.value,
+      updatedAt: item.updated_at,
+    }));
+
+    const body = {
       value: scalar?.value ?? null,
-      items: items.map((item) => ({
-        itemKey: item.item_key,
-        value: item.value,
-        updatedAt: item.updated_at,
-      })),
-      count: items.length,
+      items: mappedItems,
+      count: mappedItems.length,
     };
+
+    if (request.query.path) {
+      const result: unknown = JSONPath({
+        path: request.query.path,
+        json: body,
+      });
+      return { result, count: Array.isArray(result) ? result.length : 1 };
+    }
+
+    return body;
   });
 }
