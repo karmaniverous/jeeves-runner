@@ -1,5 +1,7 @@
 /**
  * Job executor. Spawns job scripts as child processes, captures output, parses result metadata, enforces timeouts.
+ *
+ * @module
  */
 
 import { spawn } from 'node:child_process';

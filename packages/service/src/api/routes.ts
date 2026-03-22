@@ -52,7 +52,7 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
   });
 
   /** GET /jobs/:id — Single job detail. */
-  app.get<{ Params: { id: string } }>('/jobs/:id', async (request, reply) => {
+  app.get<{ Params: { id: string } }>('/jobs/:id', (request, reply) => {
     const job = db
       .prepare('SELECT * FROM jobs WHERE id = ?')
       .get(request.params.id);
@@ -132,7 +132,7 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
     },
   );
 
-  // Register job CRUD routes (POST, PUT, DELETE, PATCH enable/disable, PUT script)
+  // Register job CRUD routes (POST, PATCH, DELETE, PATCH enable/disable, PUT script)
   registerJobRoutes(app, { db, scheduler });
 
   // Register queue and state inspection routes

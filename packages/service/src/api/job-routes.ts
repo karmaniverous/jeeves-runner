@@ -43,6 +43,9 @@ const updateScriptSchema = z.object({
   source_type: z.enum(['path', 'inline']).optional(),
 });
 
+/** Standard error message for missing job resources. */
+const JOB_NOT_FOUND = 'Job not found';
+
 /**
  * Register job CRUD routes on the Fastify instance.
  */
@@ -106,7 +109,7 @@ export function registerJobRoutes(
       .get(request.params.id);
     if (!existing) {
       reply.code(404);
-      return { error: 'Job not found' };
+      return { error: JOB_NOT_FOUND };
     }
 
     const data = parsed.data;
@@ -188,7 +191,7 @@ export function registerJobRoutes(
 
     if (result.changes === 0) {
       reply.code(404);
-      return { error: 'Job not found' };
+      return { error: JOB_NOT_FOUND };
     }
 
     scheduler.reconcileNow();
@@ -203,7 +206,7 @@ export function registerJobRoutes(
         .run(enabledValue, request.params.id);
       if (result.changes === 0) {
         reply.code(404);
-        return { error: 'Job not found' };
+        return { error: JOB_NOT_FOUND };
       }
       scheduler.reconcileNow();
       return { ok: true };
@@ -221,24 +224,18 @@ export function registerJobRoutes(
       return { error: parsed.error.message };
     }
 
-    const existing = db
-      .prepare('SELECT id FROM jobs WHERE id = ?')
-      .get(request.params.id);
-    if (!existing) {
-      reply.code(404);
-      return { error: 'Job not found' };
-    }
-
     const data = parsed.data;
-    if (data.source_type) {
-      db.prepare(
-        'UPDATE jobs SET script = ?, source_type = ? WHERE id = ?',
-      ).run(data.script, data.source_type, request.params.id);
-    } else {
-      db.prepare('UPDATE jobs SET script = ? WHERE id = ?').run(
-        data.script,
-        request.params.id,
-      );
+    const result = data.source_type
+      ? db
+          .prepare('UPDATE jobs SET script = ?, source_type = ? WHERE id = ?')
+          .run(data.script, data.source_type, request.params.id)
+      : db
+          .prepare('UPDATE jobs SET script = ? WHERE id = ?')
+          .run(data.script, request.params.id);
+
+    if (result.changes === 0) {
+      reply.code(404);
+      return { error: JOB_NOT_FOUND };
     }
 
     scheduler.reconcileNow();

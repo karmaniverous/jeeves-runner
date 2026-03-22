@@ -1,5 +1,7 @@
 /**
  * Schema migration runner. Tracks applied migrations via schema_version table, applies pending migrations idempotently.
+ *
+ * @module
  */
 
 import type { DatabaseSync } from 'node:sqlite';
