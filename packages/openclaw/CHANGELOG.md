@@ -2,7 +2,15 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [0.4.0](https://github.com/karmaniverous/jeeves-runner/compare/openclaw/0.3.0...0.4.0)
+#### [0.5.0](https://github.com/karmaniverous/jeeves-runner/compare/openclaw/0.4.0...0.5.0)
+
+- chore: update core dependency to v0.3.0 and migrate /health to /status [`#38`](https://github.com/karmaniverous/jeeves-runner/pull/38)
+- chore: update core dependency to v0.3.0 and migrate /health to /status (#36, #37) [`86df754`](https://github.com/karmaniverous/jeeves-runner/commit/86df754e6796a2c62173a7cc97aadc1843c7177b)
+- chore: release @karmaniverous/jeeves-runner v0.7.0 [`a42dbc8`](https://github.com/karmaniverous/jeeves-runner/commit/a42dbc81626840a5b7abeac972fb6282df8a4ff5)
+
+#### [openclaw/0.4.0](https://github.com/karmaniverous/jeeves-runner/compare/openclaw/0.3.0...openclaw/0.4.0)
+
+> 22 March 2026
 
 - feat: v0.6.0 — Runner Management Tools & RRStack Scheduling [`#35`](https://github.com/karmaniverous/jeeves-runner/pull/35)
 - test: split large test files (routes, scheduler) to respect 300 LOC limit [`396818d`](https://github.com/karmaniverous/jeeves-runner/commit/396818d8d473ca8b9298f5cf910edacb2f7163a1)
@@ -17,6 +25,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - refactor: DRY toggle route and harden tool helper [`ac82338`](https://github.com/karmaniverous/jeeves-runner/commit/ac82338fe9f62f46b070d00727041afc39e89ceb)
 - refactor: remove deprecated POST enable/disable aliases [`0c71fd2`](https://github.com/karmaniverous/jeeves-runner/commit/0c71fd21e9b97944fe9101ab97c6e1bd14d2bc41)
 - refactor: DRY job-not-found constant, eliminate SELECT-before-UPDATE, add @module tags [`68d953b`](https://github.com/karmaniverous/jeeves-runner/commit/68d953bec0d850493ff744ffca08a19070bcac21)
+- chore: release @karmaniverous/jeeves-runner-openclaw v0.4.0 [`47a8ee2`](https://github.com/karmaniverous/jeeves-runner/commit/47a8ee25a295a146d651fb6c3321cb991e3b6ef2)
 - docs: add @module TSDoc tags to all source modules [`59efba3`](https://github.com/karmaniverous/jeeves-runner/commit/59efba3d5298f4d8d4af3b531f749b6e1ba6ae1a)
 - chore: release @karmaniverous/jeeves-runner v0.6.0 [`c73dbe4`](https://github.com/karmaniverous/jeeves-runner/commit/c73dbe4b4f229059ccaf021224d19352fb3f4e9f)
 - fix(service): add JSONPath support to GET /state/:namespace/:key [`089f8f2`](https://github.com/karmaniverous/jeeves-runner/commit/089f8f2b7f5e290de6f51a6a08ce2f379043803a)
