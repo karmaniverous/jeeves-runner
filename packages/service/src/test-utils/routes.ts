@@ -62,6 +62,7 @@ export async function createRouteTestHarness(): Promise<RouteTestHarness> {
     db: testDb.db,
     scheduler,
     getConfig: () => defaultConfig,
+    version: '0.0.0-test',
   });
 
   await app.ready();

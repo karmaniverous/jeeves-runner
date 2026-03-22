@@ -26,15 +26,31 @@ describe('API routes', () => {
     testDb.cleanup();
   });
 
-  it('GET /health should return ok', async () => {
+  it('GET /status should return status with version and stats', async () => {
     const response = await app.inject({
       method: 'GET',
-      url: '/health',
+      url: '/status',
     });
 
     expect(response.statusCode).toBe(200);
-    const body = JSON.parse(response.body) as { ok: boolean };
-    expect(body.ok).toBe(true);
+    const body = JSON.parse(response.body) as {
+      status: string;
+      version: string;
+      uptime: number;
+      totalJobs: number;
+      running: number;
+      failedRegistrations: number;
+      okLastHour: number;
+      errorsLastHour: number;
+    };
+    expect(body.status).toBe('ok');
+    expect(body.version).toBe('0.0.0-test');
+    expect(body).toHaveProperty('uptime');
+    expect(body).toHaveProperty('totalJobs');
+    expect(body).toHaveProperty('running');
+    expect(body).toHaveProperty('failedRegistrations');
+    expect(body).toHaveProperty('okLastHour');
+    expect(body).toHaveProperty('errorsLastHour');
   });
 
   it('GET /jobs should return empty list', async () => {
@@ -125,23 +141,6 @@ describe('API routes', () => {
     });
 
     expect(response.statusCode).toBe(404);
-  });
-
-  it('GET /stats should return statistics', async () => {
-    const response = await app.inject({
-      method: 'GET',
-      url: '/stats',
-    });
-
-    expect(response.statusCode).toBe(200);
-    const body = JSON.parse(response.body) as {
-      totalJobs: number;
-      running: number;
-      failedRegistrations: number;
-    };
-    expect(body).toHaveProperty('totalJobs');
-    expect(body).toHaveProperty('running');
-    expect(body).toHaveProperty('failedRegistrations');
   });
 
   it('GET /config should return full config', async () => {

@@ -76,7 +76,7 @@ program
     void (async () => {
       try {
         const resp = await fetch(
-          `http://127.0.0.1:${String(config.port)}/stats`,
+          `http://127.0.0.1:${String(config.port)}/status`,
         );
         const stats = (await resp.json()) as Record<string, unknown>;
         console.log(JSON.stringify(stats, null, 2));

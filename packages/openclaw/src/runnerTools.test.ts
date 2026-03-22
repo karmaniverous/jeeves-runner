@@ -63,8 +63,11 @@ describe('registerRunnerTools', () => {
     }
   });
 
-  it('runner_status calls GET /stats', async () => {
+  it('runner_status calls GET /status', async () => {
     const mockResponse = {
+      status: 'ok',
+      version: '0.6.0',
+      uptime: 3600,
       totalJobs: 28,
       running: 0,
       failedRegistrations: 0,
@@ -82,7 +85,7 @@ describe('registerRunnerTools', () => {
     expect(result.isError).toBeUndefined();
     expect(JSON.parse(result.content[0].text)).toEqual(mockResponse);
     expect(fetch).toHaveBeenCalledWith(
-      'http://localhost:1937/stats',
+      'http://localhost:1937/status',
       undefined,
     );
   });

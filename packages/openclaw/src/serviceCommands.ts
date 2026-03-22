@@ -11,11 +11,11 @@ import {
   type ServiceStatus,
 } from '@karmaniverous/jeeves';
 
-/** Health response from GET /health. */
-interface HealthResponse {
-  ok: boolean;
+/** Status response from GET /status. */
+interface StatusResponse {
+  status: string;
+  version: string;
   uptime: number;
-  version?: string;
 }
 
 /**
@@ -44,11 +44,11 @@ export function createRunnerServiceCommands(baseUrl: string): ServiceCommands {
 
     async status(): Promise<ServiceStatus> {
       try {
-        const health = (await fetchJson(`${baseUrl}/health`)) as HealthResponse;
+        const data = (await fetchJson(`${baseUrl}/status`)) as StatusResponse;
         return {
-          running: health.ok,
-          version: health.version,
-          uptimeSeconds: health.uptime,
+          running: data.status === 'ok',
+          version: data.version,
+          uptimeSeconds: data.uptime,
         };
       } catch {
         return { running: false };

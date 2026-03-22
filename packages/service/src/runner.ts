@@ -5,7 +5,9 @@
  */
 
 import { readFileSync } from 'node:fs';
+import { dirname, resolve } from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
+import { fileURLToPath } from 'node:url';
 
 import type { FastifyInstance } from 'fastify';
 import type { Logger } from 'pino';
@@ -112,11 +114,25 @@ export function createRunner(config: RunnerConfig, deps?: RunnerDeps): Runner {
       scheduler.start();
       logger.info('Scheduler started');
 
+      // Read package version
+      const pkgVersion = (() => {
+        try {
+          const dir = dirname(fileURLToPath(import.meta.url));
+          const pkg = JSON.parse(
+            readFileSync(resolve(dir, '..', 'package.json'), 'utf8'),
+          ) as { version?: string };
+          return pkg.version ?? 'unknown';
+        } catch {
+          return 'unknown';
+        }
+      })();
+
       // API server
       server = createServer({
         db,
         scheduler,
         getConfig: () => config,
+        version: pkgVersion,
         loggerConfig: { level: config.log.level, file: config.log.file },
       });
       await server.listen({ port: config.port, host: config.host });

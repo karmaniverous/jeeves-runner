@@ -10,11 +10,20 @@ import {
 } from './serviceCommands.js';
 
 describe('createRunnerServiceCommands', () => {
-  it('status returns running state from /health', async () => {
-    const health = { ok: true, uptime: 3600, version: '0.3.1' };
+  it('status returns running state from /status', async () => {
+    const statusResp = {
+      status: 'ok',
+      uptime: 3600,
+      version: '0.6.0',
+      totalJobs: 40,
+      running: 0,
+      failedRegistrations: 0,
+      okLastHour: 10,
+      errorsLastHour: 0,
+    };
 
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
-      new Response(JSON.stringify(health), { status: 200 }),
+      new Response(JSON.stringify(statusResp), { status: 200 }),
     );
 
     const cmds = createRunnerServiceCommands('http://localhost:1937');
@@ -22,11 +31,11 @@ describe('createRunnerServiceCommands', () => {
 
     expect(status).toEqual({
       running: true,
-      version: '0.3.1',
+      version: '0.6.0',
       uptimeSeconds: 3600,
     });
     expect(fetch).toHaveBeenCalledWith(
-      'http://localhost:1937/health',
+      'http://localhost:1937/status',
       undefined,
     );
   });

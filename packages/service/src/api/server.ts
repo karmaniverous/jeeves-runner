@@ -18,6 +18,8 @@ interface ServerDeps {
   scheduler: Scheduler;
   /** Getter for the current effective configuration. */
   getConfig: () => RunnerConfig;
+  /** Service version string (from package.json). */
+  version: string;
   /** Pino logger config or false to disable. */
   loggerConfig?: { level: string; file?: string };
 }
@@ -46,6 +48,7 @@ export function createServer(deps: ServerDeps): FastifyInstance {
     db: deps.db,
     scheduler: deps.scheduler,
     getConfig: deps.getConfig,
+    version: deps.version,
   });
 
   return app;

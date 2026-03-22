@@ -21,20 +21,45 @@ interface RouteDeps {
   scheduler: Scheduler;
   /** Getter for the current effective configuration. */
   getConfig: () => RunnerConfig;
+  /** Service version string (from package.json). */
+  version: string;
 }
 
 /**
  * Register all API routes on the Fastify instance.
  */
 export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
-  const { db, scheduler, getConfig } = deps;
+  const { db, scheduler, getConfig, version } = deps;
 
-  /** GET /health — Health check. */
-  app.get('/health', () => {
+  /** GET /status — Unified status endpoint (single health/metadata entrypoint). */
+  app.get('/status', () => {
+    const totalJobs = db
+      .prepare('SELECT COUNT(*) as count FROM jobs')
+      .get() as { count: number };
+    const runningCount = scheduler.getRunningJobs().length;
+    const failedCount = scheduler.getFailedRegistrations().length;
+    const okLastHour = db
+      .prepare(
+        `SELECT COUNT(*) as count FROM runs 
+         WHERE status = 'ok' AND started_at > datetime('now', '-1 hour')`,
+      )
+      .get() as { count: number };
+    const errorsLastHour = db
+      .prepare(
+        `SELECT COUNT(*) as count FROM runs 
+         WHERE status IN ('error', 'timeout') AND started_at > datetime('now', '-1 hour')`,
+      )
+      .get() as { count: number };
+
     return {
-      ok: true,
+      status: 'ok',
+      version,
       uptime: process.uptime(),
-      failedRegistrations: scheduler.getFailedRegistrations().length,
+      totalJobs: totalJobs.count,
+      running: runningCount,
+      failedRegistrations: failedCount,
+      okLastHour: okLastHour.count,
+      errorsLastHour: errorsLastHour.count,
     };
   });
 
@@ -90,35 +115,6 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
       }
     },
   );
-
-  /** GET /stats — Aggregate job statistics. */
-  app.get('/stats', () => {
-    const totalJobs = db
-      .prepare('SELECT COUNT(*) as count FROM jobs')
-      .get() as { count: number };
-    const runningCount = scheduler.getRunningJobs().length;
-    const failedCount = scheduler.getFailedRegistrations().length;
-    const okLastHour = db
-      .prepare(
-        `SELECT COUNT(*) as count FROM runs 
-         WHERE status = 'ok' AND started_at > datetime('now', '-1 hour')`,
-      )
-      .get() as { count: number };
-    const errorsLastHour = db
-      .prepare(
-        `SELECT COUNT(*) as count FROM runs 
-         WHERE status IN ('error', 'timeout') AND started_at > datetime('now', '-1 hour')`,
-      )
-      .get() as { count: number };
-
-    return {
-      totalJobs: totalJobs.count,
-      running: runningCount,
-      failedRegistrations: failedCount,
-      okLastHour: okLastHour.count,
-      errorsLastHour: errorsLastHour.count,
-    };
-  });
 
   /** GET /config — Query effective configuration via JSONPath. */
   const configHandler = createConfigQueryHandler(getConfig);
