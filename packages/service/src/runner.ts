@@ -1,5 +1,7 @@
 /**
  * Main runner orchestrator. Wires up database, scheduler, API server, and handles graceful shutdown on SIGTERM/SIGINT.
+ *
+ * @module
  */
 
 import { readFileSync } from 'node:fs';

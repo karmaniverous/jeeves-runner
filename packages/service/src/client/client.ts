@@ -1,5 +1,7 @@
 /**
  * Job client library for runner jobs. Provides state and queue operations. Opens its own DB connection via JR_DB_PATH env var.
+ *
+ * @module
  */
 
 import type { DatabaseSync } from 'node:sqlite';

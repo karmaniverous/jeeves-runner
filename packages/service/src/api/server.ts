@@ -1,5 +1,7 @@
 /**
  * Fastify HTTP server for runner API. Creates server instance with logging, registers routes, listens on configured port (localhost only).
+ *
+ * @module
  */
 
 import type { DatabaseSync } from 'node:sqlite';

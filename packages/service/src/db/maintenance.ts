@@ -1,5 +1,7 @@
 /**
  * Database maintenance tasks: run retention pruning and expired state cleanup.
+ *
+ * @module
  */
 
 import type { DatabaseSync } from 'node:sqlite';

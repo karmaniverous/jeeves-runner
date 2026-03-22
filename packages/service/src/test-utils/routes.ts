@@ -1,5 +1,7 @@
 /**
  * Shared test utilities for route testing.
+ *
+ * @module
  */
 
 import Fastify, { type FastifyInstance } from 'fastify';

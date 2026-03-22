@@ -1,5 +1,7 @@
 /**
  * Session executor for job type='session'. Spawns OpenClaw Gateway sessions and polls for completion.
+ *
+ * @module
  */
 
 import { existsSync, readFileSync } from 'node:fs';

@@ -1,5 +1,7 @@
 /**
  * Slack notification module. Sends job completion/failure messages via Slack Web API (chat.postMessage). Falls back gracefully if no token.
+ *
+ * @module
  */
 
 import { httpPost } from '../lib/http.js';
