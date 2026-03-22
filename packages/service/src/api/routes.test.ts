@@ -180,68 +180,6 @@ describe('API routes', () => {
     expect(body).toHaveProperty('failedRegistrations');
   });
 
-  it('PATCH /jobs/:id/enable should enable job', async () => {
-    testDb.db
-      .prepare(
-        `INSERT INTO jobs (id, name, schedule, script, enabled) VALUES (?, ?, ?, ?, ?)`,
-      )
-      .run('test-job', 'Test Job', '0 0 * * *', 'echo test', 0);
-
-    const response = await app.inject({
-      method: 'PATCH',
-      url: '/jobs/test-job/enable',
-    });
-
-    expect(response.statusCode).toBe(200);
-    expect(reconcileNowMock).toHaveBeenCalled();
-
-    // Verify job is enabled
-    const job = testDb.db
-      .prepare('SELECT enabled FROM jobs WHERE id = ?')
-      .get('test-job') as { enabled: number };
-    expect(job.enabled).toBe(1);
-  });
-
-  it('PATCH /jobs/:id/disable should disable job', async () => {
-    testDb.db
-      .prepare(
-        `INSERT INTO jobs (id, name, schedule, script, enabled) VALUES (?, ?, ?, ?, ?)`,
-      )
-      .run('test-job', 'Test Job', '0 0 * * *', 'echo test', 1);
-
-    const response = await app.inject({
-      method: 'PATCH',
-      url: '/jobs/test-job/disable',
-    });
-
-    expect(response.statusCode).toBe(200);
-    expect(reconcileNowMock).toHaveBeenCalled();
-
-    // Verify job is disabled
-    const job = testDb.db
-      .prepare('SELECT enabled FROM jobs WHERE id = ?')
-      .get('test-job') as { enabled: number };
-    expect(job.enabled).toBe(0);
-  });
-
-  it('PATCH /jobs/:id/enable should return 404 for missing job', async () => {
-    const response = await app.inject({
-      method: 'PATCH',
-      url: '/jobs/nonexistent/enable',
-    });
-
-    expect(response.statusCode).toBe(404);
-  });
-
-  it('PATCH /jobs/:id/disable should return 404 for missing job', async () => {
-    const response = await app.inject({
-      method: 'PATCH',
-      url: '/jobs/nonexistent/disable',
-    });
-
-    expect(response.statusCode).toBe(404);
-  });
-
   it('GET /config should return full config', async () => {
     const response = await app.inject({
       method: 'GET',

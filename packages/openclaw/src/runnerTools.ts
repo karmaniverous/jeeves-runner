@@ -39,6 +39,7 @@ export function registerRunnerTools(api: PluginApi, baseUrl: string): void {
       description:
         'Manually trigger a runner job. Blocks until the job completes and returns the run result.',
       parameters: JOB_ID_PARAM,
+      method: 'POST',
       buildRequest: (params) => [jobPath(params, '/run'), {}],
     },
     {

@@ -1,5 +1,7 @@
 /**
- * Croner-based job scheduler. Loads enabled jobs, creates cron instances, manages execution, respects overlap policies and concurrency limits.
+ * Job scheduler. Loads enabled jobs, registers schedules (cron or rrstack), manages execution, respects overlap policies and concurrency limits.
+ *
+ * @module
  */
 
 import type { DatabaseSync } from 'node:sqlite';

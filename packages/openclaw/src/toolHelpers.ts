@@ -9,7 +9,6 @@ import {
   fetchJson,
   ok,
   type PluginApi,
-  postJson,
   type ToolResult,
 } from '@karmaniverous/jeeves';
 
@@ -46,22 +45,16 @@ export function registerApiTool(
           const url = `${baseUrl}${endpoint}`;
           const method = config.method;
 
-          if (method && method !== 'GET') {
-            const data = await fetchJson(url, {
-              method,
-              headers: { 'Content-Type': 'application/json' },
-              ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-            });
-            return ok(data);
-          }
+          const init: RequestInit | undefined =
+            method && method !== 'GET'
+              ? {
+                  method,
+                  headers: { 'Content-Type': 'application/json' },
+                  ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+                }
+              : undefined;
 
-          // Legacy behaviour: infer from body presence
-          if (body !== undefined) {
-            const data = await postJson(url, body);
-            return ok(data);
-          }
-
-          const data = await fetchJson(url);
+          const data = await fetchJson(url, init);
           return ok(data);
         } catch (error) {
           return connectionFail(error, baseUrl, PLUGIN_ID);

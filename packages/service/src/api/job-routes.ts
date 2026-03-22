@@ -195,37 +195,23 @@ export function registerJobRoutes(
     return { ok: true };
   });
 
-  /** PATCH /jobs/:id/enable — Enable a job. */
-  app.patch<{ Params: { id: string } }>(
-    '/jobs/:id/enable',
-    (request, reply) => {
+  /** Register a PATCH toggle endpoint (enable or disable). */
+  function registerToggle(path: string, enabledValue: number): void {
+    app.patch<{ Params: { id: string } }>(path, (request, reply) => {
       const result = db
-        .prepare('UPDATE jobs SET enabled = 1 WHERE id = ?')
-        .run(request.params.id);
+        .prepare('UPDATE jobs SET enabled = ? WHERE id = ?')
+        .run(enabledValue, request.params.id);
       if (result.changes === 0) {
         reply.code(404);
         return { error: 'Job not found' };
       }
       scheduler.reconcileNow();
       return { ok: true };
-    },
-  );
+    });
+  }
 
-  /** PATCH /jobs/:id/disable — Disable a job. */
-  app.patch<{ Params: { id: string } }>(
-    '/jobs/:id/disable',
-    (request, reply) => {
-      const result = db
-        .prepare('UPDATE jobs SET enabled = 0 WHERE id = ?')
-        .run(request.params.id);
-      if (result.changes === 0) {
-        reply.code(404);
-        return { error: 'Job not found' };
-      }
-      scheduler.reconcileNow();
-      return { ok: true };
-    },
-  );
+  registerToggle('/jobs/:id/enable', 1);
+  registerToggle('/jobs/:id/disable', 0);
 
   /** PUT /jobs/:id/script — Update job script and source_type. */
   app.put<{ Params: { id: string } }>('/jobs/:id/script', (request, reply) => {
