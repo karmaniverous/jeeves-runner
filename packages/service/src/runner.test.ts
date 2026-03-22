@@ -14,6 +14,7 @@ function testConfig(dbPath: string, port: number) {
   return {
     dbPath,
     port,
+    host: '127.0.0.1',
     maxConcurrency: 5,
     reconcileIntervalMs: 0,
     shutdownGraceMs: 1000,

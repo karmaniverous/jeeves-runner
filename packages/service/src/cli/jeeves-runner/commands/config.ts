@@ -14,6 +14,7 @@ import { runnerConfigSchema } from '../../../schemas/config.js';
 /** Minimal starter config template. */
 const INIT_CONFIG_TEMPLATE = {
   port: 1937,
+  host: '127.0.0.1',
   dbPath: './data/runner.sqlite',
   maxConcurrency: 4,
   runRetentionDays: 30,
