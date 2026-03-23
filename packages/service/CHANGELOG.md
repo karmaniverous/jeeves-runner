@@ -2,11 +2,20 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [0.7.0](https://github.com/karmaniverous/jeeves-runner/compare/service/0.6.0...0.7.0)
+#### [0.7.1](https://github.com/karmaniverous/jeeves-runner/compare/service/0.7.0...0.7.1)
+
+- fix(openclaw): do not send Content-Type on bodyless DELETE requests [`#40`](https://github.com/karmaniverous/jeeves-runner/pull/40)
+- chore: bump rrstack to 0.17.1 (fixes minutely nextEvent hang) [`3ec48e5`](https://github.com/karmaniverous/jeeves-runner/commit/3ec48e56d2bc60408b3e9ff8f045450fc75f74af)
+- chore: release @karmaniverous/jeeves-runner-openclaw v0.5.0 [`b237c41`](https://github.com/karmaniverous/jeeves-runner/commit/b237c41a8a88eedeb2cbd0c2507c876b20131ef4)
+
+#### [service/0.7.0](https://github.com/karmaniverous/jeeves-runner/compare/service/0.6.0...service/0.7.0)
+
+> 23 March 2026
 
 - chore: update core dependency to v0.3.0 and migrate /health to /status [`#38`](https://github.com/karmaniverous/jeeves-runner/pull/38)
 - chore: update core dependency to v0.3.0 and migrate /health to /status (#36, #37) [`86df754`](https://github.com/karmaniverous/jeeves-runner/commit/86df754e6796a2c62173a7cc97aadc1843c7177b)
 - chore: release @karmaniverous/jeeves-runner-openclaw v0.4.0 [`47a8ee2`](https://github.com/karmaniverous/jeeves-runner/commit/47a8ee25a295a146d651fb6c3321cb991e3b6ef2)
+- chore: release @karmaniverous/jeeves-runner v0.7.0 [`a42dbc8`](https://github.com/karmaniverous/jeeves-runner/commit/a42dbc81626840a5b7abeac972fb6282df8a4ff5)
 
 #### [service/0.6.0](https://github.com/karmaniverous/jeeves-runner/compare/service/0.5.0...service/0.6.0)
 
