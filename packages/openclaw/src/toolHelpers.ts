@@ -49,8 +49,12 @@ export function registerApiTool(
             method && method !== 'GET'
               ? {
                   method,
-                  headers: { 'Content-Type': 'application/json' },
-                  ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+                  ...(body !== undefined
+                    ? {
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(body),
+                      }
+                    : {}),
                 }
               : undefined;
 
