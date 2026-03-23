@@ -188,6 +188,11 @@ describe('registerRunnerTools', () => {
       'http://localhost:1937/jobs/old-job',
       expect.objectContaining({ method: 'DELETE' }),
     );
+
+    // DELETE with no body must not send Content-Type (Fastify rejects empty JSON body)
+    const callArgs = vi.mocked(fetch).mock.calls[0] as [string, RequestInit];
+    expect(callArgs[1].headers).toBeUndefined();
+    expect(callArgs[1].body).toBeUndefined();
   });
 
   it('runner_query_state calls GET /state/:namespace', async () => {
