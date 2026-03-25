@@ -2,10 +2,22 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [0.5.0](https://github.com/karmaniverous/jeeves-runner/compare/openclaw/0.4.0...0.5.0)
+#### [0.5.1](https://github.com/karmaniverous/jeeves-runner/compare/openclaw/0.5.0...0.5.1)
+
+- fix(openclaw): do not send Content-Type on bodyless DELETE requests [`#40`](https://github.com/karmaniverous/jeeves-runner/pull/40)
+- chore: bump rrstack to 0.17.1 (fixes minutely nextEvent hang) [`3ec48e5`](https://github.com/karmaniverous/jeeves-runner/commit/3ec48e56d2bc60408b3e9ff8f045450fc75f74af)
+- ci: add shared Deploy Docs workflow [`00f6dd4`](https://github.com/karmaniverous/jeeves-runner/commit/00f6dd4e8e264f320e3858a9568d2ac1830d02ba)
+- chore: release @karmaniverous/jeeves-runner v0.7.1 [`7ce1fd1`](https://github.com/karmaniverous/jeeves-runner/commit/7ce1fd1427f7b56a90582e8af583f6fe4c5e4073)
+- chore: release @karmaniverous/jeeves-runner v0.7.2 [`01a8291`](https://github.com/karmaniverous/jeeves-runner/commit/01a829132da51315d446f57fd1ea62b1af4a6e44)
+- chore(deps): bump @karmaniverous/jeeves to 0.3.1 [`fb53f47`](https://github.com/karmaniverous/jeeves-runner/commit/fb53f47a64fd83b45b0f4c321dd9b6a28911c27c)
+
+#### [openclaw/0.5.0](https://github.com/karmaniverous/jeeves-runner/compare/openclaw/0.4.0...openclaw/0.5.0)
+
+> 23 March 2026
 
 - chore: update core dependency to v0.3.0 and migrate /health to /status [`#38`](https://github.com/karmaniverous/jeeves-runner/pull/38)
 - chore: update core dependency to v0.3.0 and migrate /health to /status (#36, #37) [`86df754`](https://github.com/karmaniverous/jeeves-runner/commit/86df754e6796a2c62173a7cc97aadc1843c7177b)
+- chore: release @karmaniverous/jeeves-runner-openclaw v0.5.0 [`b237c41`](https://github.com/karmaniverous/jeeves-runner/commit/b237c41a8a88eedeb2cbd0c2507c876b20131ef4)
 - chore: release @karmaniverous/jeeves-runner v0.7.0 [`a42dbc8`](https://github.com/karmaniverous/jeeves-runner/commit/a42dbc81626840a5b7abeac972fb6282df8a4ff5)
 
 #### [openclaw/0.4.0](https://github.com/karmaniverous/jeeves-runner/compare/openclaw/0.3.0...openclaw/0.4.0)
