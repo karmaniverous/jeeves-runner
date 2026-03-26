@@ -8,6 +8,8 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+const isWindows = process.platform === 'win32';
+
 import { executeJob } from './executor.js';
 
 describe('executeJob', () => {
@@ -105,7 +107,7 @@ describe('executeJob', () => {
     expect(parsed.JR_RUN_ID).toBe('99');
   });
 
-  it('should execute a .cmd script', async () => {
+  it.skipIf(!isWindows)('should execute a .cmd script', async () => {
     const script = join(testDir, 'test.cmd');
     writeFileSync(script, '@echo off\r\necho cmd-output\r\nexit /b 0\r\n');
 
@@ -121,21 +123,25 @@ describe('executeJob', () => {
     expect(result.stdoutTail).toContain('cmd-output');
   });
 
-  it('should execute a .ps1 script', async () => {
-    const script = join(testDir, 'test.ps1');
-    writeFileSync(script, 'Write-Output "ps1-output"\nexit 0\n');
+  it.skipIf(!isWindows)(
+    'should execute a .ps1 script',
+    async () => {
+      const script = join(testDir, 'test.ps1');
+      writeFileSync(script, 'Write-Output "ps1-output"\nexit 0\n');
 
-    const result = await executeJob({
-      script,
-      dbPath: ':memory:',
-      jobId: 'test',
-      runId: 1,
-    });
+      const result = await executeJob({
+        script,
+        dbPath: ':memory:',
+        jobId: 'test',
+        runId: 1,
+      });
 
-    expect(result.status).toBe('ok');
-    expect(result.exitCode).toBe(0);
-    expect(result.stdoutTail).toContain('ps1-output');
-  }, 20000);
+      expect(result.status).toBe('ok');
+      expect(result.exitCode).toBe(0);
+      expect(result.stdoutTail).toContain('ps1-output');
+    },
+    20000,
+  );
 
   it('should timeout long-running scripts', async () => {
     const script = join(testDir, 'slow.js');
