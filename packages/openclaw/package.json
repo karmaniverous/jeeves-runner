@@ -1,6 +1,6 @@
 {
   "name": "@karmaniverous/jeeves-runner-openclaw",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "author": "Jason Williscroft",
   "description": "OpenClaw plugin for jeeves-runner — job management, monitoring, and operational tools",
   "license": "BSD-3-Clause",
