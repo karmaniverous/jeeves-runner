@@ -53,6 +53,8 @@ export interface ExecutionOptions {
   commandResolver?: (script: string) => ResolvedCommand;
   /** Source type: 'path' uses script as file path, 'inline' writes script content to a temp file. */
   sourceType?: 'path' | 'inline';
+  /** Command used to execute TypeScript files. Defaults to 'tsx'. */
+  tsRunner?: string;
 }
 
 /** Ring buffer for capturing last N lines of output. */
@@ -100,8 +102,14 @@ function parseResultLines(stdout: string): {
   return { tokens, resultMeta };
 }
 
+/** TypeScript file extensions that should be executed via tsRunner. */
+export const TS_EXTENSIONS = new Set(['.ts', '.tsx', '.mts', '.cts']);
+
 /** Resolve the command and arguments for a script based on its file extension. */
-function resolveCommand(script: string): ResolvedCommand {
+export function resolveCommand(
+  script: string,
+  tsRunner = 'tsx',
+): ResolvedCommand {
   const ext = extname(script).toLowerCase();
   switch (ext) {
     case '.ps1':
@@ -113,6 +121,9 @@ function resolveCommand(script: string): ResolvedCommand {
     case '.bat':
       return { command: 'cmd.exe', args: ['/c', script] };
     default:
+      if (TS_EXTENSIONS.has(ext)) {
+        return { command: tsRunner, args: [script] };
+      }
       // .js, .mjs, .cjs, or anything else: run with node
       return { command: 'node', args: [script] };
   }
@@ -132,6 +143,7 @@ export function executeJob(
     timeoutMs,
     commandResolver,
     sourceType = 'path',
+    tsRunner,
   } = options;
   const startTime = Date.now();
 
@@ -151,7 +163,7 @@ export function executeJob(
 
     const { command, args } = commandResolver
       ? commandResolver(effectiveScript)
-      : resolveCommand(effectiveScript);
+      : resolveCommand(effectiveScript, tsRunner);
     const child = spawn(command, args, {
       env: {
         ...process.env,

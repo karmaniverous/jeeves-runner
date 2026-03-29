@@ -122,6 +122,7 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
           runId,
           timeoutMs: timeout_ms ?? undefined,
           sourceType: source_type ?? 'path',
+          tsRunner: config.tsRunner,
         });
       }
 
