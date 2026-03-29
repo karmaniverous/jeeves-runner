@@ -26,6 +26,7 @@ function testConfig(dbPath: string, port: number) {
       defaultOnFailure: null,
     },
     gateway: { url: 'http://127.0.0.1:18789' },
+    tsRunner: 'tsx',
   };
 }
 

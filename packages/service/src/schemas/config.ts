@@ -61,6 +61,8 @@ export const runnerConfigSchema = z.object({
   log: logSchema.default({ level: 'info' }),
   /** Gateway configuration for session-type jobs. */
   gateway: gatewaySchema.default({ url: 'http://127.0.0.1:18789' }),
+  /** Command used to execute .ts/.tsx/.mts/.cts scripts. Defaults to 'tsx'. Can be an absolute path. */
+  tsRunner: z.string().default('tsx'),
 });
 
 /** Inferred runner configuration type. */
