@@ -10,7 +10,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 const isWindows = process.platform === 'win32';
 
-import { executeJob, resolveCommand, TS_EXTENSIONS } from './executor.js';
+import { executeJob, resolveCommand } from './executor.js';
 
 describe('executeJob', () => {
   let testDir: string;
@@ -160,44 +160,54 @@ describe('executeJob', () => {
   }, 10000);
 
   describe('resolveCommand', () => {
-    it('should resolve .ts to tsRunner', () => {
-      const cmd = resolveCommand('/path/to/script.ts');
-      expect(cmd.command).toBe('tsx');
-      expect(cmd.args).toEqual(['/path/to/script.ts']);
+    it('should use custom runner for configured extension', () => {
+      const cmd = resolveCommand('/path/to/script.ts', {
+        ts: 'node /path/to/tsx/cli.mjs',
+      });
+      expect(cmd.command).toBe('node');
+      expect(cmd.args).toEqual(['/path/to/tsx/cli.mjs', '/path/to/script.ts']);
     });
 
-    it('should resolve .ts with custom tsRunner', () => {
-      const cmd = resolveCommand('/path/to/script.ts', '/custom/bin/tsx');
-      expect(cmd.command).toBe('/custom/bin/tsx');
-      expect(cmd.args).toEqual(['/path/to/script.ts']);
+    it('should use custom runner with single-token command', () => {
+      const cmd = resolveCommand('/path/to/script.py', {
+        py: 'python3',
+      });
+      expect(cmd.command).toBe('python3');
+      expect(cmd.args).toEqual(['/path/to/script.py']);
     });
 
-    it('should resolve .mts to tsRunner', () => {
-      const cmd = resolveCommand('/path/to/script.mts');
-      expect(cmd.command).toBe('tsx');
-    });
-
-    it('should resolve .cts to tsRunner', () => {
-      const cmd = resolveCommand('/path/to/script.cts');
-      expect(cmd.command).toBe('tsx');
-    });
-
-    it('should resolve .tsx to tsRunner', () => {
-      const cmd = resolveCommand('/path/to/script.tsx');
-      expect(cmd.command).toBe('tsx');
-    });
-
-    it('should resolve .js to node', () => {
+    it('should fall back to node for .js without custom runner', () => {
       const cmd = resolveCommand('/path/to/script.js');
+      expect(cmd.command).toBe('node');
+      expect(cmd.args).toEqual(['/path/to/script.js']);
+    });
+
+    it('should fall back to node for unknown extensions', () => {
+      const cmd = resolveCommand('/path/to/script.mjs');
       expect(cmd.command).toBe('node');
     });
 
-    it('should cover all expected TS extensions', () => {
-      expect(TS_EXTENSIONS).toEqual(new Set(['.ts', '.tsx', '.mts', '.cts']));
+    it('should fall back to powershell for .ps1', () => {
+      const cmd = resolveCommand('/path/to/script.ps1');
+      expect(cmd.command).toBe('powershell.exe');
+      expect(cmd.args).toContain('-File');
+    });
+
+    it('should fall back to cmd.exe for .cmd', () => {
+      const cmd = resolveCommand('/path/to/script.cmd');
+      expect(cmd.command).toBe('cmd.exe');
+    });
+
+    it('should prefer custom runner over built-in default', () => {
+      const cmd = resolveCommand('/path/to/script.js', {
+        js: 'deno run',
+      });
+      expect(cmd.command).toBe('deno');
+      expect(cmd.args).toEqual(['run', '/path/to/script.js']);
     });
   });
 
-  it('should execute a .ts script via tsRunner', async () => {
+  it('should execute a .ts script via custom runner', async () => {
     const script = join(testDir, 'hello.ts');
     // Write plain JS that's also valid TS (no type syntax needed)
     writeFileSync(script, 'console.log("ts-output"); process.exit(0);');
@@ -207,8 +217,7 @@ describe('executeJob', () => {
       dbPath: ':memory:',
       jobId: 'ts-test',
       runId: 1,
-      // Use node with --experimental-strip-types as tsRunner since tsx may not be available
-      tsRunner: 'node',
+      runners: { ts: 'node' },
     });
 
     expect(result.status).toBe('ok');
