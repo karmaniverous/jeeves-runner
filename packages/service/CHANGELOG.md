@@ -2,9 +2,21 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [0.7.2](https://github.com/karmaniverous/jeeves-runner/compare/service/0.7.1...0.7.2)
+#### [0.7.3](https://github.com/karmaniverous/jeeves-runner/compare/service/0.7.2...0.7.3)
+
+- feat(service): add configurable tsRunner for TypeScript scripts [`#46`](https://github.com/karmaniverous/jeeves-runner/pull/46)
+- [45] feat(service): add configurable tsRunner for TypeScript scripts [`508641f`](https://github.com/karmaniverous/jeeves-runner/commit/508641f7f9a885cd2189c26e7656bfff1b739ae2)
+- Merge pull request #41 from karmaniverous/bugfix/linux-compat-executor-tests [`76bcf90`](https://github.com/karmaniverous/jeeves-runner/commit/76bcf90d86303c120a5bbfd88ac2630b32303e83)
+- test: skip .cmd and .ps1 executor tests on non-Windows platforms [`e206ec2`](https://github.com/karmaniverous/jeeves-runner/commit/e206ec267915ec2653267c06f51b4cb078ab0e82)
+- chore: release @karmaniverous/jeeves-runner-openclaw v0.5.1 [`f00ad74`](https://github.com/karmaniverous/jeeves-runner/commit/f00ad74acf61a81235093bc5a474334ba7c49724)
+- ci: add linux-compat workflow via shared gha-workflows [`a8c4f60`](https://github.com/karmaniverous/jeeves-runner/commit/a8c4f60c70e70f1c33543469341fd11f169df451)
+
+#### [service/0.7.2](https://github.com/karmaniverous/jeeves-runner/compare/service/0.7.1...service/0.7.2)
+
+> 25 March 2026
 
 - ci: add shared Deploy Docs workflow [`00f6dd4`](https://github.com/karmaniverous/jeeves-runner/commit/00f6dd4e8e264f320e3858a9568d2ac1830d02ba)
+- chore: release @karmaniverous/jeeves-runner v0.7.2 [`01a8291`](https://github.com/karmaniverous/jeeves-runner/commit/01a829132da51315d446f57fd1ea62b1af4a6e44)
 - chore(deps): bump @karmaniverous/jeeves to 0.3.1 [`fb53f47`](https://github.com/karmaniverous/jeeves-runner/commit/fb53f47a64fd83b45b0f4c321dd9b6a28911c27c)
 
 #### [service/0.7.1](https://github.com/karmaniverous/jeeves-runner/compare/service/0.7.0...service/0.7.1)
