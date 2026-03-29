@@ -13,6 +13,7 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "require": "./dist/mjs/index.js",
       "default": "./dist/mjs/index.js"
     }
   },
