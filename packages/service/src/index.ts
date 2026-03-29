@@ -28,11 +28,7 @@ export type {
   ExecutionResult,
   ResolvedCommand,
 } from './scheduler/executor.js';
-export {
-  executeJob,
-  resolveCommand,
-  TS_EXTENSIONS,
-} from './scheduler/executor.js';
+export { executeJob, resolveCommand } from './scheduler/executor.js';
 
 // Scheduler
 export type { Scheduler, SchedulerDeps } from './scheduler/scheduler.js';

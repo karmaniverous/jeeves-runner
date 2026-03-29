@@ -53,8 +53,8 @@ export interface ExecutionOptions {
   commandResolver?: (script: string) => ResolvedCommand;
   /** Source type: 'path' uses script as file path, 'inline' writes script content to a temp file. */
   sourceType?: 'path' | 'inline';
-  /** Command used to execute TypeScript files. Defaults to 'tsx'. */
-  tsRunner?: string;
+  /** Custom command runners keyed by file extension (e.g. { ".ts": "node /path/to/tsx/cli.mjs" }). */
+  runners?: Record<string, string>;
 }
 
 /** Ring buffer for capturing last N lines of output. */
@@ -102,15 +102,30 @@ function parseResultLines(stdout: string): {
   return { tokens, resultMeta };
 }
 
-/** TypeScript file extensions that should be executed via tsRunner. */
-export const TS_EXTENSIONS = new Set(['.ts', '.tsx', '.mts', '.cts']);
-
-/** Resolve the command and arguments for a script based on its file extension. */
+/** Resolve the command and arguments for a script based on its file extension.
+ *  Custom runners (keyed by extension) take priority over built-in defaults.
+ *  The runner string is split on whitespace: first token is the command,
+ *  remaining tokens are prefix args inserted before the script path. */
 export function resolveCommand(
   script: string,
-  tsRunner = 'tsx',
+  runners: Record<string, string> = {},
 ): ResolvedCommand {
   const ext = extname(script).toLowerCase();
+  const key = ext.replace(/^\./, '');
+
+  // Check custom runners first
+  const customRunner = runners[key];
+  if (customRunner) {
+    const parts = customRunner.trim().split(/\s+/);
+    if (parts[0]) {
+      return {
+        command: parts[0],
+        args: [...parts.slice(1), script],
+      };
+    }
+  }
+
+  // Built-in defaults
   switch (ext) {
     case '.ps1':
       return {
@@ -121,9 +136,6 @@ export function resolveCommand(
     case '.bat':
       return { command: 'cmd.exe', args: ['/c', script] };
     default:
-      if (TS_EXTENSIONS.has(ext)) {
-        return { command: tsRunner, args: [script] };
-      }
       // .js, .mjs, .cjs, or anything else: run with node
       return { command: 'node', args: [script] };
   }
@@ -143,7 +155,7 @@ export function executeJob(
     timeoutMs,
     commandResolver,
     sourceType = 'path',
-    tsRunner,
+    runners,
   } = options;
   const startTime = Date.now();
 
@@ -163,7 +175,7 @@ export function executeJob(
 
     const { command, args } = commandResolver
       ? commandResolver(effectiveScript)
-      : resolveCommand(effectiveScript, tsRunner);
+      : resolveCommand(effectiveScript, runners);
     const child = spawn(command, args, {
       env: {
         ...process.env,
