@@ -6,7 +6,6 @@
  */
 
 import fs from 'node:fs';
-import https from 'node:https';
 
 /** Options for the Slack workspace resolver. */
 export interface SlackWorkspaceOptions {
@@ -43,40 +42,34 @@ export function saveCache(): void {
   }
 }
 
-function queryChannelWorkspace(
+async function queryChannelWorkspace(
   channelId: string,
   token: string,
   defaultWorkspace: string,
 ): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const url = `https://slack.com/api/conversations.info?channel=${channelId}`;
-    https
-      .get(url, { headers: { Authorization: `Bearer ${token}` } }, (res) => {
-        let d = '';
-        res.on('data', (c: Buffer) => (d += c.toString()));
-        res.on('end', () => {
-          try {
-            const j = JSON.parse(d) as {
-              ok: boolean;
-              channel?: { shared_team_ids?: string[] };
-            };
-            if (!j.ok) {
-              resolve(defaultWorkspace);
-              return;
-            }
-            const shared = j.channel?.shared_team_ids ?? [];
-            if (shared.length > 0 && !shared.includes(defaultWorkspace)) {
-              resolve(shared[0]);
-            } else {
-              resolve(defaultWorkspace);
-            }
-          } catch (e) {
-            reject(e instanceof Error ? e : new Error(String(e)));
-          }
-        });
-      })
-      .on('error', reject);
-  });
+  const url = `https://slack.com/api/conversations.info?channel=${channelId}`;
+  try {
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (!res.ok) return defaultWorkspace;
+
+    const j = (await res.json()) as {
+      ok: boolean;
+      channel?: { shared_team_ids?: string[] };
+    };
+
+    if (!j.ok) return defaultWorkspace;
+
+    const shared = j.channel?.shared_team_ids ?? [];
+    if (shared.length > 0 && !shared.includes(defaultWorkspace)) {
+      return shared[0];
+    }
+    return defaultWorkspace;
+  } catch {
+    return defaultWorkspace;
+  }
 }
 
 /**

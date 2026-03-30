@@ -225,7 +225,7 @@ const descriptor = createRunnerDescriptor({
 
 // Type assertion bridges @commander-js/extra-typings Command (core dep)
 // with the base commander types in this package.
-const program = createServiceCli(descriptor) as unknown as {
+const program = createServiceCli(descriptor) as {
   parse: (argv?: string[]) => void;
 };
 

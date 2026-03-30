@@ -29,6 +29,6 @@ const program = createPluginCli({
   distDir,
   pluginPackage: '@karmaniverous/jeeves-runner-openclaw',
   componentName: 'runner',
-}) as unknown as { parse: (argv?: string[]) => void };
+}) as { parse: (argv?: string[]) => void };
 
 program.parse();

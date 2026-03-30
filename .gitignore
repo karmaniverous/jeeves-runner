@@ -18,3 +18,4 @@ context/
 .stan/system/.docs.meta.json
 .stan/imports/
 dev-config.json
+.stan/context/

@@ -61,9 +61,12 @@ export default function register(api: PluginApi): void {
     servicePackage: '@karmaniverous/jeeves-runner',
     pluginPackage: '@karmaniverous/jeeves-runner-openclaw',
     defaultPort: 1937,
+    // Plugin has no service-side config to validate. This pass-through schema
+    // satisfies the descriptor contract; the plugin's own config is validated
+    // separately via openclaw.plugin.json's configSchema.
     configSchema: {
       parse: (v: unknown) => v,
-      safeParse: (v: unknown) => ({ success: true, data: v }),
+      safeParse: (v: unknown) => ({ success: true as const, data: v }),
     } as JeevesComponentDescriptor['configSchema'],
     configFileName: 'config.json',
     initTemplate: () => ({}),
