@@ -53,7 +53,7 @@ export interface ExecutionOptions {
   commandResolver?: (script: string) => ResolvedCommand;
   /** Source type: 'path' uses script as file path, 'inline' writes script content to a temp file. */
   sourceType?: 'path' | 'inline';
-  /** Custom command runners keyed by file extension (e.g. { ".ts": "node /path/to/tsx/cli.mjs" }). */
+  /** Custom command runners keyed by file extension (e.g. `".ts": "node /path/to/tsx/cli.mjs"`). */
   runners?: Record<string, string>;
 }
 

@@ -5,9 +5,7 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
-import { fileURLToPath } from 'node:url';
 
 import type { FastifyInstance } from 'fastify';
 import type { Logger } from 'pino';
@@ -114,18 +112,8 @@ export function createRunner(config: RunnerConfig, deps?: RunnerDeps): Runner {
       scheduler.start();
       logger.info('Scheduler started');
 
-      // Read package version
-      const pkgVersion = (() => {
-        try {
-          const dir = dirname(fileURLToPath(import.meta.url));
-          const pkg = JSON.parse(
-            readFileSync(resolve(dir, '..', 'package.json'), 'utf8'),
-          ) as { version?: string };
-          return pkg.version ?? 'unknown';
-        } catch {
-          return 'unknown';
-        }
-      })();
+      // Version injected at build time by @rollup/plugin-replace
+      const pkgVersion: string = '__VERSION__';
 
       // API server
       server = createServer({

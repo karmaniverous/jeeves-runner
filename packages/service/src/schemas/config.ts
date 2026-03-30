@@ -4,6 +4,7 @@
  * @module
  */
 
+import { DEFAULT_BIND_ADDRESS } from '@karmaniverous/jeeves';
 import { z } from 'zod';
 
 /** Notification configuration sub-schema. */
@@ -38,8 +39,8 @@ const gatewaySchema = z.object({
 export const runnerConfigSchema = z.object({
   /** HTTP server port for the runner API. */
   port: z.number().default(1937),
-  /** Bind address for the HTTP server. */
-  host: z.string().default('127.0.0.1'),
+  /** Bind address for the HTTP server. Defaults to the platform-standard bind address. */
+  host: z.string().default(DEFAULT_BIND_ADDRESS),
   /** Path to SQLite database file. */
   dbPath: z.string().default('./data/runner.sqlite'),
   /** Maximum number of concurrent job executions. */

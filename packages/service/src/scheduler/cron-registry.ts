@@ -50,6 +50,7 @@ export function createCronRegistry(deps: CronRegistryDeps): CronRegistry {
 
   const handles = new Map<string, ScheduleHandle>();
   const scheduleStrings = new Map<string, string>();
+  const nextFireTimes = new Map<string, number>();
   const failedRegistrations = new Set<string>();
 
   /**
@@ -63,7 +64,9 @@ export function createCronRegistry(deps: CronRegistryDeps): CronRegistry {
       return;
     }
 
-    const delayMs = Math.max(0, nextDate.getTime() - Date.now());
+    const fireTimeMs = nextDate.getTime();
+    nextFireTimes.set(jobId, fireTimeMs);
+    const delayMs = Math.max(0, fireTimeMs - Date.now());
 
     // Node.js setTimeout max is ~24.8 days. If delay exceeds that,
     // set an intermediate wakeup and re-check.
@@ -127,25 +130,33 @@ export function createCronRegistry(deps: CronRegistryDeps): CronRegistry {
         handle.cancel();
         handles.delete(jobId);
         scheduleStrings.delete(jobId);
+        nextFireTimes.delete(jobId);
       }
     }
 
     const failedIds: string[] = [];
+    const now = Date.now();
 
     // Add or update enabled jobs
     for (const job of enabledJobs) {
       const existingHandle = handles.get(job.id);
       const existingSchedule = scheduleStrings.get(job.id);
+      const existingFireTime = nextFireTimes.get(job.id);
 
-      if (!existingHandle) {
-        if (!registerSchedule(job)) failedIds.push(job.id);
-        continue;
-      }
+      // Re-register if: no handle, schedule changed, or next fire time
+      // is in the past (indicating a missed or failed re-arm after fire).
+      const needsReRegister =
+        !existingHandle ||
+        existingSchedule !== job.schedule ||
+        (existingFireTime !== undefined && existingFireTime <= now);
 
-      if (existingSchedule !== job.schedule) {
-        existingHandle.cancel();
-        handles.delete(job.id);
-        scheduleStrings.delete(job.id);
+      if (needsReRegister) {
+        if (existingHandle) {
+          existingHandle.cancel();
+          handles.delete(job.id);
+          scheduleStrings.delete(job.id);
+          nextFireTimes.delete(job.id);
+        }
         if (!registerSchedule(job)) failedIds.push(job.id);
       }
     }
@@ -159,6 +170,7 @@ export function createCronRegistry(deps: CronRegistryDeps): CronRegistry {
     }
     handles.clear();
     scheduleStrings.clear();
+    nextFireTimes.clear();
   }
 
   return {

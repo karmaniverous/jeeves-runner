@@ -9,6 +9,9 @@ import { resolve } from 'node:path';
 
 import { Command } from 'commander';
 
+/** Version injected at build time by rollup plugin-replace. */
+const VERSION: string = '__VERSION__';
+
 import { createConnection } from '../../db/connection.js';
 import { runMigrations } from '../../db/migrations.js';
 import { createRunner } from '../../runner.js';
@@ -55,7 +58,7 @@ const program = new Command();
 program
   .name('jeeves-runner')
   .description('Graph-aware job execution engine with SQLite state')
-  .version('0.0.0');
+  .version(VERSION);
 
 program
   .command('start')

@@ -7,6 +7,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+import { DEFAULT_BIND_ADDRESS } from '@karmaniverous/jeeves';
 import type { Command } from 'commander';
 
 import { runnerConfigSchema } from '../../../schemas/config.js';
@@ -14,7 +15,7 @@ import { runnerConfigSchema } from '../../../schemas/config.js';
 /** Minimal starter config template. */
 const INIT_CONFIG_TEMPLATE = {
   port: 1937,
-  host: '127.0.0.1',
+  host: DEFAULT_BIND_ADDRESS,
   dbPath: './data/runner.sqlite',
   maxConcurrency: 4,
   runRetentionDays: 30,
