@@ -22,8 +22,6 @@ interface ServerDeps {
   scheduler: Scheduler;
   /** Getter for the current effective configuration. */
   getConfig: () => RunnerConfig;
-  /** Service version string (from package.json). */
-  version: string;
   /** Component descriptor for factory-produced handlers. */
   descriptor: JeevesComponentDescriptor;
   /** Pino logger config or false to disable. */
@@ -56,7 +54,6 @@ export function createServer(deps: ServerDeps): FastifyInstance {
     db: deps.db,
     scheduler: deps.scheduler,
     getConfig: deps.getConfig,
-    version: deps.version,
     descriptor: deps.descriptor,
   });
 

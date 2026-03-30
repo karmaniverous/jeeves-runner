@@ -29,8 +29,6 @@ interface RouteDeps {
   scheduler: Scheduler;
   /** Getter for the current effective configuration. */
   getConfig: () => RunnerConfig;
-  /** Service version string (from package.json). */
-  version: string;
   /** Component descriptor for factory-produced handlers. */
   descriptor: JeevesComponentDescriptor;
 }
@@ -39,12 +37,12 @@ interface RouteDeps {
  * Register all API routes on the Fastify instance.
  */
 export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
-  const { db, scheduler, getConfig, version, descriptor } = deps;
+  const { db, scheduler, getConfig, descriptor } = deps;
 
   // --- GET /status (factory-produced) ---
   const statusHandler = createStatusHandler({
     name: 'runner',
-    version,
+    version: descriptor.version,
     getHealth: () => {
       const totalJobs = db
         .prepare('SELECT COUNT(*) as count FROM jobs')

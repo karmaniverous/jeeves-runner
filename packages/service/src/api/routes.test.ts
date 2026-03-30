@@ -47,7 +47,7 @@ describe('API routes', () => {
       };
     };
     expect(body.name).toBe('runner');
-    expect(body.version).toBe('0.0.0-test');
+    expect(typeof body.version).toBe('string');
     expect(body.status).toBe('healthy');
     expect(body).toHaveProperty('uptime');
     expect(body.health).toHaveProperty('totalJobs');

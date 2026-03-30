@@ -113,9 +113,6 @@ export function createRunner(config: RunnerConfig, deps?: RunnerDeps): Runner {
       scheduler.start();
       logger.info('Scheduler started');
 
-      // Version injected at build time by rollup plugin-replace
-      const pkgVersion: string = '__VERSION__';
-
       // Build descriptor with scheduler reference for config-apply callback
       const descriptor = createRunnerDescriptor({
         onConfigApply: () => {
@@ -129,7 +126,6 @@ export function createRunner(config: RunnerConfig, deps?: RunnerDeps): Runner {
         db,
         scheduler,
         getConfig: () => config,
-        version: pkgVersion,
         descriptor,
         loggerConfig: { level: config.log.level, file: config.log.file },
       });
