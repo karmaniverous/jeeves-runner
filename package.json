@@ -14,8 +14,6 @@
     "typecheck": "npm run typecheck --workspaces"
   },
   "devDependencies": {
-    "@emnapi/core": "^1.9.1",
-    "@emnapi/runtime": "^1.9.1",
     "@eslint/js": "^10.0.1",
     "@vitest/eslint-plugin": "^1.6.13",
     "eslint": "^10.1.0",
