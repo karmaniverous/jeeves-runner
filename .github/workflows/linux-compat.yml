@@ -13,4 +13,4 @@ jobs:
   linux-compat:
     uses: karmaniverous/gha-workflows/.github/workflows/linux-compat.yml@main
     with:
-      install-command: npm install
+      install-command: rm -f package-lock.json && npm install
