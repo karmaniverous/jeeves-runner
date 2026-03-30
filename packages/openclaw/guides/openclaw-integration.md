@@ -82,15 +82,40 @@ This replaces the previous `JEEVES_RUNNER_URL` environment variable approach.
 
 ## Available Tools
 
-The plugin registers 17 tools across three tiers: monitoring, management, and inspection.
+The plugin registers 20 tools: 4 standard platform tools (via `createPluginToolset`) plus 16 custom runner tools across three tiers.
 
-### Monitoring Tools
+### Standard Platform Tools
 
 #### `runner_status`
 
-Get jeeves-runner service health, uptime, job counts, and error statistics.
+Get service status including version, uptime, and health metrics (`{ name, version, uptime, status, health }`).
 
 **Parameters:** None
+
+#### `runner_config`
+
+Query resolved service configuration. Supports optional JSONPath filtering.
+
+**Parameters:** None (or optional JSONPath)
+
+#### `runner_config_apply`
+
+Apply a configuration patch to the running service.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `patch` | `object` | Yes | Configuration fields to update |
+| `replace` | `boolean` | No | Replace entire config instead of merging |
+
+#### `runner_service`
+
+System service management (install, uninstall, start, stop, restart, status).
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `action` | `string` | Yes | Service action to perform |
+
+### Custom Monitoring Tools
 
 #### `runner_jobs`
 

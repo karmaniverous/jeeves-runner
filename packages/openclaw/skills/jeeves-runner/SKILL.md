@@ -16,7 +16,8 @@ jeeves-runner is a Node.js job execution engine that schedules and runs process 
 | Package | `@karmaniverous/jeeves-runner` (globally installed) |
 | Default Port | `1937` |
 | Database | `runner.sqlite` (node:sqlite DatabaseSync) |
-| Config | JSON config file with `dbPath`, `port`, `scheduleFile`, `notifications` |
+| Default Host | `0.0.0.0` (all interfaces) |
+| Config | `jeeves-runner/config.json` with `dbPath`, `port`, `host`, `runners`, `notifications` |
 
 ## Plugin Installation
 
@@ -126,10 +127,12 @@ Full config with notifications and gateway:
 }
 ```
 
-Write the config to a sensible location:
-- **Linux:** `~/.config/jeeves-runner.config.json` or `/etc/jeeves-runner/config.json`
-- **Windows:** alongside the data directory or in a config directory
-- **macOS:** `~/.config/jeeves-runner.config.json`
+Write the config to the standard location (`jeeves-runner/config.json` inside the platform config dir):
+- **Linux:** `~/.config/jeeves-runner/config.json` or `/etc/jeeves-runner/config.json`
+- **Windows:** alongside the data directory, e.g. `C:\ProgramData\jeeves-runner\config.json`
+- **macOS:** `~/.config/jeeves-runner/config.json`
+
+Use `jeeves-runner init` to generate a starter config at the default location.
 
 Create the database directory and log directory:
 ```bash
@@ -150,8 +153,8 @@ jeeves-runner start -c /path/to/config.json
 
 In another terminal, verify:
 ```bash
-curl http://127.0.0.1:1937/health
-# Expected: { "ok": true, "uptime": <seconds>, "failedRegistrations": 0 }
+curl http://127.0.0.1:1937/status
+# Expected: { "name": "runner", "version": "...", "uptime": <seconds>, "status": "ok", "health": { "totalJobs": ..., ... } }
 ```
 
 Stop it with Ctrl+C after confirming it starts cleanly.
@@ -220,7 +223,7 @@ launchctl load ~/Library/LaunchAgents/com.jeeves.runner.plist
 
 Verify the service started:
 ```bash
-curl http://127.0.0.1:1937/health
+curl http://127.0.0.1:1937/status
 ```
 
 Or use `runner_status` if the plugin tools are available.
@@ -283,13 +286,15 @@ On sessions after bootstrap is complete:
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/health` | Health check (`{ ok, uptime, failedRegistrations }`) |
+| `GET` | `/status` | Service status (`{ name, version, uptime, status, health: { totalJobs, running, failedRegistrations, okLastHour, errorsLastHour } }`) |
+| `GET` | `/config` | Query resolved config (optional `?path=` JSONPath) |
+| `POST` | `/config/apply` | Apply a config patch (`{ patch, replace? }`) |
 | `GET` | `/jobs` | List all jobs with last run status |
 | `GET` | `/jobs/:id` | Single job detail |
 | `GET` | `/jobs/:id/runs` | Run history (`?limit=N`, default 50) |
 | `POST` | `/jobs/:id/run` | Trigger manual run (synchronous) |
 | `POST` | `/jobs` | Create a new job |
-| `PUT` | `/jobs/:id` | Update an existing job |
+| `PATCH` | `/jobs/:id` | Partial update of an existing job |
 | `DELETE` | `/jobs/:id` | Delete a job and its run history |
 | `PATCH` | `/jobs/:id/enable` | Enable a job |
 | `PATCH` | `/jobs/:id/disable` | Disable a job |
@@ -300,16 +305,26 @@ On sessions after bootstrap is complete:
 | `GET` | `/state` | List all state namespaces |
 | `GET` | `/state/:namespace` | Read scalar state (optional `?path=` JSONPath) |
 | `GET` | `/state/:namespace/:key` | Read collection items |
-| `GET` | `/stats` | Aggregate stats (total, running, ok/errors last hour) |
 
 ## Tools
 
-The plugin registers 17 tools across three tiers: monitoring, management, and inspection.
+The plugin registers 20 tools: 4 standard platform tools plus 16 custom runner tools across three tiers.
 
-### Monitoring Tools
+### Standard Platform Tools
 
 #### `runner_status`
-Service health check. Returns total jobs, running count, failed registrations, ok/error counts for last hour.
+Service status check. Returns `{ name, version, uptime, status, health }` where health includes total jobs, running count, failed registrations, ok/error counts for last hour.
+
+#### `runner_config`
+Query resolved service configuration. Supports optional JSONPath filtering.
+
+#### `runner_config_apply`
+Apply a configuration patch to the running service. Supports merge or full replace.
+
+#### `runner_service`
+System service management (install, uninstall, start, stop, restart, status).
+
+### Custom Monitoring Tools
 
 #### `runner_jobs`
 List all jobs with enabled state, schedule, last run status, and last run time.
@@ -352,7 +367,7 @@ Create a new runner job. Requires `id`, `name`, `schedule`, and `script`.
 - `on_failure`, `on_success` (string, optional) — Slack channel IDs
 
 #### `runner_update_job`
-Update an existing job. Only supplied fields are changed (PUT with partial body).
+Update an existing job. Only supplied fields are changed (PATCH with partial body).
 - `jobId` (string, required) — The job to update
 - All fields from `runner_create_job` except `id` are accepted as optional updates
 
@@ -450,7 +465,7 @@ db.prepare('UPDATE jobs SET script = ? WHERE id = ?').run('/path/to/new-script.j
 Check the `script` column in the `jobs` table. If pointing to a stale path, update it with `runner_update_script` or directly in SQLite.
 
 ### All jobs failing after service restart
-The runner seeds from the schedule file on startup (upsert). If the schedule file has stale paths, they'll overwrite DB values. Fix the schedule file first, then restart.
+Check that job script paths in the database are still valid. Use `runner_jobs` to list all jobs and `runner_job_detail` to inspect individual script paths. Update stale paths with `runner_update_script`.
 
 ### Notifications not sending
 Check the runner config's `notifications.slackTokenPath`. Verify the token file exists and is valid.
@@ -493,7 +508,15 @@ Get-Content <log-path> -Tail 20   # Recent logs
 
 ### Template Repo
 
-New script projects start from `karmaniverous/jeeves-runner-scripts-template`:
+New script projects start from `karmaniverous/jeeves-runner-scripts-template`. Use the CLI to scaffold:
+
+```bash
+jeeves-runner init-scripts -c /path/to/config.json
+```
+
+This clones the template into a `scripts/` directory next to the config, installs dependencies, and configures the `runners.ts` entry in the config file for TypeScript execution via tsx.
+
+Alternatively, clone manually:
 
 ```bash
 git clone https://github.com/karmaniverous/jeeves-runner-scripts-template.git scripts
@@ -587,7 +610,10 @@ If tools are unavailable (plugin not loaded in this session):
 - Default: `http://127.0.0.1:1937`
 
 **CLI Fallbacks:**
-- `jeeves-runner status -c <config>` — check if the service is running
+- `jeeves-runner status` — check if the service is running (probes GET /status)
 - `jeeves-runner list-jobs -c <config>` — list registered jobs
 - `jeeves-runner trigger -i <job-id> -c <config>` — trigger a job manually
-- Restart via NSSM (Windows) or systemctl (Linux)
+- `jeeves-runner config validate -c <config>` — validate config file
+- `jeeves-runner config apply -f <patch.json>` — apply config patch
+- `jeeves-runner service start|stop|restart|status` — manage system service
+- `jeeves-runner init-scripts -c <config>` — scaffold a scripts project

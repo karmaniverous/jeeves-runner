@@ -12,8 +12,8 @@ This repository is a monorepo containing two packages:
 
 | Package | npm | Description |
 |---------|-----|-------------|
-| [`packages/service`](packages/service) | [`@karmaniverous/jeeves-runner`](https://www.npmjs.com/package/@karmaniverous/jeeves-runner) v0.3.1 | Job execution engine |
-| [`packages/openclaw`](packages/openclaw) | [`@karmaniverous/jeeves-runner-openclaw`](https://www.npmjs.com/package/@karmaniverous/jeeves-runner-openclaw) v0.1.0 | OpenClaw plugin |
+| [`packages/service`](packages/service) | [`@karmaniverous/jeeves-runner`](https://www.npmjs.com/package/@karmaniverous/jeeves-runner) v0.7.4 | Job execution engine |
+| [`packages/openclaw`](packages/openclaw) | [`@karmaniverous/jeeves-runner-openclaw`](https://www.npmjs.com/package/@karmaniverous/jeeves-runner-openclaw) v0.5.1 | OpenClaw plugin |
 
 ## What It Does
 
@@ -54,17 +54,29 @@ Requires Node.js 24+ for `node:sqlite` support.
 
 ### 1. Create a config file
 
+Generate a starter config:
+
+```bash
+npx jeeves-runner init
+```
+
+Or create `jeeves-runner/config.json` manually:
+
 ```json
 {
   "port": 1937,
+  "host": "0.0.0.0",
   "dbPath": "./data/runner.sqlite",
   "maxConcurrency": 4,
   "runRetentionDays": 30,
   "stateCleanupIntervalMs": 3600000,
   "reconcileIntervalMs": 60000,
   "shutdownGraceMs": 30000,
+  "runners": {
+    "ts": "node ./scripts/node_modules/tsx/dist/cli.mjs"
+  },
   "gateway": {
-    "url": "http://localhost:3000",
+    "url": "http://127.0.0.1:18789",
     "tokenPath": "./credentials/gateway-token"
   },
   "notifications": {
@@ -103,40 +115,46 @@ Or programmatically via `scripts/seed-jobs.ts`.
 ### 4. Check status
 
 ```bash
-npx jeeves-runner status --config ./config.json
+npx jeeves-runner status
 npx jeeves-runner list-jobs --config ./config.json
 ```
 
 ## CLI Commands
 
+Built with `createServiceCli(descriptor)` from core. Standard commands plus custom job management commands.
+
 | Command | Description |
 |---------|-------------|
-| `start` | Start the runner daemon |
-| `status` | Show runner stats (queries the HTTP API) |
-| `list-jobs` | List all configured jobs |
+| `start` | Start the runner daemon (foreground) |
+| `status` | Probe service health and version (queries `GET /status`) |
+| `config [jsonpath]` | Query resolved config from running service |
+| `config validate` | Validate a config file against the Zod schema |
+| `config apply` | Apply a config patch to the running service |
+| `init` | Generate default config file |
+| `service install` | Install as a system service |
+| `service uninstall` | Uninstall the system service |
+| `service start/stop/restart` | Manage the system service |
+| `service status` | Query system service state |
 | `add-job` | Add a new job to the database |
+| `list-jobs` | List all configured jobs |
 | `trigger` | Manually trigger a job run (queries the HTTP API) |
-| `validate` | Validate a config file |
-| `init` | Initialize a new runner config and database |
-| `config-show` | Display the resolved config |
-| `service install` | Install as an NSSM service (Windows) |
-| `service uninstall` | Uninstall the NSSM service |
-
-All commands accept `--config <path>` to specify the config file.
+| `init-scripts` | Scaffold a scripts project from the template |
 
 ## HTTP API
 
-The runner exposes a REST API on `localhost` (not externally accessible by default).
+The runner exposes a REST API. Default bind address: `0.0.0.0` (all interfaces), default port: `1937`.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| `GET` | `/health` | Health check |
+| `GET` | `/status` | Service status (`{ name, version, uptime, status, health }`) |
+| `GET` | `/config` | Query resolved config (optional `?path=` JSONPath) |
+| `POST` | `/config/apply` | Apply a config patch (`{ patch, replace? }`) |
 | `GET` | `/jobs` | List all jobs with last run status |
 | `GET` | `/jobs/:id` | Single job detail |
 | `GET` | `/jobs/:id/runs` | Run history (paginated via `?limit=N`) |
 | `POST` | `/jobs/:id/run` | Trigger manual run |
 | `POST` | `/jobs` | Create a new job |
-| `PUT` | `/jobs/:id` | Update an existing job |
+| `PATCH` | `/jobs/:id` | Partial update of an existing job |
 | `DELETE` | `/jobs/:id` | Delete a job and its run history |
 | `PATCH` | `/jobs/:id/enable` | Enable a job |
 | `PATCH` | `/jobs/:id/disable` | Disable a job |
@@ -147,7 +165,6 @@ The runner exposes a REST API on `localhost` (not externally accessible by defau
 | `GET` | `/state` | List all state namespaces |
 | `GET` | `/state/:namespace` | Read scalar state (optional `?path=` JSONPath) |
 | `GET` | `/state/:namespace/:key` | Read collection items |
-| `GET` | `/stats` | Aggregate stats (jobs ok/error/running counts) |
 
 ### Example response
 
@@ -276,36 +293,23 @@ The runner parses this and stores the data in the `runs` table.
 
 ### Client library
 
-Job scripts can import the runner client for state and queue operations:
+Job scripts use the `runScript()` wrapper and `getRunnerClient()` for lifecycle management and API access:
 
 ```typescript
-import { createClient } from '@karmaniverous/jeeves-runner';
+import { getRunnerClient, runScript } from '@karmaniverous/jeeves-runner';
 
-const jr = createClient(); // reads JR_DB_PATH from env
+await runScript(import.meta, async () => {
+  const client = getRunnerClient(); // HTTP client pointed at the running runner
 
-// Scalar state (key-value with optional TTL)
-const lastId = jr.getState('email-poll', 'last_history_id');
-jr.setState('email-poll', 'last_history_id', newId);
-jr.setState('email-poll', 'checkpoint', value, { ttl: '30d' });
-jr.deleteState('email-poll', 'old_key');
+  // Use state API
+  await client.setState('my-namespace', 'lastRun', new Date().toISOString());
 
-// Collection state (tracking sets of items)
-jr.setItem('email-poll', 'seen-threads', threadId, '1', { ttl: '30d' });
-const seen = jr.hasItem('email-poll', 'seen-threads', threadId);
-const item = jr.getItem('email-poll', 'seen-threads', threadId);
-jr.deleteItem('email-poll', 'seen-threads', threadId);
-const count = jr.countItems('email-poll', 'seen-threads');
-const keys = jr.listItemKeys('email-poll', 'seen-threads');
-jr.pruneItems('email-poll', 'seen-threads'); // remove expired
-
-// Queues
-jr.enqueue('email-updates', { threadId, action: 'label' });
-const items = jr.dequeue('email-updates', 10); // claim up to 10
-jr.done(items[0].id);
-jr.fail(items[1].id, 'API error');
-
-jr.close();
+  // Use queue API
+  await client.enqueue('my-queue', { url: 'https://example.com' });
+});
 ```
+
+Additional client utilities are exported for use in job scripts: `runScript`, `getRunnerClient`, `createGoogleAuth`, `run`, `runWithRetry`, `dispatchSession`, `runDispatcher`, and file utilities (`readJson`, `writeJsonAtomic`, `appendJsonl`, etc.).
 
 ## Job Lifecycle
 
@@ -360,16 +364,20 @@ process.on('SIGTERM', () => runner.stop());
 
 ## Configuration Reference
 
+Config file: `jeeves-runner/config.json` (legacy `jeeves-runner.config.json` is auto-migrated).
+
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | `port` | number | `1937` | HTTP API port |
+| `host` | string | `0.0.0.0` | Bind address for the HTTP server |
 | `dbPath` | string | `./data/runner.sqlite` | SQLite database path |
 | `maxConcurrency` | number | `4` | Max concurrent jobs |
 | `runRetentionDays` | number | `30` | Days to keep run history |
 | `stateCleanupIntervalMs` | number | `3600000` | State cleanup interval (ms) |
 | `reconcileIntervalMs` | number | `60000` | Job reconciliation interval (ms) |
 | `shutdownGraceMs` | number | `30000` | Grace period for running jobs on shutdown |
-| `gateway.url` | string | — | OpenClaw Gateway URL (for session jobs) |
+| `runners` | Record | `{}` | Custom command runners keyed by file extension |
+| `gateway.url` | string | `http://127.0.0.1:18789` | OpenClaw Gateway URL (for session jobs) |
 | `gateway.tokenPath` | string | — | Path to gateway auth token file |
 | `notifications.slackTokenPath` | string | — | Path to Slack bot token file |
 | `notifications.defaultOnFailure` | string \| null | `null` | Default Slack channel for failures |
@@ -409,12 +417,17 @@ jeeves-runner is one component of a four-part platform:
 - ✅ Zod-validated configuration
 - ✅ Seed script for 27 existing n8n workflows
 - ✅ NSSM service deployment
-- ✅ OpenClaw plugin (`@karmaniverous/jeeves-runner-openclaw`) with 17 tools (monitoring, management, inspection)
+- ✅ OpenClaw plugin (`@karmaniverous/jeeves-runner-openclaw`) with 20 tools (4 standard + 16 custom)
 - ✅ Job management API (create, update, delete, script update, enable/disable)
 - ✅ Queue and state inspection API (list queues, peek, query state/collections)
 - ✅ Dual-format scheduling (cron + RRStack)
 - ✅ Monorepo restructure complete
-- ✅ 158 passing tests (126 service + 32 plugin)
+- ✅ Component SDK adoption (`createServiceCli`, `createPluginToolset`)
+- ✅ Standard `/status`, `/config`, `/config/apply` endpoints
+- ✅ Config path migration (`jeeves-runner.config.json` to `jeeves-runner/config.json`)
+- ✅ Build-time version injection via `@rollup/plugin-replace`
+- ✅ `init-scripts` CLI command for scaffolding script projects
+- ✅ Client utility modules (`run-script`, `runner-client`, `fs-utils`, `shell`, `google-auth`, `spawn-worker`, `slack-workspace`)
 
 ### What's next
 
