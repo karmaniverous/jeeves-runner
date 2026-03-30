@@ -93,7 +93,11 @@ export {
   writeJsonAtomic,
   writeJsonl,
 } from './client/fs-utils.js';
-export type { AccountConfig, GoogleAuthOptions } from './client/google-auth.js';
+export type {
+  AccountConfig,
+  GoogleAuthOptions,
+  ServiceAccountFileConfig,
+} from './client/google-auth.js';
 export { createGoogleAuth } from './client/google-auth.js';
 export { runScript } from './client/run-script.js';
 export { getRunnerClient } from './client/runner-client.js';

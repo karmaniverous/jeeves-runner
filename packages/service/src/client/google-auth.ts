@@ -32,6 +32,12 @@ interface RefreshTokenFile {
   refresh_token: string;
 }
 
+/** Service account config object specifying a key file path. */
+export interface ServiceAccountFileConfig {
+  /** Path to the service account JSON key file. */
+  file: string;
+}
+
 /** Configuration for a Google account's auth method. */
 export interface AccountConfig {
   /** Google account email address. */
@@ -39,7 +45,7 @@ export interface AccountConfig {
   /** Path to refresh token file (relative to credentialsDir). */
   tokenFile?: string;
   /** Service account key file path or config object. */
-  serviceAccount?: string | { file: string };
+  serviceAccount?: string | ServiceAccountFileConfig;
 }
 
 /** Options for the Google auth helper. */
@@ -192,5 +198,8 @@ export function createGoogleAuth(options: GoogleAuthOptions) {
     throw new Error(`No auth method configured for ${account.email}`);
   }
 
-  return { getAccessToken };
+  return {
+    /** Get an access token for the given account and scopes. */
+    getAccessToken,
+  };
 }
