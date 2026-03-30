@@ -2,10 +2,18 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [0.8.1](https://github.com/karmaniverous/jeeves-runner/compare/service/0.8.0...0.8.1)
+#### [0.8.2](https://github.com/karmaniverous/jeeves-runner/compare/service/0.8.1...0.8.2)
+
+- fix(core): integrate descriptor run callback [`#54`](https://github.com/karmaniverous/jeeves-runner/pull/54)
+- ni [`1a9f65e`](https://github.com/karmaniverous/jeeves-runner/commit/1a9f65ea0587241c9fb4cef19cff55d0b8b5d9f8)
+
+#### [service/0.8.1](https://github.com/karmaniverous/jeeves-runner/compare/service/0.8.0...service/0.8.1)
+
+> 30 March 2026
 
 - fix(service): correct startCommand path doubling in descriptor [`#53`](https://github.com/karmaniverous/jeeves-runner/pull/53)
 - chore: release @karmaniverous/jeeves-runner-openclaw v0.6.0 [`22ecab0`](https://github.com/karmaniverous/jeeves-runner/commit/22ecab00874292575e631fe1002184d46d083d13)
+- chore: release @karmaniverous/jeeves-runner v0.8.1 [`4df7759`](https://github.com/karmaniverous/jeeves-runner/commit/4df7759e67f7ef64410ea67d58775058172e12ea)
 
 #### [service/0.8.0](https://github.com/karmaniverous/jeeves-runner/compare/service/0.7.4...service/0.8.0)
 
