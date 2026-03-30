@@ -46,7 +46,7 @@
     "node": ">=20"
   },
   "dependencies": {
-    "@karmaniverous/jeeves": "^0.3.0",
+    "@karmaniverous/jeeves": "^0.4.3",
     "@karmaniverous/rrstack": "^0.17.1",
     "commander": "^14.0.3",
     "croner": "^10.0.1",
