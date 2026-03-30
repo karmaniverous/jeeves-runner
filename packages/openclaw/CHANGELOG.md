@@ -2,7 +2,17 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [0.6.0](https://github.com/karmaniverous/jeeves-runner/compare/openclaw/0.5.1...0.6.0)
+#### [0.6.1](https://github.com/karmaniverous/jeeves-runner/compare/openclaw/0.6.0...0.6.1)
+
+- fix(core): integrate descriptor run callback [`#54`](https://github.com/karmaniverous/jeeves-runner/pull/54)
+- fix(service): correct startCommand path doubling in descriptor [`#53`](https://github.com/karmaniverous/jeeves-runner/pull/53)
+- ni [`1a9f65e`](https://github.com/karmaniverous/jeeves-runner/commit/1a9f65ea0587241c9fb4cef19cff55d0b8b5d9f8)
+- chore: release @karmaniverous/jeeves-runner v0.8.2 [`cdde17a`](https://github.com/karmaniverous/jeeves-runner/commit/cdde17aa67321750d8f1650dbcafc0b20c55e1c6)
+- chore: release @karmaniverous/jeeves-runner v0.8.1 [`4df7759`](https://github.com/karmaniverous/jeeves-runner/commit/4df7759e67f7ef64410ea67d58775058172e12ea)
+
+#### [openclaw/0.6.0](https://github.com/karmaniverous/jeeves-runner/compare/openclaw/0.5.1...openclaw/0.6.0)
+
+> 30 March 2026
 
 - feat: v0.8.0 — Component SDK Adoption + Script Utilities Hoist [`#52`](https://github.com/karmaniverous/jeeves-runner/pull/52)
 - feat(service): replace tsRunner with configurable runners map [`#48`](https://github.com/karmaniverous/jeeves-runner/pull/48)
@@ -22,6 +32,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - [45] feat(service): add configurable tsRunner for TypeScript scripts [`508641f`](https://github.com/karmaniverous/jeeves-runner/commit/508641f7f9a885cd2189c26e7656bfff1b739ae2)
 - feat(service): add init-scripts CLI command [`a92f6be`](https://github.com/karmaniverous/jeeves-runner/commit/a92f6bea5719a96030d70694542772fdead4a437)
 - npm audit fix [`c6e9b1c`](https://github.com/karmaniverous/jeeves-runner/commit/c6e9b1cd8321324d8b90d84a910cf6be4d1bea62)
+- chore: release @karmaniverous/jeeves-runner-openclaw v0.6.0 [`22ecab0`](https://github.com/karmaniverous/jeeves-runner/commit/22ecab00874292575e631fe1002184d46d083d13)
 - test: skip .cmd and .ps1 executor tests on non-Windows platforms [`e206ec2`](https://github.com/karmaniverous/jeeves-runner/commit/e206ec267915ec2653267c06f51b4cb078ab0e82)
 - chore: release @karmaniverous/jeeves-runner v0.8.0 [`1366368`](https://github.com/karmaniverous/jeeves-runner/commit/1366368565e36ae1270b0e752fa3631d2870bacc)
 - fix: use npm install in Linux CI for cross-platform native bindings [`2690611`](https://github.com/karmaniverous/jeeves-runner/commit/269061129dee45cffecea16c9bf4d99acc38eac3)

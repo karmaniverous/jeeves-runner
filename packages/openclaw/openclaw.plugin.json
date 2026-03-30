@@ -2,7 +2,7 @@
   "id": "jeeves-runner-openclaw",
   "name": "Jeeves Runner",
   "description": "Job execution engine management - status, troubleshooting, and operational tools for jeeves-runner.",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "skills": [
     "dist/skills/jeeves-runner"
   ],
