@@ -2,7 +2,14 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [0.8.0](https://github.com/karmaniverous/jeeves-runner/compare/service/0.7.4...0.8.0)
+#### [0.8.1](https://github.com/karmaniverous/jeeves-runner/compare/service/0.8.0...0.8.1)
+
+- fix(service): correct startCommand path doubling in descriptor [`#53`](https://github.com/karmaniverous/jeeves-runner/pull/53)
+- chore: release @karmaniverous/jeeves-runner-openclaw v0.6.0 [`22ecab0`](https://github.com/karmaniverous/jeeves-runner/commit/22ecab00874292575e631fe1002184d46d083d13)
+
+#### [service/0.8.0](https://github.com/karmaniverous/jeeves-runner/compare/service/0.7.4...service/0.8.0)
+
+> 30 March 2026
 
 - feat: v0.8.0 — Component SDK Adoption + Script Utilities Hoist [`#52`](https://github.com/karmaniverous/jeeves-runner/pull/52)
 - refactor: address Gemini PR review feedback [`11aa730`](https://github.com/karmaniverous/jeeves-runner/commit/11aa730f135190a39ebd3973f69ed21e9aa9e936)
@@ -18,6 +25,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - refactor(service): DRY — extract shared pino options builder and CLI withDb helper [`f676dc1`](https://github.com/karmaniverous/jeeves-runner/commit/f676dc1da9a53f1e900f498e532316edaf0d97d4)
 - feat(service): add init-scripts CLI command [`a92f6be`](https://github.com/karmaniverous/jeeves-runner/commit/a92f6bea5719a96030d70694542772fdead4a437)
 - npm audit fix [`c6e9b1c`](https://github.com/karmaniverous/jeeves-runner/commit/c6e9b1cd8321324d8b90d84a910cf6be4d1bea62)
+- chore: release @karmaniverous/jeeves-runner v0.8.0 [`1366368`](https://github.com/karmaniverous/jeeves-runner/commit/1366368565e36ae1270b0e752fa3631d2870bacc)
 - fix: use npm install in Linux CI for cross-platform native bindings [`2690611`](https://github.com/karmaniverous/jeeves-runner/commit/269061129dee45cffecea16c9bf4d99acc38eac3)
 - refactor(service): remove redundant version prop from route/server deps [`5f43efd`](https://github.com/karmaniverous/jeeves-runner/commit/5f43efd9e9411b8a50aa5fa7bb9338a4af04b881)
 - fix(service): resolve TSDoc warnings in google-auth [`0422beb`](https://github.com/karmaniverous/jeeves-runner/commit/0422beb219eee262bc03225d25252766a6b889ae)
