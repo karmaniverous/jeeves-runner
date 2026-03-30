@@ -17,6 +17,7 @@ import { createMaintenance, type Maintenance } from './db/maintenance.js';
 import { runMigrations } from './db/migrations.js';
 import { createRunnerDescriptor } from './descriptor.js';
 import { createGatewayClient } from './gateway/client.js';
+import { buildPinoOptions } from './lib/pino-options.js';
 import { createNotifier } from './notify/slack.js';
 import { executeJob } from './scheduler/executor.js';
 import { createScheduler, type Scheduler } from './scheduler/scheduler.js';
@@ -45,19 +46,7 @@ export function createRunner(config: RunnerConfig, deps?: RunnerDeps): Runner {
   let server: FastifyInstance | null = null;
   let maintenance: Maintenance | null = null;
 
-  const logger =
-    deps?.logger ??
-    pino({
-      level: config.log.level,
-      ...(config.log.file
-        ? {
-            transport: {
-              target: 'pino/file',
-              options: { destination: config.log.file },
-            },
-          }
-        : {}),
-    });
+  const logger = deps?.logger ?? pino(buildPinoOptions(config.log));
 
   return {
     async start(): Promise<void> {
@@ -127,7 +116,7 @@ export function createRunner(config: RunnerConfig, deps?: RunnerDeps): Runner {
         scheduler,
         getConfig: () => config,
         descriptor,
-        loggerConfig: { level: config.log.level, file: config.log.file },
+        logConfig: config.log,
       });
       await server.listen({ port: config.port, host: config.host });
       logger.info({ port: config.port }, 'API server listening');

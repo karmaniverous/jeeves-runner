@@ -12,6 +12,8 @@ import type { DatabaseSync } from 'node:sqlite';
 import type { JeevesComponentDescriptor } from '@karmaniverous/jeeves';
 import Fastify, { type FastifyInstance } from 'fastify';
 
+import type { LogConfig } from '../lib/pino-options.js';
+import { buildPinoOptions } from '../lib/pino-options.js';
 import type { Scheduler } from '../scheduler/scheduler.js';
 import type { RunnerConfig } from '../schemas/config.js';
 import { registerRoutes } from './routes.js';
@@ -24,8 +26,8 @@ interface ServerDeps {
   getConfig: () => RunnerConfig;
   /** Component descriptor for factory-produced handlers. */
   descriptor: JeevesComponentDescriptor;
-  /** Pino logger config or false to disable. */
-  loggerConfig?: { level: string; file?: string };
+  /** Pino logger configuration. */
+  logConfig: LogConfig;
 }
 
 /**
@@ -35,19 +37,7 @@ interface ServerDeps {
  */
 export function createServer(deps: ServerDeps): FastifyInstance {
   const app = Fastify({
-    logger: deps.loggerConfig
-      ? {
-          level: deps.loggerConfig.level,
-          ...(deps.loggerConfig.file
-            ? {
-                transport: {
-                  target: 'pino/file',
-                  options: { destination: deps.loggerConfig.file },
-                },
-              }
-            : {}),
-        }
-      : false,
+    logger: buildPinoOptions(deps.logConfig),
   });
 
   registerRoutes(app, {

@@ -30,6 +30,20 @@ function loadConfig(configPath?: string) {
   return runnerConfigSchema.parse({});
 }
 
+/** Open a migrated DB connection, run `fn`, then close. */
+function withDb<T>(
+  dbPath: string,
+  fn: (db: ReturnType<typeof createConnection>) => T,
+): T {
+  const db = createConnection(dbPath);
+  runMigrations(db);
+  try {
+    return fn(db);
+  } finally {
+    db.close();
+  }
+}
+
 const descriptor = createRunnerDescriptor({
   customCliCommands: (program: BaseCommand) => {
     program
@@ -79,25 +93,24 @@ const descriptor = createRunnerDescriptor({
             process.exit(1);
           }
 
-          const db = createConnection(config.dbPath);
-          runMigrations(db);
-          db.prepare(
-            `INSERT INTO jobs (id, name, schedule, script, type, description, timeout_ms, overlap_policy, on_failure, on_success)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          ).run(
-            options.id,
-            options.name,
-            options.schedule,
-            resolve(options.script),
-            options.type,
-            options.description ?? null,
-            options.timeout ? parseInt(options.timeout, 10) : null,
-            options.overlap,
-            options.onFailure ?? null,
-            options.onSuccess ?? null,
-          );
-          console.log(`Job '${options.id}' added.`);
-          db.close();
+          withDb(config.dbPath, (db) => {
+            db.prepare(
+              `INSERT INTO jobs (id, name, schedule, script, type, description, timeout_ms, overlap_policy, on_failure, on_success)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ).run(
+              options.id,
+              options.name,
+              options.schedule,
+              resolve(options.script),
+              options.type,
+              options.description ?? null,
+              options.timeout ? parseInt(options.timeout, 10) : null,
+              options.overlap,
+              options.onFailure ?? null,
+              options.onSuccess ?? null,
+            );
+            console.log(`Job '${options.id}' added.`);
+          });
         },
       );
 
@@ -107,25 +120,24 @@ const descriptor = createRunnerDescriptor({
       .option('-c, --config <path>', 'Path to config file')
       .action((options: { config?: string }) => {
         const config = loadConfig(options.config);
-        const db = createConnection(config.dbPath);
-        runMigrations(db);
-        const rows = db
-          .prepare('SELECT id, name, schedule, enabled FROM jobs')
-          .all() as Array<{
-          id: string;
-          name: string;
-          schedule: string;
-          enabled: number;
-        }>;
-        if (rows.length === 0) {
-          console.log('No jobs configured.');
-        } else {
-          for (const row of rows) {
-            const status = row.enabled ? '\u2705' : '\u23F8\uFE0F';
-            console.log(`${status} ${row.id}  ${row.schedule}  ${row.name}`);
+        withDb(config.dbPath, (db) => {
+          const rows = db
+            .prepare('SELECT id, name, schedule, enabled FROM jobs')
+            .all() as Array<{
+            id: string;
+            name: string;
+            schedule: string;
+            enabled: number;
+          }>;
+          if (rows.length === 0) {
+            console.log('No jobs configured.');
+          } else {
+            for (const row of rows) {
+              const status = row.enabled ? '\u2705' : '\u23F8\uFE0F';
+              console.log(`${status} ${row.id}  ${row.schedule}  ${row.name}`);
+            }
           }
-        }
-        db.close();
+        });
       });
 
     program
