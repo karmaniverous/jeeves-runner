@@ -8,10 +8,11 @@
  * @module
  */
 
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { execSync } from 'node:child_process';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 
-import { createServiceCli } from '@karmaniverous/jeeves';
+import { createServiceCli, getComponentConfigDir } from '@karmaniverous/jeeves';
 import type { Command as BaseCommand } from 'commander';
 
 import { createConnection } from '../../db/connection.js';
@@ -149,6 +150,63 @@ const descriptor = createRunnerDescriptor({
             process.exit(1);
           }
         })();
+      });
+
+    program
+      .command('init-scripts')
+      .description(
+        'Clone jeeves-runner-scripts-template into scripts/ and configure tsx runner',
+      )
+      .option('-c, --config <path>', 'Path to config file')
+      .action((options: { config?: string }) => {
+        const configDir = options.config
+          ? dirname(resolve(options.config))
+          : getComponentConfigDir('runner');
+        const configPath = options.config
+          ? resolve(options.config)
+          : join(configDir, 'config.json');
+        const scriptsDir = join(configDir, 'scripts');
+
+        if (existsSync(scriptsDir)) {
+          console.error(`Scripts directory already exists: ${scriptsDir}`);
+          process.exit(1);
+        }
+
+        console.log(`Cloning scripts template into ${scriptsDir}...`);
+        execSync(
+          `git clone https://github.com/karmaniverous/jeeves-runner-scripts-template.git "${scriptsDir}"`,
+          { stdio: 'inherit' },
+        );
+
+        console.log('Installing dependencies...');
+        execSync('npm install', { cwd: scriptsDir, stdio: 'inherit' });
+
+        const tsxPath = join(
+          scriptsDir,
+          'node_modules',
+          'tsx',
+          'dist',
+          'cli.mjs',
+        );
+        const tsRunner = `node ${tsxPath}`;
+
+        if (existsSync(configPath)) {
+          const raw = JSON.parse(readFileSync(configPath, 'utf-8')) as Record<
+            string,
+            unknown
+          >;
+          const runners = (raw.runners ?? {}) as Record<string, string>;
+          runners.ts = tsRunner;
+          raw.runners = runners;
+          writeFileSync(configPath, JSON.stringify(raw, null, 2) + '\n');
+          console.log(`Updated runners.ts in ${configPath}`);
+        } else {
+          const template = { runners: { ts: tsRunner } };
+          writeFileSync(configPath, JSON.stringify(template, null, 2) + '\n');
+          console.log(`Created config with runners.ts at ${configPath}`);
+        }
+
+        console.log('Scripts initialized successfully.');
       });
   },
 });
