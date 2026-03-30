@@ -26,7 +26,7 @@ describe('API routes', () => {
     testDb.cleanup();
   });
 
-  it('GET /status should return status with version and stats', async () => {
+  it('GET /status should return status with version and health stats', async () => {
     const response = await app.inject({
       method: 'GET',
       url: '/status',
@@ -34,23 +34,27 @@ describe('API routes', () => {
 
     expect(response.statusCode).toBe(200);
     const body = JSON.parse(response.body) as {
-      status: string;
+      name: string;
       version: string;
       uptime: number;
-      totalJobs: number;
-      running: number;
-      failedRegistrations: number;
-      okLastHour: number;
-      errorsLastHour: number;
+      status: string;
+      health: {
+        totalJobs: number;
+        running: number;
+        failedRegistrations: number;
+        okLastHour: number;
+        errorsLastHour: number;
+      };
     };
-    expect(body.status).toBe('ok');
+    expect(body.name).toBe('runner');
     expect(body.version).toBe('0.0.0-test');
+    expect(body.status).toBe('healthy');
     expect(body).toHaveProperty('uptime');
-    expect(body).toHaveProperty('totalJobs');
-    expect(body).toHaveProperty('running');
-    expect(body).toHaveProperty('failedRegistrations');
-    expect(body).toHaveProperty('okLastHour');
-    expect(body).toHaveProperty('errorsLastHour');
+    expect(body.health).toHaveProperty('totalJobs');
+    expect(body.health).toHaveProperty('running');
+    expect(body.health).toHaveProperty('failedRegistrations');
+    expect(body.health).toHaveProperty('okLastHour');
+    expect(body.health).toHaveProperty('errorsLastHour');
   });
 
   it('GET /jobs should return empty list', async () => {

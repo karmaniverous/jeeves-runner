@@ -1,7 +1,9 @@
 /**
  * Runner tool registrations (runner_* tools) for the OpenClaw plugin.
  *
- * Orchestrates registration of all runner tools across sub-modules.
+ * Orchestrates registration of custom runner tools across sub-modules.
+ * Standard tools (status, config, config_apply, service) are produced
+ * by `createPluginToolset()` and registered separately.
  *
  * @module runnerTools
  */
@@ -17,16 +19,12 @@ import {
   registerApiTool,
 } from './toolHelpers.js';
 
-/** Register all 17 runner_* tools with the OpenClaw plugin API. */
-export function registerRunnerTools(api: PluginApi, baseUrl: string): void {
+/** Register the 16 custom runner_* tools (excludes runner_status). */
+export function registerRunnerCustomTools(
+  api: PluginApi,
+  baseUrl: string,
+): void {
   const coreTools: ApiToolConfig[] = [
-    {
-      name: 'runner_status',
-      description:
-        'Job counts (total, running), failed registrations, ok/error counts last hour',
-      parameters: { type: 'object', properties: {} },
-      buildRequest: () => ['/status'],
-    },
     {
       name: 'runner_jobs',
       description:

@@ -70,8 +70,13 @@ describe('Runner', () => {
     // Verify API server is listening
     const response = await fetch('http://127.0.0.1:18783/status');
     expect(response.status).toBe(200);
-    const body = (await response.json()) as { status: string; version: string };
-    expect(body.status).toBe('ok');
+    const body = (await response.json()) as {
+      name: string;
+      status: string;
+      version: string;
+    };
+    expect(body.name).toBe('runner');
+    expect(body.status).toBe('healthy');
     expect(body.version).toBeDefined();
 
     await runner.stop();

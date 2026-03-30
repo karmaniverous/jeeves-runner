@@ -41,6 +41,32 @@ vi.mock('@karmaniverous/jeeves', () => {
     ),
     createAsyncContentCache: vi.fn(() => vi.fn(() => 'cached content')),
     createComponentWriter: vi.fn(() => ({ start: vi.fn() })),
+    createPluginToolset: vi.fn(() => [
+      {
+        name: 'runner_status',
+        description: 'mock',
+        parameters: {},
+        execute: vi.fn(),
+      },
+      {
+        name: 'runner_config',
+        description: 'mock',
+        parameters: {},
+        execute: vi.fn(),
+      },
+      {
+        name: 'runner_config_apply',
+        description: 'mock',
+        parameters: {},
+        execute: vi.fn(),
+      },
+      {
+        name: 'runner_service',
+        description: 'mock',
+        parameters: {},
+        execute: vi.fn(),
+      },
+    ]),
   };
 });
 
@@ -61,7 +87,8 @@ describe('plugin register', () => {
 
     register(api);
 
-    expect(tools.size).toBe(17);
+    // 4 standard factory tools + 16 custom runner tools = 20
+    expect(tools.size).toBe(20);
     expect(core.init).toHaveBeenCalled();
     expect(core.createComponentWriter).toHaveBeenCalled();
 

@@ -6,16 +6,19 @@
 
 import { fetchJson } from '@karmaniverous/jeeves';
 
-/** Status response from GET /status. */
+/** Status response from GET /status (factory-produced format). */
 interface RunnerStatus {
-  status: string;
+  name: string;
   version: string;
   uptime: number;
-  totalJobs: number;
-  running: number;
-  failedRegistrations: number;
-  okLastHour: number;
-  errorsLastHour: number;
+  status: string;
+  health: {
+    totalJobs: number;
+    running: number;
+    failedRegistrations: number;
+    okLastHour: number;
+    errorsLastHour: number;
+  };
 }
 
 /**
@@ -30,6 +33,7 @@ interface RunnerStatus {
  */
 export async function generateRunnerContent(baseUrl: string): Promise<string> {
   const data = (await fetchJson(`${baseUrl}/status`)) as RunnerStatus;
+  const h = data.health;
 
   const lines: string[] = [];
 
@@ -37,15 +41,13 @@ export async function generateRunnerContent(baseUrl: string): Promise<string> {
   lines.push('');
   lines.push(`| Metric | Value |`);
   lines.push(`|--------|-------|`);
-  lines.push(`| Total jobs | ${String(data.totalJobs)} |`);
-  lines.push(`| Running | ${String(data.running)} |`);
-  lines.push(`| OK last hour | ${String(data.okLastHour)} |`);
-  lines.push(`| Errors last hour | ${String(data.errorsLastHour)} |`);
+  lines.push(`| Total jobs | ${String(h.totalJobs)} |`);
+  lines.push(`| Running | ${String(h.running)} |`);
+  lines.push(`| OK last hour | ${String(h.okLastHour)} |`);
+  lines.push(`| Errors last hour | ${String(h.errorsLastHour)} |`);
 
-  if (data.failedRegistrations > 0) {
-    lines.push(
-      `| Failed registrations | ${String(data.failedRegistrations)} |`,
-    );
+  if (h.failedRegistrations > 0) {
+    lines.push(`| Failed registrations | ${String(h.failedRegistrations)} |`);
   }
 
   lines.push('');

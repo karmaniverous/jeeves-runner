@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url';
 import {
   createAsyncContentCache,
   createComponentWriter,
+  createPluginToolset,
   init,
   type JeevesComponentDescriptor,
   type PluginApi,
@@ -23,7 +24,7 @@ import {
 
 import { generateRunnerContent } from './generateContent.js';
 import { getApiUrl, getConfigRoot } from './helpers.js';
-import { registerRunnerTools } from './runnerTools.js';
+import { registerRunnerCustomTools } from './runnerTools.js';
 
 /** Plugin version derived from package.json. */
 const PLUGIN_VERSION: string = (() => {
@@ -43,7 +44,6 @@ const REFRESH_INTERVAL_SECONDS = 67;
 /** Register all runner tools with the OpenClaw plugin API and start TOOLS.md writer. */
 export default function register(api: PluginApi): void {
   const baseUrl = getApiUrl(api);
-  registerRunnerTools(api, baseUrl);
 
   init({
     workspacePath: resolveWorkspacePath(api),
@@ -63,6 +63,7 @@ export default function register(api: PluginApi): void {
     defaultPort: 1937,
     configSchema: {
       parse: (v: unknown) => v,
+      safeParse: (v: unknown) => ({ success: true, data: v }),
     } as JeevesComponentDescriptor['configSchema'],
     configFileName: 'config.json',
     initTemplate: () => ({}),
@@ -72,7 +73,16 @@ export default function register(api: PluginApi): void {
     generateToolsContent: getContent,
   };
 
-  const writer = createComponentWriter(descriptor);
+  // Register 4 standard tools from the factory
+  const standardTools = createPluginToolset(descriptor);
+  for (const tool of standardTools) {
+    api.registerTool(tool, { optional: true });
+  }
 
+  // Register 16 custom runner tools (excludes runner_status, now standard)
+  registerRunnerCustomTools(api, baseUrl);
+
+  // Start TOOLS.md writer
+  const writer = createComponentWriter(descriptor);
   writer.start();
 }

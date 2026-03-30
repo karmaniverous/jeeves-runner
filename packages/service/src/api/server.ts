@@ -1,11 +1,15 @@
 /**
- * Fastify HTTP server for runner API. Creates server instance with logging, registers routes, listens on configured port (localhost only).
+ * Fastify HTTP server for runner API.
+ *
+ * Creates server instance with logging, registers routes, listens
+ * on configured port (localhost only).
  *
  * @module
  */
 
 import type { DatabaseSync } from 'node:sqlite';
 
+import type { JeevesComponentDescriptor } from '@karmaniverous/jeeves';
 import Fastify, { type FastifyInstance } from 'fastify';
 
 import type { Scheduler } from '../scheduler/scheduler.js';
@@ -20,12 +24,16 @@ interface ServerDeps {
   getConfig: () => RunnerConfig;
   /** Service version string (from package.json). */
   version: string;
+  /** Component descriptor for factory-produced handlers. */
+  descriptor: JeevesComponentDescriptor;
   /** Pino logger config or false to disable. */
   loggerConfig?: { level: string; file?: string };
 }
 
 /**
- * Create and configure the Fastify server. Routes are registered but server is not started.
+ * Create and configure the Fastify server.
+ *
+ * Routes are registered but server is not started.
  */
 export function createServer(deps: ServerDeps): FastifyInstance {
   const app = Fastify({
@@ -49,6 +57,7 @@ export function createServer(deps: ServerDeps): FastifyInstance {
     scheduler: deps.scheduler,
     getConfig: deps.getConfig,
     version: deps.version,
+    descriptor: deps.descriptor,
   });
 
   return app;

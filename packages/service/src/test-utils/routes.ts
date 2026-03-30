@@ -8,6 +8,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { vi } from 'vitest';
 
 import { registerRoutes } from '../api/routes.js';
+import { createRunnerDescriptor } from '../descriptor.js';
 import type { Scheduler } from '../scheduler/scheduler.js';
 import { runnerConfigSchema } from '../schemas/config.js';
 import type { TestDb } from './db.js';
@@ -58,11 +59,14 @@ export async function createRouteTestHarness(): Promise<RouteTestHarness> {
   const app = Fastify({ logger: false });
   const defaultConfig = runnerConfigSchema.parse({});
 
+  const descriptor = createRunnerDescriptor();
+
   registerRoutes(app, {
     db: testDb.db,
     scheduler,
     getConfig: () => defaultConfig,
     version: '0.0.0-test',
+    descriptor,
   });
 
   await app.ready();

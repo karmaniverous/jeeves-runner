@@ -6,16 +6,19 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { generateRunnerContent } from './generateContent.js';
 
-/** Default status fixture. */
+/** Default status fixture (factory-produced format). */
 const defaultStatus = {
-  status: 'ok',
+  name: 'runner',
   version: '0.6.0',
   uptime: 3600,
-  totalJobs: 2,
-  running: 1,
-  failedRegistrations: 0,
-  okLastHour: 5,
-  errorsLastHour: 1,
+  status: 'healthy',
+  health: {
+    totalJobs: 2,
+    running: 1,
+    failedRegistrations: 0,
+    okLastHour: 5,
+    errorsLastHour: 1,
+  },
 };
 
 /** Mock fetch to return a status payload. */
@@ -48,7 +51,10 @@ describe('generateRunnerContent', () => {
   });
 
   it('includes failed registrations row when non-zero', async () => {
-    mockStatus({ ...defaultStatus, failedRegistrations: 2 });
+    mockStatus({
+      ...defaultStatus,
+      health: { ...defaultStatus.health, failedRegistrations: 2 },
+    });
 
     const md = await generateRunnerContent('http://localhost:1937');
     expect(md).toContain('| Failed registrations | 2 |');

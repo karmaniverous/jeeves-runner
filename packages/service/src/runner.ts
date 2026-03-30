@@ -15,6 +15,7 @@ import { createServer } from './api/server.js';
 import { closeConnection, createConnection } from './db/connection.js';
 import { createMaintenance, type Maintenance } from './db/maintenance.js';
 import { runMigrations } from './db/migrations.js';
+import { createRunnerDescriptor } from './descriptor.js';
 import { createGatewayClient } from './gateway/client.js';
 import { createNotifier } from './notify/slack.js';
 import { executeJob } from './scheduler/executor.js';
@@ -112,8 +113,16 @@ export function createRunner(config: RunnerConfig, deps?: RunnerDeps): Runner {
       scheduler.start();
       logger.info('Scheduler started');
 
-      // Version injected at build time by @rollup/plugin-replace
+      // Version injected at build time by rollup plugin-replace
       const pkgVersion: string = '__VERSION__';
+
+      // Build descriptor with scheduler reference for config-apply callback
+      const descriptor = createRunnerDescriptor({
+        onConfigApply: () => {
+          scheduler?.reconcileNow();
+          return Promise.resolve();
+        },
+      });
 
       // API server
       server = createServer({
@@ -121,6 +130,7 @@ export function createRunner(config: RunnerConfig, deps?: RunnerDeps): Runner {
         scheduler,
         getConfig: () => config,
         version: pkgVersion,
+        descriptor,
         loggerConfig: { level: config.log.level, file: config.log.file },
       });
       await server.listen({ port: config.port, host: config.host });
