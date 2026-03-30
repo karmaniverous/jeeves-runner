@@ -70,9 +70,11 @@ export function createRunnerDescriptor(
     initTemplate: () =>
       runnerConfigSchema.parse({}) as unknown as Record<string, unknown>,
     onConfigApply: options?.onConfigApply,
+    // MODULE_DIR resolves to the bundled CLI entry's directory at runtime
+    // (dist/cli/jeeves-runner/), so index.js is a sibling, not nested deeper.
     startCommand: (configPath: string) => [
       'node',
-      resolve(MODULE_DIR, 'cli', 'jeeves-runner', 'index.js'),
+      resolve(MODULE_DIR, 'index.js'),
       'start',
       '--config',
       configPath,
