@@ -41,7 +41,7 @@
     "job-scheduler"
   ],
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "openclaw": {
     "extensions": [

@@ -14,3 +14,4 @@ jobs:
     uses: karmaniverous/gha-workflows/.github/workflows/linux-compat.yml@main
     with:
       install-command: rm -f package-lock.json && npm install
+      node-versions: '[22, 24]'
