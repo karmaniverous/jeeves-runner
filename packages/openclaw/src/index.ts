@@ -71,6 +71,8 @@ export default function register(api: PluginApi): void {
     configFileName: 'config.json',
     initTemplate: () => ({}),
     startCommand: () => ['node', 'index.js'],
+    // Plugin-side descriptor; run is a no-op (service handles startup).
+    async run() {},
     sectionId: SECTION_IDS.Runner,
     refreshIntervalSeconds: REFRESH_INTERVAL_SECONDS,
     generateToolsContent: getContent,

@@ -10,6 +10,7 @@
  * @module descriptor
  */
 
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -18,6 +19,7 @@ import {
   SECTION_IDS,
 } from '@karmaniverous/jeeves';
 
+import { createRunner } from './runner.js';
 import { runnerConfigSchema } from './schemas/config.js';
 
 /**
@@ -79,6 +81,23 @@ export function createRunnerDescriptor(
       '--config',
       configPath,
     ],
+    async run(configPath: string): Promise<void> {
+      const raw = readFileSync(resolve(configPath), 'utf-8');
+      const config = runnerConfigSchema.parse(JSON.parse(raw));
+      const runner = createRunner(config);
+      await runner.start();
+
+      // Block until terminated
+      await new Promise<void>((res) => {
+        const shutdown = () => {
+          void runner.stop().finally(() => {
+            res();
+          });
+        };
+        process.on('SIGTERM', shutdown);
+        process.on('SIGINT', shutdown);
+      });
+    },
     sectionId: SECTION_IDS.Runner,
     refreshIntervalSeconds: 67,
     generateToolsContent:
