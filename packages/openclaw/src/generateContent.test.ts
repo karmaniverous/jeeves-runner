@@ -61,11 +61,11 @@ describe('generateRunnerContent', () => {
     expect(md).not.toContain('Failed registrations');
   });
 
-  it('returns action-required block when unreachable', async () => {
+  it('throws when service is unreachable', async () => {
     vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(new Error('boom'));
 
-    const md = await generateRunnerContent('http://localhost:1937');
-    expect(md).toContain('ACTION REQUIRED');
-    expect(md).toContain('unreachable');
+    await expect(
+      generateRunnerContent('http://localhost:1937'),
+    ).rejects.toThrow();
   });
 });

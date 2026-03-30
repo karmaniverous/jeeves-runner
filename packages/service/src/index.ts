@@ -4,6 +4,10 @@
  * @module
  */
 
+// Descriptor
+export type { OnConfigApplyCallback } from './descriptor.js';
+export { createRunnerDescriptor } from './descriptor.js';
+
 // Schemas
 export type { RunnerConfig } from './schemas/config.js';
 export { runnerConfigSchema } from './schemas/config.js';

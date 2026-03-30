@@ -15,6 +15,7 @@ import {
   createAsyncContentCache,
   createComponentWriter,
   init,
+  type JeevesComponentDescriptor,
   type PluginApi,
   resolveWorkspacePath,
   SECTION_IDS,
@@ -23,10 +24,6 @@ import {
 import { generateRunnerContent } from './generateContent.js';
 import { getApiUrl, getConfigRoot } from './helpers.js';
 import { registerRunnerTools } from './runnerTools.js';
-import {
-  createRunnerPluginCommands,
-  createRunnerServiceCommands,
-} from './serviceCommands.js';
 
 /** Plugin version derived from package.json. */
 const PLUGIN_VERSION: string = (() => {
@@ -58,17 +55,24 @@ export default function register(api: PluginApi): void {
     placeholder: '> Initializing runner status...',
   });
 
-  const writer = createComponentWriter({
+  const descriptor: JeevesComponentDescriptor = {
     name: 'runner',
     version: PLUGIN_VERSION,
+    servicePackage: '@karmaniverous/jeeves-runner',
+    pluginPackage: '@karmaniverous/jeeves-runner-openclaw',
+    defaultPort: 1937,
+    configSchema: {
+      parse: (v: unknown) => v,
+    } as JeevesComponentDescriptor['configSchema'],
+    configFileName: 'config.json',
+    initTemplate: () => ({}),
+    startCommand: () => ['node', 'index.js'],
     sectionId: SECTION_IDS.Runner,
     refreshIntervalSeconds: REFRESH_INTERVAL_SECONDS,
     generateToolsContent: getContent,
-    servicePackage: '@karmaniverous/jeeves-runner',
-    pluginPackage: '@karmaniverous/jeeves-runner-openclaw',
-    serviceCommands: createRunnerServiceCommands(baseUrl),
-    pluginCommands: createRunnerPluginCommands(),
-  });
+  };
+
+  const writer = createComponentWriter(descriptor);
 
   writer.start();
 }

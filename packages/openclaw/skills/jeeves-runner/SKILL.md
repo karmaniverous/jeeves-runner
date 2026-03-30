@@ -489,6 +489,84 @@ Get-Content <log-path> -Tail 20   # Recent logs
 
 **Idempotency.** Process scripts should be safe to re-run. Use state keys, content hashes, or database state to avoid duplicating work.
 
+## Script Authoring
+
+### Template Repo
+
+New script projects start from `karmaniverous/jeeves-runner-scripts-template`:
+
+```bash
+git clone https://github.com/karmaniverous/jeeves-runner-scripts-template.git scripts
+cd scripts && npm install
+```
+
+### TypeScript Execution via `runners` Config
+
+The `runners` config map specifies custom command runners keyed by file extension. To run TypeScript scripts:
+
+```json
+{
+  "runners": {
+    "ts": "node ./scripts/node_modules/tsx/dist/cli.mjs"
+  }
+}
+```
+
+When a job's script path ends in `.ts`, the runner uses this command instead of the default `node` executor. The command string is split on whitespace; the first token is the executable, the rest are prefix args before the script path.
+
+### Script Structure
+
+Every script uses the `runScript()` wrapper for lifecycle management:
+
+```typescript
+import { getRunnerClient, runScript } from '@karmaniverous/jeeves-runner';
+
+await runScript(import.meta, async () => {
+  const client = getRunnerClient();
+
+  // Use state API
+  await client.setState('my-namespace', 'lastRun', new Date().toISOString());
+
+  // Use queue API
+  await client.enqueue('my-queue', { url: 'https://example.com' });
+});
+```
+
+- `runScript()` handles error reporting and exit codes.
+- `getRunnerClient()` returns an HTTP client pointed at the running runner API.
+- State and queue APIs are available for cross-job coordination.
+
+### Repo Layout
+
+```
+src/
+  lib/           # Shared utilities across all scripts
+  {domain}/      # Scripts grouped by domain (e.g., github/, slack/, data/)
+    some-job.ts  # Individual script file
+```
+
+### Quality Gates
+
+Scripts should pass these quality gates before deployment:
+
+- **typecheck** — `tsc --noEmit`
+- **lint** — `eslint .`
+- **test** — `vitest run`
+- **knip** — unused export detection
+- **STAN** — `npx stan run --sequential --no-archive`
+
+### Job Registration
+
+Register jobs via the HTTP API or CLI:
+
+```bash
+# Via CLI
+jeeves-runner add-job -i my-job -n "My Job" -s "*/5 * * * *" --script /path/to/script.ts -c config.json
+
+# Via API tool
+runner_create_job id="my-job" name="My Job" schedule="*/5 * * * *" script="/path/to/script.ts"
+```
+
 ## Engineering Standards for Process Scripts
 
 - **Node.js preferred** (cross-platform). PowerShell only for Windows-specific system management.

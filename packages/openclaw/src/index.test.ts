@@ -65,6 +65,13 @@ describe('plugin register', () => {
     expect(core.init).toHaveBeenCalled();
     expect(core.createComponentWriter).toHaveBeenCalled();
 
+    const writerArg = core.createComponentWriter.mock.calls[0]?.[0] as Record<
+      string,
+      unknown
+    >;
+    expect(writerArg.name).toBe('runner');
+    expect(writerArg.sectionId).toBe('Runner');
+
     const writer = core.createComponentWriter.mock.results[0]?.value as {
       start: MockFn;
     };
