@@ -309,7 +309,19 @@ await runScript(import.meta, async () => {
 });
 ```
 
-Additional client utilities are exported for use in job scripts: `runScript`, `getRunnerClient`, `createGoogleAuth`, `run`, `runWithRetry`, `dispatchSession`, `runDispatcher`, and file utilities (`readJson`, `writeJsonAtomic`, `appendJsonl`, etc.).
+The package exports a full suite of script helper utilities. See the [Script Helper Utilities Guide](packages/service/guides/script-helpers.md) for detailed API documentation and examples.
+
+**Highlights:**
+
+| Module | Exports | Purpose |
+|--------|---------|---------|
+| `run-script` | `runScript` | Crash-handling entry point wrapper |
+| `runner-client` | `getRunnerClient` | SQLite client factory (state + queue API) |
+| `fs-utils` | `readJson`, `writeJsonAtomic`, `appendJsonl`, `sleepMs`, `uuid`, ... | Filesystem, time, process, CLI utilities |
+| `shell` | `run`, `runWithRetry` | Synchronous command execution with retry |
+| `google-auth` | `createGoogleAuth` | OAuth refresh + service account impersonation |
+| `spawn-worker` | `dispatchSession`, `runDispatcher` | OpenClaw Gateway LLM session dispatch |
+| `slack-workspace` | `getChannelWorkspace`, `saveSlackWorkspaceCache` | Slack channel → workspace resolution |
 
 ## Job Lifecycle
 
