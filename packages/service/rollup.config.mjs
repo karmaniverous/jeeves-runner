@@ -16,6 +16,7 @@ import { createRequire } from 'node:module';
  * Minimal package.json shape used by this config.
  *
  * @typedef {{
+ *   version?: string,
  *   dependencies?: Record<string, string>,
  *   peerDependencies?: Record<string, string>
  * }} PackageJson
@@ -25,6 +26,7 @@ import aliasPlugin from '@rollup/plugin-alias';
 import commonjsPlugin from '@rollup/plugin-commonjs';
 import jsonPlugin from '@rollup/plugin-json';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
+import replacePlugin from '@rollup/plugin-replace';
 import typescriptPlugin from '@rollup/plugin-typescript';
 import fs from 'fs-extra';
 import copyPlugin from 'rollup-plugin-copy';
@@ -53,6 +55,12 @@ const typescript = typescriptPlugin({
 });
 
 const commonPlugins = [
+  replacePlugin({
+    preventAssignment: true,
+    values: {
+      __VERSION__: JSON.stringify(pkg.version ?? '0.0.0'),
+    },
+  }),
   commonjsPlugin(),
   jsonPlugin(),
   nodeResolve(),

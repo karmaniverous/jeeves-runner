@@ -1,12 +1,20 @@
 /**
- * Fastify API routes for job management and monitoring. Provides endpoints for job CRUD, run history, manual triggers, system stats, and config queries.
+ * Fastify API routes for job management and monitoring.
+ *
+ * Provides endpoints for job CRUD, run history, manual triggers,
+ * system stats, config queries, and config apply.
  *
  * @module routes
  */
 
 import type { DatabaseSync } from 'node:sqlite';
 
-import { createConfigQueryHandler } from '@karmaniverous/jeeves';
+import {
+  createConfigApplyHandler,
+  createConfigQueryHandler,
+  createStatusHandler,
+  type JeevesComponentDescriptor,
+} from '@karmaniverous/jeeves';
 import type { FastifyInstance } from 'fastify';
 
 import type { Scheduler } from '../scheduler/scheduler.js';
@@ -21,53 +29,73 @@ interface RouteDeps {
   scheduler: Scheduler;
   /** Getter for the current effective configuration. */
   getConfig: () => RunnerConfig;
-  /** Service version string (from package.json). */
-  version: string;
+  /** Component descriptor for factory-produced handlers. */
+  descriptor: JeevesComponentDescriptor;
 }
 
 /**
  * Register all API routes on the Fastify instance.
  */
 export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
-  const { db, scheduler, getConfig, version } = deps;
+  const { db, scheduler, getConfig, descriptor } = deps;
 
-  /** GET /status — Unified status endpoint (single health/metadata entrypoint). */
-  app.get('/status', () => {
-    const totalJobs = db
-      .prepare('SELECT COUNT(*) as count FROM jobs')
-      .get() as { count: number };
-    const runningCount = scheduler.getRunningJobs().length;
-    const failedCount = scheduler.getFailedRegistrations().length;
-    const okLastHour = db
-      .prepare(
-        `SELECT COUNT(*) as count FROM runs 
-         WHERE status = 'ok' AND started_at > datetime('now', '-1 hour')`,
-      )
-      .get() as { count: number };
-    const errorsLastHour = db
-      .prepare(
-        `SELECT COUNT(*) as count FROM runs 
-         WHERE status IN ('error', 'timeout') AND started_at > datetime('now', '-1 hour')`,
-      )
-      .get() as { count: number };
+  // --- GET /status (factory-produced) ---
+  const statusHandler = createStatusHandler({
+    name: 'runner',
+    version: descriptor.version,
+    getHealth: () => {
+      const totalJobs = db
+        .prepare('SELECT COUNT(*) as count FROM jobs')
+        .get() as { count: number };
+      const runningCount = scheduler.getRunningJobs().length;
+      const failedCount = scheduler.getFailedRegistrations().length;
+      const okLastHour = db
+        .prepare(
+          `SELECT COUNT(*) as count FROM runs
+           WHERE status = 'ok' AND started_at > datetime('now', '-1 hour')`,
+        )
+        .get() as { count: number };
+      const errorsLastHour = db
+        .prepare(
+          `SELECT COUNT(*) as count FROM runs
+           WHERE status IN ('error', 'timeout') AND started_at > datetime('now', '-1 hour')`,
+        )
+        .get() as { count: number };
 
-    return {
-      status: 'ok',
-      version,
-      uptime: process.uptime(),
-      totalJobs: totalJobs.count,
-      running: runningCount,
-      failedRegistrations: failedCount,
-      okLastHour: okLastHour.count,
-      errorsLastHour: errorsLastHour.count,
-    };
+      return Promise.resolve({
+        totalJobs: totalJobs.count,
+        running: runningCount,
+        failedRegistrations: failedCount,
+        okLastHour: okLastHour.count,
+        errorsLastHour: errorsLastHour.count,
+      });
+    },
   });
 
-  /** GET /jobs — List all jobs with last run status. */
+  app.get('/status', async (_request, reply) => {
+    const result = await statusHandler();
+    return reply.status(result.status).send(result.body);
+  });
+
+  // --- POST /config/apply (factory-produced) ---
+  const configApplyHandler = createConfigApplyHandler(descriptor);
+
+  app.post<{ Body: { patch: Record<string, unknown>; replace?: boolean } }>(
+    '/config/apply',
+    async (request, reply) => {
+      const result = await configApplyHandler({
+        patch: request.body.patch,
+        replace: request.body.replace,
+      });
+      return reply.status(result.status).send(result.body);
+    },
+  );
+
+  // --- GET /jobs ---
   app.get('/jobs', () => {
     const rows = db
       .prepare(
-        `SELECT j.*, 
+        `SELECT j.*,
           (SELECT status FROM runs WHERE job_id = j.id ORDER BY started_at DESC LIMIT 1) as last_status,
           (SELECT started_at FROM runs WHERE job_id = j.id ORDER BY started_at DESC LIMIT 1) as last_run
          FROM jobs j`,
@@ -76,7 +104,7 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
     return { jobs: rows };
   });
 
-  /** GET /jobs/:id — Single job detail. */
+  // --- GET /jobs/:id ---
   app.get<{ Params: { id: string } }>('/jobs/:id', (request, reply) => {
     const job = db
       .prepare('SELECT * FROM jobs WHERE id = ?')
@@ -88,7 +116,7 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
     return { job };
   });
 
-  /** GET /jobs/:id/runs — Run history for a job. */
+  // --- GET /jobs/:id/runs ---
   app.get<{ Params: { id: string }; Querystring: { limit?: string } }>(
     '/jobs/:id/runs',
     (request) => {
@@ -102,7 +130,7 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
     },
   );
 
-  /** POST /jobs/:id/run — Trigger manual job run. */
+  // --- POST /jobs/:id/run ---
   app.post<{ Params: { id: string } }>(
     '/jobs/:id/run',
     async (request, reply) => {
@@ -116,7 +144,7 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
     },
   );
 
-  /** GET /config — Query effective configuration via JSONPath. */
+  // --- GET /config ---
   const configHandler = createConfigQueryHandler(getConfig);
   app.get<{ Querystring: { path?: string } }>(
     '/config',

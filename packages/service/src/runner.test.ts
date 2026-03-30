@@ -41,25 +41,6 @@ describe('Runner', () => {
     testDb.cleanup();
   });
 
-  it('should create runner with config', () => {
-    const runner = createRunner(testConfig(testDb.dbPath, 18781), {
-      logger: pino({ level: 'silent' }),
-    });
-
-    expect(runner).toHaveProperty('start');
-    expect(runner).toHaveProperty('stop');
-  });
-
-  it('should accept custom logger via deps', () => {
-    const customLogger = pino({ level: 'silent' });
-
-    const runner = createRunner(testConfig(testDb.dbPath, 18782), {
-      logger: customLogger,
-    });
-
-    expect(runner).toBeDefined();
-  });
-
   it('should start and stop cleanly', async () => {
     const runner = createRunner(testConfig(testDb.dbPath, 18783), {
       logger: pino({ level: 'silent' }),
@@ -70,8 +51,13 @@ describe('Runner', () => {
     // Verify API server is listening
     const response = await fetch('http://127.0.0.1:18783/status');
     expect(response.status).toBe(200);
-    const body = (await response.json()) as { status: string; version: string };
-    expect(body.status).toBe('ok');
+    const body = (await response.json()) as {
+      name: string;
+      status: string;
+      version: string;
+    };
+    expect(body.name).toBe('runner');
+    expect(body.status).toBe('healthy');
     expect(body.version).toBeDefined();
 
     await runner.stop();

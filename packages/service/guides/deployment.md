@@ -11,7 +11,7 @@ This guide covers running jeeves-runner as a persistent system service.
 The CLI provides platform-specific instructions:
 
 ```bash
-jeeves-runner service install -c /path/to/jeeves-runner.config.json
+jeeves-runner service install -c /path/to/config.json
 ```
 
 ### Linux (systemd)
@@ -44,7 +44,7 @@ sudo systemctl start jeeves-runner
 ### Windows (NSSM)
 
 ```powershell
-nssm install JeevesRunner node.exe "C:\path\to\jeeves-runner\dist\cli.js" start -c "C:\config\jeeves-runner.config.json"
+nssm install JeevesRunner node.exe "C:\path\to\jeeves-runner\dist\cli.js" start -c "C:\config\jeeves-runner\config.json"
 nssm set JeevesRunner AppDirectory "C:\path\to\jeeves-runner"
 nssm set JeevesRunner AppStdout "C:\logs\jeeves-runner-stdout.log"
 nssm set JeevesRunner AppStderr "C:\logs\jeeves-runner-stderr.log"
@@ -111,37 +111,32 @@ The runner uses SQLite in WAL (Write-Ahead Logging) mode for concurrent read/wri
 
 ---
 
-## Port Configuration
+## Network Configuration
 
-Default port is **1937**. Change via `port` in config:
+Default port is **1937**. Default bind address is **0.0.0.0** (all interfaces). Change via `port` and `host` in config:
 
 ```json
 {
-  "port": 3100
+  "port": 3100,
+  "host": "127.0.0.1"
 }
 ```
 
-Ensure firewall rules allow access if exposing the API externally. For local-only access, bind to `127.0.0.1` via a reverse proxy.
+Set `host` to `127.0.0.1` to restrict access to localhost only. Ensure firewall rules allow access if exposing the API externally.
 
 ---
 
 ## Monitoring
 
-### Health Endpoint
+### Status Endpoint
 
 ```bash
-curl http://localhost:1937/health
+curl http://localhost:1937/status
 ```
 
-Use this for load balancer or uptime monitoring health checks.
+Returns `{ name, version, uptime, status, health: { totalJobs, running, failedRegistrations, okLastHour, errorsLastHour } }`.
 
-### Statistics
-
-```bash
-curl http://localhost:1937/stats
-```
-
-Monitor `errorsLastHour` and `failedRegistrations` for alerting.
+Use this for load balancer or uptime monitoring health checks. Monitor `health.errorsLastHour` and `health.failedRegistrations` for alerting.
 
 ### Logs
 

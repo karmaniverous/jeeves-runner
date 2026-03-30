@@ -14,7 +14,9 @@ import { fileURLToPath } from 'node:url';
 import {
   createAsyncContentCache,
   createComponentWriter,
+  createPluginToolset,
   init,
+  type JeevesComponentDescriptor,
   type PluginApi,
   resolveWorkspacePath,
   SECTION_IDS,
@@ -22,11 +24,7 @@ import {
 
 import { generateRunnerContent } from './generateContent.js';
 import { getApiUrl, getConfigRoot } from './helpers.js';
-import { registerRunnerTools } from './runnerTools.js';
-import {
-  createRunnerPluginCommands,
-  createRunnerServiceCommands,
-} from './serviceCommands.js';
+import { registerRunnerCustomTools } from './runnerTools.js';
 
 /** Plugin version derived from package.json. */
 const PLUGIN_VERSION: string = (() => {
@@ -46,7 +44,6 @@ const REFRESH_INTERVAL_SECONDS = 67;
 /** Register all runner tools with the OpenClaw plugin API and start TOOLS.md writer. */
 export default function register(api: PluginApi): void {
   const baseUrl = getApiUrl(api);
-  registerRunnerTools(api, baseUrl);
 
   init({
     workspacePath: resolveWorkspacePath(api),
@@ -58,17 +55,37 @@ export default function register(api: PluginApi): void {
     placeholder: '> Initializing runner status...',
   });
 
-  const writer = createComponentWriter({
+  const descriptor: JeevesComponentDescriptor = {
     name: 'runner',
     version: PLUGIN_VERSION,
+    servicePackage: '@karmaniverous/jeeves-runner',
+    pluginPackage: '@karmaniverous/jeeves-runner-openclaw',
+    defaultPort: 1937,
+    // Plugin has no service-side config to validate. This pass-through schema
+    // satisfies the descriptor contract; the plugin's own config is validated
+    // separately via openclaw.plugin.json's configSchema.
+    configSchema: {
+      parse: (v: unknown) => v,
+      safeParse: (v: unknown) => ({ success: true as const, data: v }),
+    } as JeevesComponentDescriptor['configSchema'],
+    configFileName: 'config.json',
+    initTemplate: () => ({}),
+    startCommand: () => ['node', 'index.js'],
     sectionId: SECTION_IDS.Runner,
     refreshIntervalSeconds: REFRESH_INTERVAL_SECONDS,
     generateToolsContent: getContent,
-    servicePackage: '@karmaniverous/jeeves-runner',
-    pluginPackage: '@karmaniverous/jeeves-runner-openclaw',
-    serviceCommands: createRunnerServiceCommands(baseUrl),
-    pluginCommands: createRunnerPluginCommands(),
-  });
+  };
 
+  // Register 4 standard tools from the factory
+  const standardTools = createPluginToolset(descriptor);
+  for (const tool of standardTools) {
+    api.registerTool(tool, { optional: true });
+  }
+
+  // Register 16 custom runner tools (excludes runner_status, now standard)
+  registerRunnerCustomTools(api, baseUrl);
+
+  // Start TOOLS.md writer
+  const writer = createComponentWriter(descriptor);
   writer.start();
 }

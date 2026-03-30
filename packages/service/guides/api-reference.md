@@ -4,31 +4,79 @@ title: API Reference
 
 # API Reference
 
-jeeves-runner exposes a Fastify HTTP API for job management and monitoring. Default port: **1937**.
+jeeves-runner exposes a Fastify HTTP API for job management and monitoring. Default port: **1937**, default bind address: **0.0.0.0**.
 
 ---
 
-## Health Check
+## Service Status
 
-### `GET /health`
+### `GET /status`
 
-Returns service health status.
+Returns service status with version and health metrics.
 
 **Response:**
 
 ```json
 {
-  "ok": true,
+  "name": "runner",
+  "version": "0.8.0",
   "uptime": 3661.234,
-  "failedRegistrations": 0
+  "status": "ok",
+  "health": {
+    "totalJobs": 28,
+    "running": 2,
+    "failedRegistrations": 0,
+    "okLastHour": 45,
+    "errorsLastHour": 1
+  }
 }
 ```
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `ok` | `boolean` | Always `true` if the server is responding |
+| `name` | `string` | Service name (`"runner"`) |
+| `version` | `string` | Service version (injected at build time) |
 | `uptime` | `number` | Process uptime in seconds |
-| `failedRegistrations` | `number` | Jobs that failed to register with the cron scheduler |
+| `status` | `string` | Service status (`"ok"`) |
+| `health.totalJobs` | `number` | Total registered jobs |
+| `health.running` | `number` | Currently executing jobs |
+| `health.failedRegistrations` | `number` | Jobs that failed cron registration |
+| `health.okLastHour` | `number` | Successful runs in the last hour |
+| `health.errorsLastHour` | `number` | Failed/timed-out runs in the last hour |
+
+---
+
+## Configuration
+
+### `GET /config`
+
+Query the resolved service configuration. Supports optional JSONPath filtering.
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `path` | `string` | — | JSONPath expression to filter config |
+
+**Example:** `GET /config?path=$.port`
+
+### `POST /config/apply`
+
+Apply a configuration patch to the running service.
+
+**Request Body:**
+
+```json
+{
+  "patch": { "log": { "level": "debug" } },
+  "replace": false
+}
+```
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `patch` | `object` | Yes | Configuration fields to update |
+| `replace` | `boolean` | No | Replace entire config instead of merging (default: false) |
 
 ---
 
@@ -150,7 +198,44 @@ Manually trigger a job run. Blocks until the job completes.
 }
 ```
 
-### `POST /jobs/:id/enable`
+### `POST /jobs`
+
+Create a new job. See the CLI Reference for field descriptions.
+
+**Response (201):**
+
+```json
+{
+  "ok": true,
+  "id": "my-job"
+}
+```
+
+### `PATCH /jobs/:id`
+
+Partial update of an existing job. Only supplied fields are changed.
+
+**Response (200):**
+
+```json
+{
+  "ok": true
+}
+```
+
+### `DELETE /jobs/:id`
+
+Delete a job and all its run history.
+
+**Response (200):**
+
+```json
+{
+  "ok": true
+}
+```
+
+### `PATCH /jobs/:id/enable`
 
 Enable a disabled job. Takes effect immediately (triggers reconciliation).
 
@@ -162,7 +247,7 @@ Enable a disabled job. Takes effect immediately (triggers reconciliation).
 }
 ```
 
-### `POST /jobs/:id/disable`
+### `PATCH /jobs/:id/disable`
 
 Disable a job. The job will not run until re-enabled.
 
@@ -174,30 +259,14 @@ Disable a job. The job will not run until re-enabled.
 }
 ```
 
----
+### `PUT /jobs/:id/script`
 
-## Statistics
+Update a job's script content or path without changing other fields.
 
-### `GET /stats`
-
-Aggregate job statistics.
-
-**Response:**
+**Response (200):**
 
 ```json
 {
-  "totalJobs": 28,
-  "running": 2,
-  "failedRegistrations": 0,
-  "okLastHour": 45,
-  "errorsLastHour": 1
+  "ok": true
 }
 ```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `totalJobs` | `number` | Total registered jobs |
-| `running` | `number` | Currently executing jobs |
-| `failedRegistrations` | `number` | Jobs that failed cron registration |
-| `okLastHour` | `number` | Successful runs in the last hour |
-| `errorsLastHour` | `number` | Failed/timed-out runs in the last hour |

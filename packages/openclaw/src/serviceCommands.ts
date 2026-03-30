@@ -4,18 +4,39 @@
  * @module serviceCommands
  */
 
-import {
-  fetchJson,
-  type PluginCommands,
-  type ServiceCommands,
-  type ServiceStatus,
-} from '@karmaniverous/jeeves';
+import { fetchJson } from '@karmaniverous/jeeves';
 
-/** Status response from GET /status. */
+/** Service status response from GET /status. */
 interface StatusResponse {
   status: string;
   version: string;
   uptime: number;
+}
+
+/** Service health status returned by the status command. */
+export interface ServiceStatus {
+  /** Whether the service is currently running. */
+  running: boolean;
+  /** Service version (when available). */
+  version?: string;
+  /** Uptime in seconds (when available). */
+  uptimeSeconds?: number;
+}
+
+/** Commands for managing the service lifecycle. */
+export interface ServiceCommands {
+  /** Stop the service. */
+  stop(): Promise<void>;
+  /** Uninstall the service. */
+  uninstall(): Promise<void>;
+  /** Query service health status. */
+  status(): Promise<ServiceStatus>;
+}
+
+/** Commands for managing the plugin lifecycle. */
+export interface PluginCommands {
+  /** Uninstall the plugin. */
+  uninstall(): Promise<void>;
 }
 
 /**

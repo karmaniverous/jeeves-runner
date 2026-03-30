@@ -5,9 +5,7 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
-import { fileURLToPath } from 'node:url';
 
 import type { FastifyInstance } from 'fastify';
 import type { Logger } from 'pino';
@@ -17,7 +15,9 @@ import { createServer } from './api/server.js';
 import { closeConnection, createConnection } from './db/connection.js';
 import { createMaintenance, type Maintenance } from './db/maintenance.js';
 import { runMigrations } from './db/migrations.js';
+import { createRunnerDescriptor } from './descriptor.js';
 import { createGatewayClient } from './gateway/client.js';
+import { buildPinoOptions } from './lib/pino-options.js';
 import { createNotifier } from './notify/slack.js';
 import { executeJob } from './scheduler/executor.js';
 import { createScheduler, type Scheduler } from './scheduler/scheduler.js';
@@ -46,19 +46,7 @@ export function createRunner(config: RunnerConfig, deps?: RunnerDeps): Runner {
   let server: FastifyInstance | null = null;
   let maintenance: Maintenance | null = null;
 
-  const logger =
-    deps?.logger ??
-    pino({
-      level: config.log.level,
-      ...(config.log.file
-        ? {
-            transport: {
-              target: 'pino/file',
-              options: { destination: config.log.file },
-            },
-          }
-        : {}),
-    });
+  const logger = deps?.logger ?? pino(buildPinoOptions(config.log));
 
   return {
     async start(): Promise<void> {
@@ -114,26 +102,21 @@ export function createRunner(config: RunnerConfig, deps?: RunnerDeps): Runner {
       scheduler.start();
       logger.info('Scheduler started');
 
-      // Read package version
-      const pkgVersion = (() => {
-        try {
-          const dir = dirname(fileURLToPath(import.meta.url));
-          const pkg = JSON.parse(
-            readFileSync(resolve(dir, '..', 'package.json'), 'utf8'),
-          ) as { version?: string };
-          return pkg.version ?? 'unknown';
-        } catch {
-          return 'unknown';
-        }
-      })();
+      // Build descriptor with scheduler reference for config-apply callback
+      const descriptor = createRunnerDescriptor({
+        onConfigApply: () => {
+          scheduler?.reconcileNow();
+          return Promise.resolve();
+        },
+      });
 
       // API server
       server = createServer({
         db,
         scheduler,
         getConfig: () => config,
-        version: pkgVersion,
-        loggerConfig: { level: config.log.level, file: config.log.file },
+        descriptor,
+        logConfig: config.log,
       });
       await server.listen({ port: config.port, host: config.host });
       logger.info({ port: config.port }, 'API server listening');

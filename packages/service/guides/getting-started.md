@@ -30,16 +30,16 @@ npm install --save-dev @karmaniverous/jeeves-runner
 Generate a starter config file:
 
 ```bash
-jeeves-runner init -o ./jeeves-runner.config.json
+jeeves-runner init
 ```
 
-This creates a config file with sensible defaults. See the [Configuration Guide](./configuration.md) for full reference.
+This creates a `config.json` in the default platform config directory (`jeeves-runner/config.json`). See the [Configuration Guide](./configuration.md) for full reference.
 
 ## Add Your First Job
 
 ```bash
 jeeves-runner add-job \
-  -c ./jeeves-runner.config.json \
+  -c ./jeeves-runner/config.json \
   --id hello-world \
   --name "Hello World" \
   --schedule "*/5 * * * *" \
@@ -58,7 +58,7 @@ This registers a job that runs every 5 minutes. The script must be an absolute p
 ## Start the Runner
 
 ```bash
-jeeves-runner start -c ./jeeves-runner.config.json
+jeeves-runner start -c ./jeeves-runner/config.json
 ```
 
 The runner starts:
@@ -71,14 +71,22 @@ The runner starts:
 Check the runner is healthy:
 
 ```bash
-curl http://localhost:1937/health
+curl http://localhost:1937/status
 ```
 
 ```json
 {
-  "ok": true,
+  "name": "runner",
+  "version": "0.8.0",
   "uptime": 12.345,
-  "failedRegistrations": 0
+  "status": "ok",
+  "health": {
+    "totalJobs": 1,
+    "running": 0,
+    "failedRegistrations": 0,
+    "okLastHour": 0,
+    "errorsLastHour": 0
+  }
 }
 ```
 
@@ -91,13 +99,13 @@ curl http://localhost:1937/jobs
 Or via the CLI:
 
 ```bash
-jeeves-runner list-jobs -c ./jeeves-runner.config.json
+jeeves-runner list-jobs -c ./jeeves-runner/config.json
 ```
 
 ## Next Steps
 
-- [Configuration Reference](./configuration.md) — full config schema documentation
-- [API Reference](./api-reference.md) — HTTP API endpoints
-- [CLI Reference](./cli-reference.md) — all CLI commands
-- [Architecture](./architecture.md) — how jeeves-runner works internally
-- [Deployment](./deployment.md) — running as a system service
+- [Configuration Reference](./configuration.md) ï¿½ full config schema documentation
+- [API Reference](./api-reference.md) ï¿½ HTTP API endpoints
+- [CLI Reference](./cli-reference.md) ï¿½ all CLI commands
+- [Architecture](./architecture.md) ï¿½ how jeeves-runner works internally
+- [Deployment](./deployment.md) ï¿½ running as a system service
