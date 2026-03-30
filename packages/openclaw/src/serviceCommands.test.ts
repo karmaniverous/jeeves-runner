@@ -40,6 +40,22 @@ describe('createRunnerServiceCommands', () => {
     );
   });
 
+  it('status returns running=false when service reports non-ok status', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({ status: 'degraded', version: '0.8.0', uptime: 100 }),
+        { status: 200 },
+      ),
+    );
+
+    const cmds = createRunnerServiceCommands('http://localhost:1937');
+    const status = await cmds.status();
+
+    expect(status.running).toBe(false);
+    expect(status.version).toBe('0.8.0');
+    expect(status.uptimeSeconds).toBe(100);
+  });
+
   it('status returns running=false when service unreachable', async () => {
     vi.spyOn(globalThis, 'fetch').mockRejectedValueOnce(
       new Error('ECONNREFUSED'),

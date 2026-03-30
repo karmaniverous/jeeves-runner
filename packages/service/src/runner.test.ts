@@ -41,25 +41,6 @@ describe('Runner', () => {
     testDb.cleanup();
   });
 
-  it('should create runner with config', () => {
-    const runner = createRunner(testConfig(testDb.dbPath, 18781), {
-      logger: pino({ level: 'silent' }),
-    });
-
-    expect(runner).toHaveProperty('start');
-    expect(runner).toHaveProperty('stop');
-  });
-
-  it('should accept custom logger via deps', () => {
-    const customLogger = pino({ level: 'silent' });
-
-    const runner = createRunner(testConfig(testDb.dbPath, 18782), {
-      logger: customLogger,
-    });
-
-    expect(runner).toBeDefined();
-  });
-
   it('should start and stop cleanly', async () => {
     const runner = createRunner(testConfig(testDb.dbPath, 18783), {
       logger: pino({ level: 'silent' }),
