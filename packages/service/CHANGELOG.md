@@ -2,10 +2,20 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [0.8.2](https://github.com/karmaniverous/jeeves-runner/compare/service/0.8.1...0.8.2)
+#### [0.8.3](https://github.com/karmaniverous/jeeves-runner/compare/service/0.8.2...0.8.3)
+
+- chore(core): integrate 0.4.6 init fix [`#56`](https://github.com/karmaniverous/jeeves-runner/pull/56)
+- [CORE-046] chore(core): integrate 0.4.6 init fix [`6c1ecf6`](https://github.com/karmaniverous/jeeves-runner/commit/6c1ecf609921161eafd425df75d180ab40ff2120)
+- ni [`ab05460`](https://github.com/karmaniverous/jeeves-runner/commit/ab054600ab6848204b44181e148a38c598917f05)
+- chore: release @karmaniverous/jeeves-runner-openclaw v0.6.1 [`3806b14`](https://github.com/karmaniverous/jeeves-runner/commit/3806b140763512991a1a1322a1a476c117a2834d)
+
+#### [service/0.8.2](https://github.com/karmaniverous/jeeves-runner/compare/service/0.8.1...service/0.8.2)
+
+> 31 March 2026
 
 - fix(core): integrate descriptor run callback [`#54`](https://github.com/karmaniverous/jeeves-runner/pull/54)
 - ni [`1a9f65e`](https://github.com/karmaniverous/jeeves-runner/commit/1a9f65ea0587241c9fb4cef19cff55d0b8b5d9f8)
+- chore: release @karmaniverous/jeeves-runner v0.8.2 [`cdde17a`](https://github.com/karmaniverous/jeeves-runner/commit/cdde17aa67321750d8f1650dbcafc0b20c55e1c6)
 
 #### [service/0.8.1](https://github.com/karmaniverous/jeeves-runner/compare/service/0.8.0...service/0.8.1)
 
