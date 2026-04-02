@@ -77,36 +77,7 @@ export { runMigrations } from './db/migrations.js';
 // Config migration
 export { migrateConfig } from './lib/migrate-config.js';
 
-// Client utilities (for use in runner job scripts)
-export {
-  appendJsonl,
-  ensureDir,
-  getArg,
-  loadEnvFile,
-  nowIso,
-  parseArgs,
-  readJson,
-  readJsonl,
-  sleepAsync,
-  sleepMs,
-  uuid,
-  writeJsonAtomic,
-  writeJsonl,
-} from './client/fs-utils.js';
-export type {
-  AccountConfig,
-  GoogleAuthOptions,
-  ServiceAccountFileConfig,
-} from './client/google-auth.js';
-export { createGoogleAuth } from './client/google-auth.js';
-export { runScript } from './client/run-script.js';
+// Client utilities (runner-specific; general utilities moved to @karmaniverous/jeeves)
 export { getRunnerClient } from './client/runner-client.js';
-export type { RetryOptions, RunOptions } from './client/shell.js';
-export { run, runWithRetry } from './client/shell.js';
-export type { SlackWorkspaceOptions } from './client/slack-workspace.js';
-export {
-  getChannelWorkspace,
-  saveCache as saveSlackWorkspaceCache,
-} from './client/slack-workspace.js';
 export type { DispatchOptions } from './client/spawn-worker.js';
 export { dispatchSession, runDispatcher } from './client/spawn-worker.js';
