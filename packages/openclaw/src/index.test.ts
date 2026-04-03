@@ -10,6 +10,12 @@ type MockFn = ReturnType<typeof vi.fn>;
 vi.mock('@karmaniverous/jeeves', () => {
   return {
     init: vi.fn(),
+    getPackageVersion: vi.fn(() => '0.0.0-test'),
+    loadWorkspaceConfig: vi.fn(() => null),
+    WORKSPACE_CONFIG_DEFAULTS: {
+      core: { workspace: '.', configRoot: './config', gatewayUrl: 'http://127.0.0.1:3000' },
+    },
+    RUNNER_PORT: 1937,
     SECTION_IDS: { Runner: 'Runner' },
     resolveWorkspacePath: vi.fn(() => '/mock/workspace'),
     resolvePluginSetting: vi.fn(

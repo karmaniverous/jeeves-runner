@@ -7,37 +7,27 @@
  * @packageDocumentation
  */
 
-import { readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
 import {
   createAsyncContentCache,
   createComponentWriter,
   createPluginToolset,
+  getPackageVersion,
   init,
   type JeevesComponentDescriptor,
+  loadWorkspaceConfig,
   type PluginApi,
   resolveWorkspacePath,
+  RUNNER_PORT,
   SECTION_IDS,
+  WORKSPACE_CONFIG_DEFAULTS,
 } from '@karmaniverous/jeeves';
 
 import { generateRunnerContent } from './generateContent.js';
 import { getApiUrl, getConfigRoot } from './helpers.js';
 import { registerRunnerCustomTools } from './runnerTools.js';
 
-/** Plugin version derived from package.json. */
-const PLUGIN_VERSION: string = (() => {
-  try {
-    const dir = dirname(fileURLToPath(import.meta.url));
-    const pkg = JSON.parse(
-      readFileSync(resolve(dir, '..', 'package.json'), 'utf8'),
-    ) as { version?: string };
-    return pkg.version ?? 'unknown';
-  } catch {
-    return 'unknown';
-  }
-})();
+/** Plugin version derived from the nearest package.json. */
+const PLUGIN_VERSION = getPackageVersion(import.meta.url);
 
 const REFRESH_INTERVAL_SECONDS = 67;
 
@@ -60,7 +50,7 @@ export default function register(api: PluginApi): void {
     version: PLUGIN_VERSION,
     servicePackage: '@karmaniverous/jeeves-runner',
     pluginPackage: '@karmaniverous/jeeves-runner-openclaw',
-    defaultPort: 1937,
+    defaultPort: RUNNER_PORT,
     // Plugin has no service-side config to validate. This pass-through schema
     // satisfies the descriptor contract; the plugin's own config is validated
     // separately via openclaw.plugin.json's configSchema.
@@ -87,7 +77,12 @@ export default function register(api: PluginApi): void {
   // Register 16 custom runner tools (excludes runner_status, now standard)
   registerRunnerCustomTools(api, baseUrl);
 
-  // Start TOOLS.md writer
-  const writer = createComponentWriter(descriptor);
+  // Start TOOLS.md writer with gateway URL for cleanup escalation
+  const workspacePath = resolveWorkspacePath(api);
+  const gatewayUrl =
+    loadWorkspaceConfig(workspacePath)?.core?.gatewayUrl ??
+    WORKSPACE_CONFIG_DEFAULTS.core.gatewayUrl;
+
+  const writer = createComponentWriter(descriptor, { gatewayUrl });
   writer.start();
 }

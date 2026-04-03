@@ -12,7 +12,14 @@ import { execSync } from 'node:child_process';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 
-import { createServiceCli, getComponentConfigDir } from '@karmaniverous/jeeves';
+import {
+  createServiceCli,
+  getComponentConfigDir,
+  getServiceUrl,
+  init,
+  loadWorkspaceConfig,
+  WORKSPACE_CONFIG_DEFAULTS,
+} from '@karmaniverous/jeeves';
 import type { Command as BaseCommand } from 'commander';
 
 import { createConnection } from '../../db/connection.js';
@@ -144,33 +151,40 @@ const descriptor = createRunnerDescriptor({
       .command('trigger')
       .description('Manually trigger a job')
       .requiredOption('-i, --id <id>', 'Job ID to trigger')
-      .option('-c, --config <path>', 'Path to config file')
-      .action((options: { id: string; config?: string }) => {
-        const config = loadConfig(options.config);
-        void (async () => {
-          try {
-            const resp = await fetch(
-              `http://127.0.0.1:${String(config.port)}/jobs/${options.id}/run`,
-              { method: 'POST' },
-            );
-            const result = (await resp.json()) as Record<string, unknown>;
-            console.log(JSON.stringify(result, null, 2));
-          } catch {
-            console.error(
-              `Runner not reachable on port ${String(config.port)}. Is it running?`,
-            );
-            process.exit(1);
-          }
-        })();
-      });
+      .option('-w, --workspace <path>', 'Workspace root path', WORKSPACE_CONFIG_DEFAULTS.core.workspace)
+      .option('--config-root <path>', 'Platform config root path', WORKSPACE_CONFIG_DEFAULTS.core.configRoot)
+      .action(
+        (options: { id: string; workspace: string; configRoot: string }) => {
+          init({ workspacePath: options.workspace, configRoot: options.configRoot });
+          const url = getServiceUrl('runner');
+          void (async () => {
+            try {
+              const resp = await fetch(
+                `${url}/jobs/${options.id}/run`,
+                { method: 'POST' },
+              );
+              const result = (await resp.json()) as Record<string, unknown>;
+              console.log(JSON.stringify(result, null, 2));
+            } catch {
+              console.error(
+                `Runner not reachable at ${url}. Is it running?`,
+              );
+              process.exit(1);
+            }
+          })();
+        },
+      );
 
     program
       .command('init-scripts')
       .description(
-        'Clone jeeves-runner-scripts-template into scripts/ and configure tsx runner',
+        'Clone jeeves-scripts-template into scripts/ and configure tsx runner',
       )
       .option('-c, --config <path>', 'Path to config file')
-      .action((options: { config?: string }) => {
+      .option('-w, --workspace <path>', 'Workspace root path', WORKSPACE_CONFIG_DEFAULTS.core.workspace)
+      .option('--config-root <path>', 'Platform config root path', WORKSPACE_CONFIG_DEFAULTS.core.configRoot)
+      .action((options: { config?: string; workspace: string; configRoot: string }) => {
+        init({ workspacePath: options.workspace, configRoot: options.configRoot });
         const configDir = options.config
           ? dirname(resolve(options.config))
           : getComponentConfigDir('runner');
@@ -186,7 +200,7 @@ const descriptor = createRunnerDescriptor({
 
         console.log(`Cloning scripts template into ${scriptsDir}...`);
         execSync(
-          `git clone https://github.com/karmaniverous/jeeves-runner-scripts-template.git "${scriptsDir}"`,
+          `git clone https://github.com/karmaniverous/jeeves-scripts-template.git "${scriptsDir}"`,
           { stdio: 'inherit' },
         );
 

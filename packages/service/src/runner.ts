@@ -7,6 +7,7 @@
 import { readFileSync } from 'node:fs';
 import type { DatabaseSync } from 'node:sqlite';
 
+import { getBindAddress } from '@karmaniverous/jeeves';
 import type { FastifyInstance } from 'fastify';
 import type { Logger } from 'pino';
 import { pino } from 'pino';
@@ -118,8 +119,14 @@ export function createRunner(config: RunnerConfig, deps?: RunnerDeps): Runner {
         descriptor,
         logConfig: config.log,
       });
-      await server.listen({ port: config.port, host: config.host });
-      logger.info({ port: config.port }, 'API server listening');
+      let effectiveHost = config.host;
+      try {
+        effectiveHost = getBindAddress('runner') ?? config.host;
+      } catch {
+        // init() not called — use config.host as-is
+      }
+      await server.listen({ port: config.port, host: effectiveHost });
+      logger.info({ port: config.port, host: effectiveHost }, 'API server listening');
 
       // Graceful shutdown
       const shutdown = async (signal: string): Promise<void> => {

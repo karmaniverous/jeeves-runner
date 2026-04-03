@@ -4,7 +4,11 @@
  * @module helpers
  */
 
-import { type PluginApi, resolvePluginSetting } from '@karmaniverous/jeeves';
+import {
+  type PluginApi,
+  resolvePluginSetting,
+  RUNNER_PORT,
+} from '@karmaniverous/jeeves';
 
 import { PLUGIN_ID } from './constants.js';
 
@@ -15,7 +19,7 @@ export function getApiUrl(api: PluginApi): string {
     PLUGIN_ID,
     'apiUrl',
     'JEEVES_RUNNER_URL',
-    'http://127.0.0.1:1937',
+    `http://127.0.0.1:${String(RUNNER_PORT)}`,
   );
 }
 
