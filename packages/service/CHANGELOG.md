@@ -2,12 +2,36 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [0.8.3](https://github.com/karmaniverous/jeeves-runner/compare/service/0.8.2...0.8.3)
+#### [0.9.0](https://github.com/karmaniverous/jeeves-runner/compare/service/0.8.3...0.9.0)
+
+- feat: v0.9.0 — Core v0.5.1 Adoption + Cleanup [`#62`](https://github.com/karmaniverous/jeeves-runner/pull/62)
+- refactor: remove hoisted script utilities from runner [`#61`](https://github.com/karmaniverous/jeeves-runner/pull/61)
+- refactor: adopt core v0.5.1 APIs across runner and plugin [`#57`](https://github.com/karmaniverous/jeeves-runner/issues/57) [`#58`](https://github.com/karmaniverous/jeeves-runner/issues/58) [`#59`](https://github.com/karmaniverous/jeeves-runner/issues/59) [`#60`](https://github.com/karmaniverous/jeeves-runner/issues/60)
+- refactor: adopt core v0.5.1 APIs across runner and plugin [`#57`](https://github.com/karmaniverous/jeeves-runner/issues/57) [`#58`](https://github.com/karmaniverous/jeeves-runner/issues/58) [`#59`](https://github.com/karmaniverous/jeeves-runner/issues/59) [`#60`](https://github.com/karmaniverous/jeeves-runner/issues/60)
+- fix: resolve all build/docs warnings [`ea7719a`](https://github.com/karmaniverous/jeeves-runner/commit/ea7719aa52fcead31544e8dcd0c12f900fa2223a)
+- refactor: extract shared scheduler test helpers and deduplicate constants [`831f7e7`](https://github.com/karmaniverous/jeeves-runner/commit/831f7e75494f1faca6a7b71d028bd72624ab023a)
+- refactor: extract shared scheduler test helpers and deduplicate constants [`87b0e50`](https://github.com/karmaniverous/jeeves-runner/commit/87b0e50c92baa04917202e301b9dbeb6cd8ef83f)
+- docs: update skill, guides, and tests for v0.9.0 core adoption [`e0acf91`](https://github.com/karmaniverous/jeeves-runner/commit/e0acf919f6d16fddae92f7109661f70195706823)
+- docs: update skill, guides, and tests for v0.9.0 core adoption [`7c6a428`](https://github.com/karmaniverous/jeeves-runner/commit/7c6a4287027250db53cb5d8d461e9d029c80f4b6)
+- test: close coverage gaps for v0.9.0 core adoption [`d87378e`](https://github.com/karmaniverous/jeeves-runner/commit/d87378efd95cad49d166d8b1b0b4c3d43c5fdffc)
+- test: close coverage gaps for v0.9.0 core adoption [`caa7966`](https://github.com/karmaniverous/jeeves-runner/commit/caa7966a23fc513c874ec33dba36b076d362468e)
+- feat: bump @karmaniverous/jeeves to ^0.5.1 [`43bb504`](https://github.com/karmaniverous/jeeves-runner/commit/43bb504b81d7182c48e57f06e964dcd52e74d750)
+- feat: bump @karmaniverous/jeeves to ^0.5.1 [`65a40f0`](https://github.com/karmaniverous/jeeves-runner/commit/65a40f0c1609056101e950fe335a7f9531a0c193)
+- npm audit fix [`92f6e25`](https://github.com/karmaniverous/jeeves-runner/commit/92f6e252c303133387ca39cc3ea8349abd5f2f45)
+- fix: correct getRunnerClient import source in SKILL.md [`6bbb6e1`](https://github.com/karmaniverous/jeeves-runner/commit/6bbb6e100ea221c5abf58271c65c8e4aab39d2b3)
+- chore: release @karmaniverous/jeeves-runner-openclaw v0.6.2 [`a294db2`](https://github.com/karmaniverous/jeeves-runner/commit/a294db2be5260461461f27a211b82e6f48dfb611)
+- chore: remove temp script [`22fb24b`](https://github.com/karmaniverous/jeeves-runner/commit/22fb24be6913f0a81f124c1551b320a0fb01e377)
+- fix: correct getRunnerClient import source in SKILL.md [`ba1825d`](https://github.com/karmaniverous/jeeves-runner/commit/ba1825d3c425a68d40288fedad92acfd62357381)
+
+#### [service/0.8.3](https://github.com/karmaniverous/jeeves-runner/compare/service/0.8.2...service/0.8.3)
+
+> 31 March 2026
 
 - chore(core): integrate 0.4.6 init fix [`#56`](https://github.com/karmaniverous/jeeves-runner/pull/56)
 - [CORE-046] chore(core): integrate 0.4.6 init fix [`6c1ecf6`](https://github.com/karmaniverous/jeeves-runner/commit/6c1ecf609921161eafd425df75d180ab40ff2120)
 - ni [`ab05460`](https://github.com/karmaniverous/jeeves-runner/commit/ab054600ab6848204b44181e148a38c598917f05)
 - chore: release @karmaniverous/jeeves-runner-openclaw v0.6.1 [`3806b14`](https://github.com/karmaniverous/jeeves-runner/commit/3806b140763512991a1a1322a1a476c117a2834d)
+- chore: release @karmaniverous/jeeves-runner v0.8.3 [`f5c0199`](https://github.com/karmaniverous/jeeves-runner/commit/f5c0199db54d48f3f19f3c40add95a2bc0d4bad4)
 
 #### [service/0.8.2](https://github.com/karmaniverous/jeeves-runner/compare/service/0.8.1...service/0.8.2)
 
