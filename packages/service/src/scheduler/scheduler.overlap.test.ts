@@ -2,82 +2,14 @@
  * Tests for overlap policy behaviour (skip vs allow).
  */
 
-import type { DatabaseSync } from 'node:sqlite';
-
-import type { Logger } from 'pino';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { Notifier } from '../notify/slack.js';
-import { type RunnerConfig, runnerConfigSchema } from '../schemas/config.js';
 import { createTestDb } from '../test-utils/db.js';
+import {
+  createSchedulerMocks,
+  createTestScheduler,
+} from '../test-utils/scheduler.js';
 import type { ExecutionOptions, ExecutionResult } from './executor.js';
-import { createScheduler } from './scheduler.js';
-
-function createTestConfig(overrides: Partial<RunnerConfig> = {}): RunnerConfig {
-  return {
-    ...runnerConfigSchema.parse({}),
-    reconcileIntervalMs: 0,
-    ...overrides,
-  };
-}
-
-function createMocks() {
-  const defaultResult: ExecutionResult = {
-    status: 'ok',
-    exitCode: 0,
-    durationMs: 100,
-    tokens: null,
-    resultMeta: null,
-    error: null,
-    stdoutTail: 'output',
-    stderrTail: '',
-  };
-
-  const executorMock = vi.fn((_opts: ExecutionOptions) =>
-    Promise.resolve(defaultResult),
-  );
-
-  const notifySuccessMock = vi.fn(() => Promise.resolve(undefined));
-  const notifyFailureMock = vi.fn(() => Promise.resolve(undefined));
-
-  const notifier: Notifier = {
-    notifySuccess: notifySuccessMock as unknown as Notifier['notifySuccess'],
-    notifyFailure: notifyFailureMock as unknown as Notifier['notifyFailure'],
-    dispatchResult: vi.fn(
-      async () => {},
-    ) as unknown as Notifier['dispatchResult'],
-  };
-
-  const logger = {
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  };
-
-  return {
-    executorMock,
-    notifier,
-    logger,
-    notifySuccessMock,
-    notifyFailureMock,
-  };
-}
-
-function createTestScheduler(
-  db: DatabaseSync,
-  mocks: ReturnType<typeof createMocks>,
-  configOverrides: Partial<RunnerConfig> = {},
-) {
-  return createScheduler({
-    db,
-    executor: mocks.executorMock as unknown as (
-      options: ExecutionOptions,
-    ) => Promise<ExecutionResult>,
-    notifier: mocks.notifier,
-    config: createTestConfig(configOverrides),
-    logger: mocks.logger as unknown as Logger,
-  });
-}
 
 describe('createScheduler overlap policies', () => {
   it('re-registers jobs whose schedule changes on reconciliation', () => {
@@ -88,7 +20,7 @@ describe('createScheduler overlap policies', () => {
        VALUES (?, ?, ?, ?, ?)`,
     ).run('job-change', 'Change Me', '*/5 * * * *', '/path/to/script.js', 1);
 
-    const mocks = createMocks();
+    const mocks = createSchedulerMocks();
     const scheduler = createTestScheduler(db, mocks);
 
     scheduler.start();
@@ -118,7 +50,7 @@ describe('createScheduler overlap policies', () => {
     ).run('overlap-test', 'Overlap Test', '* * * * *', 'echo test', 'skip');
 
     const executionLog: string[] = [];
-    const mocks = createMocks();
+    const mocks = createSchedulerMocks();
     mocks.executorMock.mockImplementation(
       async (options: ExecutionOptions): Promise<ExecutionResult> => {
         executionLog.push(`start-${options.jobId}`);
@@ -166,7 +98,7 @@ describe('createScheduler overlap policies', () => {
     ).run('allow-test', 'Allow Test', '* * * * *', 'echo test', 'allow');
 
     const executionLog: string[] = [];
-    const mocks = createMocks();
+    const mocks = createSchedulerMocks();
     mocks.executorMock.mockImplementation(
       async (options: ExecutionOptions): Promise<ExecutionResult> => {
         executionLog.push(`start-${options.jobId}`);
