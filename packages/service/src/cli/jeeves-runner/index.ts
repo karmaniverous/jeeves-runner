@@ -17,7 +17,6 @@ import {
   getComponentConfigDir,
   getServiceUrl,
   init,
-  loadWorkspaceConfig,
   WORKSPACE_CONFIG_DEFAULTS,
 } from '@karmaniverous/jeeves';
 import type { Command as BaseCommand } from 'commander';
@@ -151,24 +150,32 @@ const descriptor = createRunnerDescriptor({
       .command('trigger')
       .description('Manually trigger a job')
       .requiredOption('-i, --id <id>', 'Job ID to trigger')
-      .option('-w, --workspace <path>', 'Workspace root path', WORKSPACE_CONFIG_DEFAULTS.core.workspace)
-      .option('--config-root <path>', 'Platform config root path', WORKSPACE_CONFIG_DEFAULTS.core.configRoot)
+      .option(
+        '-w, --workspace <path>',
+        'Workspace root path',
+        WORKSPACE_CONFIG_DEFAULTS.core.workspace,
+      )
+      .option(
+        '--config-root <path>',
+        'Platform config root path',
+        WORKSPACE_CONFIG_DEFAULTS.core.configRoot,
+      )
       .action(
         (options: { id: string; workspace: string; configRoot: string }) => {
-          init({ workspacePath: options.workspace, configRoot: options.configRoot });
+          init({
+            workspacePath: options.workspace,
+            configRoot: options.configRoot,
+          });
           const url = getServiceUrl('runner');
           void (async () => {
             try {
-              const resp = await fetch(
-                `${url}/jobs/${options.id}/run`,
-                { method: 'POST' },
-              );
+              const resp = await fetch(`${url}/jobs/${options.id}/run`, {
+                method: 'POST',
+              });
               const result = (await resp.json()) as Record<string, unknown>;
               console.log(JSON.stringify(result, null, 2));
             } catch {
-              console.error(
-                `Runner not reachable at ${url}. Is it running?`,
-              );
+              console.error(`Runner not reachable at ${url}. Is it running?`);
               process.exit(1);
             }
           })();
@@ -181,59 +188,76 @@ const descriptor = createRunnerDescriptor({
         'Clone jeeves-scripts-template into scripts/ and configure tsx runner',
       )
       .option('-c, --config <path>', 'Path to config file')
-      .option('-w, --workspace <path>', 'Workspace root path', WORKSPACE_CONFIG_DEFAULTS.core.workspace)
-      .option('--config-root <path>', 'Platform config root path', WORKSPACE_CONFIG_DEFAULTS.core.configRoot)
-      .action((options: { config?: string; workspace: string; configRoot: string }) => {
-        init({ workspacePath: options.workspace, configRoot: options.configRoot });
-        const configDir = options.config
-          ? dirname(resolve(options.config))
-          : getComponentConfigDir('runner');
-        const configPath = options.config
-          ? resolve(options.config)
-          : join(configDir, 'config.json');
-        const scriptsDir = join(configDir, 'scripts');
+      .option(
+        '-w, --workspace <path>',
+        'Workspace root path',
+        WORKSPACE_CONFIG_DEFAULTS.core.workspace,
+      )
+      .option(
+        '--config-root <path>',
+        'Platform config root path',
+        WORKSPACE_CONFIG_DEFAULTS.core.configRoot,
+      )
+      .action(
+        (options: {
+          config?: string;
+          workspace: string;
+          configRoot: string;
+        }) => {
+          init({
+            workspacePath: options.workspace,
+            configRoot: options.configRoot,
+          });
+          const configDir = options.config
+            ? dirname(resolve(options.config))
+            : getComponentConfigDir('runner');
+          const configPath = options.config
+            ? resolve(options.config)
+            : join(configDir, 'config.json');
+          const scriptsDir = join(configDir, 'scripts');
 
-        if (existsSync(scriptsDir)) {
-          console.error(`Scripts directory already exists: ${scriptsDir}`);
-          process.exit(1);
-        }
+          if (existsSync(scriptsDir)) {
+            console.error(`Scripts directory already exists: ${scriptsDir}`);
+            process.exit(1);
+          }
 
-        console.log(`Cloning scripts template into ${scriptsDir}...`);
-        execSync(
-          `git clone https://github.com/karmaniverous/jeeves-scripts-template.git "${scriptsDir}"`,
-          { stdio: 'inherit' },
-        );
+          console.log(`Cloning scripts template into ${scriptsDir}...`);
+          execSync(
+            `git clone https://github.com/karmaniverous/jeeves-scripts-template.git "${scriptsDir}"`,
+            { stdio: 'inherit' },
+          );
 
-        console.log('Installing dependencies...');
-        execSync('npm install', { cwd: scriptsDir, stdio: 'inherit' });
+          console.log('Installing dependencies...');
+          execSync('npm install', { cwd: scriptsDir, stdio: 'inherit' });
 
-        const tsxPath = join(
-          scriptsDir,
-          'node_modules',
-          'tsx',
-          'dist',
-          'cli.mjs',
-        );
-        const tsRunner = `node ${tsxPath}`;
+          const tsxPath = join(
+            scriptsDir,
+            'node_modules',
+            'tsx',
+            'dist',
+            'cli.mjs',
+          );
+          const tsRunner = `node ${tsxPath}`;
 
-        if (existsSync(configPath)) {
-          const raw = JSON.parse(readFileSync(configPath, 'utf-8')) as Record<
-            string,
-            unknown
-          >;
-          const runners = (raw.runners ?? {}) as Record<string, string>;
-          runners.ts = tsRunner;
-          raw.runners = runners;
-          writeFileSync(configPath, JSON.stringify(raw, null, 2) + '\n');
-          console.log(`Updated runners.ts in ${configPath}`);
-        } else {
-          const template = { runners: { ts: tsRunner } };
-          writeFileSync(configPath, JSON.stringify(template, null, 2) + '\n');
-          console.log(`Created config with runners.ts at ${configPath}`);
-        }
+          if (existsSync(configPath)) {
+            const raw = JSON.parse(readFileSync(configPath, 'utf-8')) as Record<
+              string,
+              unknown
+            >;
+            const runners = (raw.runners ?? {}) as Record<string, string>;
+            runners.ts = tsRunner;
+            raw.runners = runners;
+            writeFileSync(configPath, JSON.stringify(raw, null, 2) + '\n');
+            console.log(`Updated runners.ts in ${configPath}`);
+          } else {
+            const template = { runners: { ts: tsRunner } };
+            writeFileSync(configPath, JSON.stringify(template, null, 2) + '\n');
+            console.log(`Created config with runners.ts at ${configPath}`);
+          }
 
-        console.log('Scripts initialized successfully.');
-      });
+          console.log('Scripts initialized successfully.');
+        },
+      );
   },
 });
 

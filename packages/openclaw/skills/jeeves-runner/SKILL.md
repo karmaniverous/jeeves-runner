@@ -14,10 +14,13 @@ jeeves-runner is a Node.js job execution engine that schedules and runs process 
 | Component | Detail |
 |-----------|--------|
 | Package | `@karmaniverous/jeeves-runner` (globally installed) |
-| Default Port | `1937` |
+| Core dependency | `@karmaniverous/jeeves` v0.5.1+ |
+| Default Port | `RUNNER_PORT` (1937) via core constant |
 | Database | `runner.sqlite` (node:sqlite DatabaseSync) |
-| Default Host | `0.0.0.0` (all interfaces) |
-| Config | `jeeves-runner/config.json` with `dbPath`, `port`, `host`, `runners`, `notifications` |
+| Default Host | Resolved via `getBindAddress('runner')` (component → core → env → `0.0.0.0`) |
+| Config | `{configRoot}/jeeves-runner/config.json` with `dbPath`, `port`, `host`, `runners`, `notifications` |
+| Scripts | `{configRoot}/jeeves-core/scripts/` (hoisted to core in v0.5.1) |
+| Shared config | `jeeves.config.json` at workspace root provides cross-cutting defaults (`configRoot`, `workspace`) |
 
 ## Plugin Installation
 
@@ -508,7 +511,7 @@ Get-Content <log-path> -Tail 20   # Recent logs
 
 ### Template Repo
 
-New script projects start from `karmaniverous/jeeves-runner-scripts-template`. Use the CLI to scaffold:
+New script projects start from `karmaniverous/jeeves-scripts-template`. Use the CLI to scaffold:
 
 ```bash
 jeeves-runner init-scripts -c /path/to/config.json
@@ -519,7 +522,7 @@ This clones the template into a `scripts/` directory next to the config, install
 Alternatively, clone manually:
 
 ```bash
-git clone https://github.com/karmaniverous/jeeves-runner-scripts-template.git scripts
+git clone https://github.com/karmaniverous/jeeves-scripts-template.git scripts
 cd scripts && npm install
 ```
 
@@ -539,10 +542,10 @@ When a job's script path ends in `.ts`, the runner uses this command instead of 
 
 ### Script Structure
 
-Every script uses the `runScript()` wrapper for lifecycle management:
+Every script uses the `runScript()` wrapper from core for lifecycle management:
 
 ```typescript
-import { getRunnerClient, runScript } from '@karmaniverous/jeeves-runner';
+import { runScript, getRunnerClient } from '@karmaniverous/jeeves';
 
 await runScript(import.meta, async () => {
   const client = getRunnerClient();
@@ -555,11 +558,14 @@ await runScript(import.meta, async () => {
 });
 ```
 
-- `runScript()` handles error reporting and exit codes.
+- `runScript()` handles error reporting and exit codes (imported from `@karmaniverous/jeeves`, not the runner package).
 - `getRunnerClient()` returns an HTTP client pointed at the running runner API.
 - State and queue APIs are available for cross-job coordination.
+- Script utilities (`runScript`, `fsUtils`, `shell`, `googleAuth`, `slackWorkspace`) are hoisted to `@karmaniverous/jeeves` core — import them from there.
 
 ### Repo Layout
+
+Scripts live at `{configRoot}/jeeves-core/scripts/` (hoisted to core in v0.5.1):
 
 ```
 src/
@@ -612,8 +618,8 @@ If tools are unavailable (plugin not loaded in this session):
 **CLI Fallbacks:**
 - `jeeves-runner status` — check if the service is running (probes GET /status)
 - `jeeves-runner list-jobs -c <config>` — list registered jobs
-- `jeeves-runner trigger -i <job-id> -c <config>` — trigger a job manually
+- `jeeves-runner trigger -i <job-id>` — trigger a job (uses `getServiceUrl('runner')` for dynamic URL resolution; supports `--config-root` and `--workspace`)
 - `jeeves-runner config validate -c <config>` — validate config file
 - `jeeves-runner config apply -f <patch.json>` — apply config patch
 - `jeeves-runner service start|stop|restart|status` — manage system service
-- `jeeves-runner init-scripts -c <config>` — scaffold a scripts project
+- `jeeves-runner init-scripts` — scaffold a scripts project from `jeeves-scripts-template` (supports `--config-root` and `--workspace`)
