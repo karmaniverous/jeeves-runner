@@ -7,6 +7,9 @@
 import { DEFAULT_BIND_ADDRESS, RUNNER_PORT } from '@karmaniverous/jeeves';
 import { z } from 'zod';
 
+/** Default OpenClaw Gateway URL. */
+const DEFAULT_GATEWAY_URL = 'http://127.0.0.1:18789';
+
 /** Notification configuration sub-schema. */
 const notificationsSchema = z.object({
   /** Path to Slack bot token file. */
@@ -30,7 +33,7 @@ const logSchema = z.object({
 /** Gateway configuration sub-schema. */
 const gatewaySchema = z.object({
   /** OpenClaw Gateway URL. */
-  url: z.string().default('http://127.0.0.1:18789'),
+  url: z.string().default(DEFAULT_GATEWAY_URL),
   /** Path to file containing Gateway auth token. */
   tokenPath: z.string().optional(),
 });
@@ -61,7 +64,7 @@ export const runnerConfigSchema = z.object({
   /** Logging configuration. */
   log: logSchema.default({ level: 'info' }),
   /** Gateway configuration for session-type jobs. */
-  gateway: gatewaySchema.default({ url: 'http://127.0.0.1:18789' }),
+  gateway: gatewaySchema.default({ url: DEFAULT_GATEWAY_URL }),
   /** Custom command runners keyed by file extension. The command string is split on whitespace; first token is the executable, rest are prefix args before the script path. Falls back to built-in defaults for unconfigured extensions. */
   runners: z.record(z.string(), z.string().trim().min(1)).default({}),
 });

@@ -6,6 +6,9 @@
 
 import { fetchJson } from '@karmaniverous/jeeves';
 
+/** Default request timeout in milliseconds. */
+const DEFAULT_TIMEOUT_MS = 30000;
+
 /** Options for creating a Gateway client. */
 export interface GatewayClientOptions {
   /** Gateway base URL (e.g., http://127.0.0.1:18789). */
@@ -76,7 +79,7 @@ function invokeGateway(
   token: string,
   tool: string,
   args: Record<string, unknown>,
-  timeoutMs = 30000,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
 ): Promise<unknown> {
   return fetchJson(`${url}/tools/invoke`, {
     method: 'POST',
@@ -93,7 +96,7 @@ function invokeGateway(
 export function createGatewayClient(
   options: GatewayClientOptions,
 ): GatewayClient {
-  const { url, token, timeoutMs = 30000 } = options;
+  const { url, token, timeoutMs = DEFAULT_TIMEOUT_MS } = options;
 
   return {
     async spawnSession(

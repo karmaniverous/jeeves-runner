@@ -6,46 +6,13 @@
 import type { Logger } from 'pino';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { Notifier } from '../notify/slack.js';
-import { runnerConfigSchema } from '../schemas/config.js';
 import { createTestDb } from '../test-utils/db.js';
+import {
+  createSchedulerMocks,
+  createTestConfig,
+} from '../test-utils/scheduler.js';
 import type { ExecutionOptions, ExecutionResult } from './executor.js';
 import { createScheduler } from './scheduler.js';
-
-function createMocks() {
-  const defaultResult: ExecutionResult = {
-    status: 'ok',
-    exitCode: 0,
-    durationMs: 100,
-    tokens: null,
-    resultMeta: null,
-    error: null,
-    stdoutTail: 'output',
-    stderrTail: '',
-  };
-
-  return {
-    executorMock: vi.fn((_opts: ExecutionOptions) =>
-      Promise.resolve(defaultResult),
-    ),
-    notifier: {
-      notifySuccess: vi.fn(() =>
-        Promise.resolve(undefined),
-      ) as unknown as Notifier['notifySuccess'],
-      notifyFailure: vi.fn(() =>
-        Promise.resolve(undefined),
-      ) as unknown as Notifier['notifyFailure'],
-      dispatchResult: vi.fn(
-        async () => {},
-      ) as unknown as Notifier['dispatchResult'],
-    },
-    logger: {
-      info: vi.fn(),
-      warn: vi.fn(),
-      error: vi.fn(),
-    },
-  };
-}
 
 describe('cron-registry reconciliation', () => {
   beforeEach(() => {
@@ -67,14 +34,14 @@ describe('cron-registry reconciliation', () => {
        VALUES (?, ?, ?, ?, ?)`,
     ).run('rr-job', 'Cron Job', '*/5 * * * *', '/path/to/script.js', 1);
 
-    const mocks = createMocks();
+    const mocks = createSchedulerMocks();
     const scheduler = createScheduler({
       db,
       executor: mocks.executorMock as unknown as (
         opts: ExecutionOptions,
       ) => Promise<ExecutionResult>,
       notifier: mocks.notifier,
-      config: { ...runnerConfigSchema.parse({}), reconcileIntervalMs: 0 },
+      config: createTestConfig(),
       logger: mocks.logger as unknown as Logger,
     });
 
@@ -116,14 +83,14 @@ describe('cron-registry reconciliation', () => {
        VALUES (?, ?, ?, ?, ?)`,
     ).run('rr-stale', 'Periodic Job', '*/5 * * * *', '/path/to/script.js', 1);
 
-    const mocks = createMocks();
+    const mocks = createSchedulerMocks();
     const scheduler = createScheduler({
       db,
       executor: mocks.executorMock as unknown as (
         opts: ExecutionOptions,
       ) => Promise<ExecutionResult>,
       notifier: mocks.notifier,
-      config: { ...runnerConfigSchema.parse({}), reconcileIntervalMs: 0 },
+      config: createTestConfig(),
       logger: mocks.logger as unknown as Logger,
     });
 
@@ -160,14 +127,14 @@ describe('cron-registry reconciliation', () => {
        VALUES (?, ?, ?, ?, ?)`,
     ).run('cron-job', 'Cron Job', '*/5 * * * *', '/path/to/script.js', 1);
 
-    const mocks = createMocks();
+    const mocks = createSchedulerMocks();
     const scheduler = createScheduler({
       db,
       executor: mocks.executorMock as unknown as (
         opts: ExecutionOptions,
       ) => Promise<ExecutionResult>,
       notifier: mocks.notifier,
-      config: { ...runnerConfigSchema.parse({}), reconcileIntervalMs: 0 },
+      config: createTestConfig(),
       logger: mocks.logger as unknown as Logger,
     });
 

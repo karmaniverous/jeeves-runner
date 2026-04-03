@@ -8,29 +8,14 @@ import type { Logger } from 'pino';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { GatewayClient } from '../gateway/client.js';
-import type { Notifier } from '../notify/slack.js';
 import { runnerConfigSchema } from '../schemas/config.js';
 import { createTestDb } from '../test-utils/db.js';
+import {
+  createMockLogger,
+  createMockNotifier,
+} from '../test-utils/scheduler.js';
 import type { ExecutionOptions, ExecutionResult } from './executor.js';
 import { createScheduler } from './scheduler.js';
-
-function createMockNotifier(): Notifier {
-  return {
-    notifySuccess: vi.fn(() =>
-      Promise.resolve(undefined),
-    ) as unknown as Notifier['notifySuccess'],
-    notifyFailure: vi.fn(() =>
-      Promise.resolve(undefined),
-    ) as unknown as Notifier['notifyFailure'],
-    dispatchResult: vi.fn(
-      async () => {},
-    ) as unknown as Notifier['dispatchResult'],
-  };
-}
-
-function createMockLogger() {
-  return { info: vi.fn(), warn: vi.fn(), error: vi.fn() };
-}
 
 describe('Scheduler session execution', () => {
   beforeEach(() => {

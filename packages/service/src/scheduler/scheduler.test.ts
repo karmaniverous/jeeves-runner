@@ -2,83 +2,14 @@
  * Tests for the job scheduler.
  */
 
-import type { DatabaseSync } from 'node:sqlite';
-
-import type { Logger } from 'pino';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { Notifier } from '../notify/slack.js';
-import { type RunnerConfig, runnerConfigSchema } from '../schemas/config.js';
+import { runnerConfigSchema } from '../schemas/config.js';
 import { createTestDb } from '../test-utils/db.js';
-import type { ExecutionOptions, ExecutionResult } from './executor.js';
-import { createScheduler } from './scheduler.js';
-
-function createTestConfig(overrides: Partial<RunnerConfig> = {}): RunnerConfig {
-  return {
-    ...runnerConfigSchema.parse({}),
-    reconcileIntervalMs: 0,
-    ...overrides,
-  };
-}
-
-function createMocks() {
-  const defaultResult: ExecutionResult = {
-    status: 'ok',
-    exitCode: 0,
-    durationMs: 100,
-    tokens: null,
-    resultMeta: null,
-    error: null,
-    stdoutTail: 'output',
-    stderrTail: '',
-  };
-
-  const executorMock = vi.fn((_opts: ExecutionOptions) =>
-    Promise.resolve(defaultResult),
-  );
-
-  const notifySuccessMock = vi.fn(() => Promise.resolve(undefined));
-  const notifyFailureMock = vi.fn(() => Promise.resolve(undefined));
-
-  const notifier: Notifier = {
-    notifySuccess: notifySuccessMock as unknown as Notifier['notifySuccess'],
-    notifyFailure: notifyFailureMock as unknown as Notifier['notifyFailure'],
-    dispatchResult: vi.fn(
-      async () => {},
-    ) as unknown as Notifier['dispatchResult'],
-  };
-
-  const logger = {
-    info: vi.fn(),
-    warn: vi.fn(),
-    error: vi.fn(),
-  };
-
-  return {
-    executorMock,
-    notifier,
-    logger,
-    notifySuccessMock,
-    notifyFailureMock,
-  };
-}
-
-/** Create a scheduler wired to test DB and mocks. */
-function createTestScheduler(
-  db: DatabaseSync,
-  mocks: ReturnType<typeof createMocks>,
-  configOverrides: Partial<RunnerConfig> = {},
-) {
-  return createScheduler({
-    db,
-    executor: mocks.executorMock as unknown as (
-      options: ExecutionOptions,
-    ) => Promise<ExecutionResult>,
-    notifier: mocks.notifier,
-    config: createTestConfig(configOverrides),
-    logger: mocks.logger as unknown as Logger,
-  });
-}
+import {
+  createSchedulerMocks,
+  createTestScheduler,
+} from '../test-utils/scheduler.js';
 
 describe('createScheduler', () => {
   beforeEach(() => {
@@ -97,7 +28,7 @@ describe('createScheduler', () => {
        VALUES (?, ?, ?, ?, ?)`,
     ).run('job1', 'Test Job', '* * * * *', '/path/to/original.js', 1);
 
-    const mocks = createMocks();
+    const mocks = createSchedulerMocks();
     const scheduler = createTestScheduler(db, mocks);
     const { executorMock } = mocks;
 
@@ -128,7 +59,7 @@ describe('createScheduler', () => {
        VALUES (?, ?, ?, ?, ?)`,
     ).run('job2', 'Test Job 2', '* * * * *', '/path/to/script.js', 1);
 
-    const mocks = createMocks();
+    const mocks = createSchedulerMocks();
     const scheduler = createTestScheduler(db, mocks);
     const { executorMock } = mocks;
 
@@ -160,7 +91,7 @@ describe('createScheduler', () => {
        VALUES (?, ?, ?, ?, ?)`,
     ).run('good-job', 'Good Job', '*/5 * * * *', '/path/to/script.js', 1);
 
-    const mocks = createMocks();
+    const mocks = createSchedulerMocks();
     const { notifyFailureMock } = mocks;
 
     const scheduler = createTestScheduler(db, mocks, {
@@ -195,7 +126,7 @@ describe('createScheduler', () => {
        VALUES (?, ?, ?, ?, ?)`,
     ).run('valid-job', 'Valid Job', '*/5 * * * *', '/path/to/script.js', 1);
 
-    const mocks = createMocks();
+    const mocks = createSchedulerMocks();
     const scheduler = createTestScheduler(db, mocks);
 
     scheduler.start();
@@ -211,7 +142,7 @@ describe('createScheduler', () => {
   it('registers newly inserted enabled jobs on reconciliation', () => {
     const testDb = createTestDb();
     const db = testDb.db;
-    const mocks = createMocks();
+    const mocks = createSchedulerMocks();
     const scheduler = createTestScheduler(db, mocks);
 
     scheduler.start();
@@ -238,7 +169,7 @@ describe('createScheduler', () => {
        VALUES (?, ?, ?, ?, ?)`,
     ).run('job-disable', 'Disable Me', '*/5 * * * *', '/path/to/script.js', 1);
 
-    const mocks = createMocks();
+    const mocks = createSchedulerMocks();
     const scheduler = createTestScheduler(db, mocks);
     const { executorMock } = mocks;
 
