@@ -545,7 +545,8 @@ When a job's script path ends in `.ts`, the runner uses this command instead of 
 Every script uses the `runScript()` wrapper from core for lifecycle management:
 
 ```typescript
-import { runScript, getRunnerClient } from '@karmaniverous/jeeves';
+import { runScript } from '@karmaniverous/jeeves';
+import { getRunnerClient } from '@karmaniverous/jeeves-runner';
 
 await runScript(import.meta, async () => {
   const client = getRunnerClient();
@@ -559,7 +560,7 @@ await runScript(import.meta, async () => {
 ```
 
 - `runScript()` handles error reporting and exit codes (imported from `@karmaniverous/jeeves`, not the runner package).
-- `getRunnerClient()` returns an HTTP client pointed at the running runner API.
+- `getRunnerClient()` returns an HTTP client pointed at the running runner API (imported from `@karmaniverous/jeeves-runner`, not core).
 - State and queue APIs are available for cross-job coordination.
 - Script utilities (`runScript`, `fsUtils`, `shell`, `googleAuth`, `slackWorkspace`) are hoisted to `@karmaniverous/jeeves` core — import them from there.
 
