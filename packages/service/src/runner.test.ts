@@ -3,11 +3,27 @@
  */
 
 import { pino } from 'pino';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createRunner } from './runner.js';
 import type { TestDb } from './test-utils/db.js';
 import { createTestDb } from './test-utils/db.js';
+
+let mockBindAddress: string | null = null;
+
+interface CoreModule extends Record<string, unknown> {
+  getBindAddress: (name: string) => string;
+}
+
+vi.mock('@karmaniverous/jeeves', async (importOriginal) => {
+  const actual: CoreModule = await importOriginal();
+  return {
+    ...actual,
+    getBindAddress: vi.fn((name: string) => {
+      if (mockBindAddress !== null) return mockBindAddress;
+      return actual.getBindAddress(name);
+    }),
+  };
+});
 
 /** Minimal config for tests — all notifications/gateway disabled. */
 function testConfig(dbPath: string, port: number) {
@@ -35,6 +51,7 @@ describe('Runner', () => {
 
   beforeEach(() => {
     testDb = createTestDb();
+    mockBindAddress = null;
   });
 
   afterEach(() => {
@@ -42,9 +59,10 @@ describe('Runner', () => {
   });
 
   it('should start and stop cleanly', async () => {
-    const runner = createRunner(testConfig(testDb.dbPath, 18783), {
-      logger: pino({ level: 'silent' }),
-    });
+    const runner = (await import('./runner.js')).createRunner(
+      testConfig(testDb.dbPath, 18783),
+      { logger: pino({ level: 'silent' }) },
+    );
 
     await runner.start();
 
@@ -64,5 +82,25 @@ describe('Runner', () => {
 
     // Verify server is stopped (connection should be refused)
     await expect(fetch('http://127.0.0.1:18783/status')).rejects.toThrow();
+  }, 20000);
+
+  it('should use getBindAddress when available', async () => {
+    mockBindAddress = '127.0.0.1';
+
+    const { getBindAddress } = await import('@karmaniverous/jeeves');
+
+    const runner = (await import('./runner.js')).createRunner(
+      testConfig(testDb.dbPath, 18784),
+      { logger: pino({ level: 'silent' }) },
+    );
+
+    await runner.start();
+
+    expect(getBindAddress).toHaveBeenCalledWith('runner');
+
+    const response = await fetch('http://127.0.0.1:18784/status');
+    expect(response.status).toBe(200);
+
+    await runner.stop();
   }, 20000);
 });

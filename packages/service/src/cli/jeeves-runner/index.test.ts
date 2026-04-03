@@ -2,8 +2,13 @@
  * Tests for CLI commands (actual behavior, not just croner).
  */
 
-import { execSync } from 'node:child_process';
-import { unlinkSync, writeFileSync } from 'node:fs';
+import { exec, execSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, unlinkSync, writeFileSync } from 'node:fs';
+import { createServer } from 'node:http';
+import type { AddressInfo, Server } from 'node:net';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { promisify } from 'node:util';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -99,5 +104,90 @@ describe('CLI', () => {
     expect(result).toContain('test-job');
     expect(result).toContain('Test Job');
     expect(result).toContain('0 0 * * *');
+  });
+});
+
+const execAsync = promisify(exec);
+
+describe('trigger command', () => {
+  vi.setConfig({ testTimeout: 15000 });
+
+  it('should POST to /jobs/:id/run on the resolved service URL', async () => {
+    // Start a mock HTTP server that records incoming requests.
+    let receivedPath = '';
+    let receivedMethod = '';
+    const server: Server = createServer((req, res) => {
+      receivedMethod = req.method ?? '';
+      receivedPath = req.url ?? '';
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: 'triggered' }));
+    });
+
+    await new Promise<void>((resolve) => {
+      server.listen(0, '127.0.0.1', resolve);
+    });
+    const mockPort = (server.address() as AddressInfo).port;
+
+    try {
+      // Create a config-root with jeeves-core/config.json that points
+      // getServiceUrl('runner') at our mock server.
+      const configRoot = mkdtempSync(join(tmpdir(), 'trigger-test-'));
+      const coreDir = join(configRoot, 'jeeves-core');
+      mkdirSync(coreDir, { recursive: true });
+      writeFileSync(
+        join(coreDir, 'config.json'),
+        JSON.stringify({
+          services: {
+            runner: { url: `http://127.0.0.1:${String(mockPort)}` },
+          },
+        }),
+      );
+
+      const { stdout } = await execAsync(
+        `node dist/cli/jeeves-runner/index.js trigger --id my-job --config-root "${configRoot}"`,
+        { encoding: 'utf-8', timeout: 10000 },
+      );
+
+      expect(receivedMethod).toBe('POST');
+      expect(receivedPath).toBe('/jobs/my-job/run');
+      expect(stdout).toContain('triggered');
+    } finally {
+      await new Promise<void>((resolve) => {
+        server.close(() => {
+          resolve();
+        });
+      });
+    }
+  }, 15000);
+});
+
+describe('init-scripts command', () => {
+  it('should reference jeeves-scripts-template in help text', () => {
+    const result = execSync(
+      'node dist/cli/jeeves-runner/index.js init-scripts --help',
+      { encoding: 'utf-8' },
+    );
+    expect(result).toContain('jeeves-scripts-template');
+  });
+});
+
+describe('shared CLI config flags', () => {
+  it('trigger accepts --workspace and --config-root without error', () => {
+    // Using --help to avoid actual execution; flags must be recognized.
+    const result = execSync(
+      'node dist/cli/jeeves-runner/index.js trigger --help',
+      { encoding: 'utf-8' },
+    );
+    expect(result).toContain('--workspace');
+    expect(result).toContain('--config-root');
+  });
+
+  it('init-scripts accepts --workspace and --config-root without error', () => {
+    const result = execSync(
+      'node dist/cli/jeeves-runner/index.js init-scripts --help',
+      { encoding: 'utf-8' },
+    );
+    expect(result).toContain('--workspace');
+    expect(result).toContain('--config-root');
   });
 });
