@@ -109,6 +109,11 @@ describe('plugin register', () => {
     expect(writerArg.name).toBe('runner');
     expect(writerArg.sectionId).toBe('Runner');
 
+    const writerOptions = core.createComponentWriter.mock.calls[0]?.[1] as {
+      gatewayUrl: string;
+    };
+    expect(writerOptions.gatewayUrl).toBe('http://127.0.0.1:3000');
+
     const writer = core.createComponentWriter.mock.results[0]?.value as {
       start: MockFn;
     };
