@@ -121,12 +121,15 @@ export function createRunner(config: RunnerConfig, deps?: RunnerDeps): Runner {
       });
       let effectiveHost = config.host;
       try {
-        effectiveHost = getBindAddress('runner') ?? config.host;
+        effectiveHost = getBindAddress('runner');
       } catch {
         // init() not called — use config.host as-is
       }
       await server.listen({ port: config.port, host: effectiveHost });
-      logger.info({ port: config.port, host: effectiveHost }, 'API server listening');
+      logger.info(
+        { port: config.port, host: effectiveHost },
+        'API server listening',
+      );
 
       // Graceful shutdown
       const shutdown = async (signal: string): Promise<void> => {

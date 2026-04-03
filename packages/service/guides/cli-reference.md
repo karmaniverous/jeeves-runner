@@ -210,7 +210,7 @@ Calls `POST /jobs/:id/run` and prints the result.
 
 ### `init-scripts`
 
-Scaffold a new scripts project from the `jeeves-runner-scripts-template`.
+Scaffold a new scripts project from the `jeeves-scripts-template`.
 
 ```bash
 jeeves-runner init-scripts [-c <path>]

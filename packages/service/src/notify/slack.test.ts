@@ -2,19 +2,16 @@
  * Tests for Slack notification module.
  */
 
-import { describe, expect, it, vi } from 'vitest';
+import { fetchJson } from '@karmaniverous/jeeves';
+import { describe, expect, it, type Mock, vi } from 'vitest';
 
-import * as jeevesModule from '@karmaniverous/jeeves';
 import { createNotifier } from './slack.js';
 
-vi.mock('@karmaniverous/jeeves', async (importOriginal) => {
-  const actual =
-    (await importOriginal()) as typeof import('@karmaniverous/jeeves');
-  return {
-    ...actual,
-    fetchJson: vi.fn().mockResolvedValue(undefined),
-  };
-});
+vi.mock('@karmaniverous/jeeves', () => ({
+  fetchJson: vi.fn().mockResolvedValue(undefined),
+}));
+
+const mockFetchJson = fetchJson as Mock;
 
 describe('createNotifier', () => {
   it('should warn and skip when no token configured', async () => {
@@ -38,14 +35,14 @@ describe('createNotifier', () => {
     const notifier = createNotifier({ slackToken: 'xoxb-test' });
     await notifier.notifySuccess('Sync Email', 12345, 'C123');
 
-    expect(jeevesModule.fetchJson).toHaveBeenCalledWith(
+    expect(mockFetchJson).toHaveBeenCalledWith(
       'https://slack.com/api/chat.postMessage',
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({
           Authorization: 'Bearer xoxb-test',
-        }),
-        body: expect.stringContaining('Sync Email'),
+        }) as Record<string, string>,
+        body: expect.stringContaining('Sync Email') as string,
       }),
     );
   });
@@ -54,10 +51,10 @@ describe('createNotifier', () => {
     const notifier = createNotifier({ slackToken: 'xoxb-test' });
     await notifier.notifyFailure('Sync Email', 5000, 'exit code 1', 'C123');
 
-    expect(jeevesModule.fetchJson).toHaveBeenCalledWith(
+    expect(mockFetchJson).toHaveBeenCalledWith(
       'https://slack.com/api/chat.postMessage',
       expect.objectContaining({
-        body: expect.stringContaining('exit code 1'),
+        body: expect.stringContaining('exit code 1') as string,
       }),
     );
   });
@@ -75,10 +72,10 @@ describe('createNotifier', () => {
         logger,
       );
 
-      expect(jeevesModule.fetchJson).toHaveBeenCalledWith(
+      expect(mockFetchJson).toHaveBeenCalledWith(
         'https://slack.com/api/chat.postMessage',
         expect.objectContaining({
-          body: expect.stringContaining('Job1'),
+          body: expect.stringContaining('Job1') as string,
         }),
       );
       expect(logger.error).not.toHaveBeenCalled();
@@ -96,10 +93,10 @@ describe('createNotifier', () => {
         logger,
       );
 
-      expect(jeevesModule.fetchJson).toHaveBeenCalledWith(
+      expect(mockFetchJson).toHaveBeenCalledWith(
         'https://slack.com/api/chat.postMessage',
         expect.objectContaining({
-          body: expect.stringContaining('boom'),
+          body: expect.stringContaining('boom') as string,
         }),
       );
     });
@@ -107,7 +104,7 @@ describe('createNotifier', () => {
     it('should skip notification when no matching channel configured', async () => {
       const notifier = createNotifier({ slackToken: 'xoxb-test' });
       const logger = { error: vi.fn() };
-      vi.mocked(jeevesModule.fetchJson).mockClear();
+      mockFetchJson.mockClear();
 
       await notifier.dispatchResult(
         { status: 'ok', durationMs: 5000, error: null },
@@ -117,7 +114,7 @@ describe('createNotifier', () => {
         logger,
       );
 
-      expect(jeevesModule.fetchJson).not.toHaveBeenCalled();
+      expect(mockFetchJson).not.toHaveBeenCalled();
     });
   });
 });

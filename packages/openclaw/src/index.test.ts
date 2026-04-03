@@ -13,7 +13,11 @@ vi.mock('@karmaniverous/jeeves', () => {
     getPackageVersion: vi.fn(() => '0.0.0-test'),
     loadWorkspaceConfig: vi.fn(() => null),
     WORKSPACE_CONFIG_DEFAULTS: {
-      core: { workspace: '.', configRoot: './config', gatewayUrl: 'http://127.0.0.1:3000' },
+      core: {
+        workspace: '.',
+        configRoot: './config',
+        gatewayUrl: 'http://127.0.0.1:3000',
+      },
     },
     RUNNER_PORT: 1937,
     SECTION_IDS: { Runner: 'Runner' },

@@ -245,18 +245,15 @@ describe('Gateway client', () => {
     await expect(
       (async () => {
         const { fetchJson } = await import('@karmaniverous/jeeves');
-        return fetchJson(
-          `http://127.0.0.1:${String(port)}/tools/invoke`,
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: 'Bearer test-token',
-            },
-            body: JSON.stringify({ tool: 'timeout_test', args: {} }),
-            signal: AbortSignal.timeout(100),
+        return fetchJson(`http://127.0.0.1:${String(port)}/tools/invoke`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer test-token',
           },
-        );
+          body: JSON.stringify({ tool: 'timeout_test', args: {} }),
+          signal: AbortSignal.timeout(100),
+        });
       })(),
     ).rejects.toThrow();
   });
