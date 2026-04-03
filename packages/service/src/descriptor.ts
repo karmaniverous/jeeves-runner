@@ -20,7 +20,6 @@ import {
   SECTION_IDS,
 } from '@karmaniverous/jeeves';
 
-import { createRunner } from './runner.js';
 import { runnerConfigSchema } from './schemas/config.js';
 
 /**
@@ -83,6 +82,8 @@ export function createRunnerDescriptor(
       configPath,
     ],
     async run(configPath: string): Promise<void> {
+      // Dynamic import breaks the descriptor ↔ runner circular dependency.
+      const { createRunner } = await import('./runner.js');
       const raw = readFileSync(resolve(configPath), 'utf-8');
       const config = runnerConfigSchema.parse(JSON.parse(raw));
       const runner = createRunner(config);

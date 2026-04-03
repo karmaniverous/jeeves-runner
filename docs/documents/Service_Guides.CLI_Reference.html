@@ -1,0 +1,282 @@
+<!DOCTYPE html><html class="default" lang="en" data-base="../"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>CLI Reference | @karmaniverous/jeeves-runner</title><meta name="description" content="Documentation for @karmaniverous/jeeves-runner"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css"/><link rel="stylesheet" href="../assets/highlight.css"/><script defer src="../assets/main.js"></script><script async src="../assets/icons.js" id="tsd-icons-script"></script><script async src="../assets/search.js" id="tsd-search-script"></script><script async src="../assets/navigation.js" id="tsd-nav-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar"><div class="tsd-toolbar-contents container"><a href="../index.html" class="title">@karmaniverous/jeeves-runner</a><div id="tsd-toolbar-links"><a href="https://github.com/karmaniverous/jeeves-runner">GitHub</a></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/><ul role="listbox" id="tsd-search-results"></ul><div id="tsd-search-status" aria-live="polite" aria-atomic="true"><div>Preparing search index...</div></div></dialog><a href="#" class="tsd-widget menu" id="tsd-toolbar-menu-trigger" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-menu"></use></svg></a></div></header><div class="container container-main"><div class="col-content"><div class="tsd-page-title"><ul class="tsd-breadcrumb" aria-label="Breadcrumb"><li><a href="Service_Guides.html">Service Guides</a></li><li><a href="" aria-current="page">CLI Reference</a></li></ul></div><div class="tsd-panel tsd-typography"><h1 id="cli-reference" class="tsd-anchor-link">CLI Reference<a href="#cli-reference" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h1>
+<p>All commands are accessed via <code>jeeves-runner &lt;command&gt;</code>. The CLI is built with <code>createServiceCli(descriptor)</code> from core, which provides standard commands, plus custom commands for job management.</p>
+<hr>
+<h2 id="standard-commands" class="tsd-anchor-link">Standard Commands<a href="#standard-commands" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<h3 id="_" class="tsd-anchor-link"><code>start</code><a href="#_" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Start the runner daemon (foreground).</p>
+<pre><code class="bash"><span class="hl-0">jeeves-runner</span><span class="hl-1"> </span><span class="hl-2">start</span><span class="hl-1"> </span><span class="hl-3">-c</span><span class="hl-1"> &lt;</span><span class="hl-2">pat</span><span class="hl-1">h&gt;</span>
+</code><button type="button">Copy</button></pre>
+
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-c, --config &lt;path&gt;</code></td>
+<td>Path to config file</td>
+</tr>
+</tbody>
+</table>
+<p>Starts the scheduler, API server, and begins executing jobs on their cron schedules.</p>
+<hr>
+<h3 id="_-1" class="tsd-anchor-link"><code>status</code><a href="#_-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Probe service health and version by querying <code>GET /status</code>.</p>
+<pre><code class="bash"><span class="hl-0">jeeves-runner</span><span class="hl-1"> </span><span class="hl-2">status</span><span class="hl-1"> [-p &lt;</span><span class="hl-2">por</span><span class="hl-1">t&gt;</span><span class="hl-2">]</span>
+</code><button type="button">Copy</button></pre>
+
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-p, --port &lt;port&gt;</code></td>
+<td><code>1937</code></td>
+<td>Service port</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="_-2" class="tsd-anchor-link"><code>config</code><a href="#_-2" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Query or manage service configuration.</p>
+<pre><code class="bash"><span class="hl-0">jeeves-runner</span><span class="hl-1"> </span><span class="hl-2">config</span><span class="hl-1"> [jsonpath] [-p &lt;port&gt;]</span>
+</code><button type="button">Copy</button></pre>
+
+<p>Queries <code>GET /config</code> on the running instance. Pass a JSONPath expression to filter.</p>
+<h4 id="_-3" class="tsd-anchor-link"><code>config validate</code><a href="#_-3" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Validate a config file against the Zod schema without starting the runner.</p>
+<pre><code class="bash"><span class="hl-0">jeeves-runner</span><span class="hl-1"> </span><span class="hl-2">config</span><span class="hl-1"> </span><span class="hl-2">validate</span><span class="hl-1"> </span><span class="hl-3">-c</span><span class="hl-1"> &lt;</span><span class="hl-2">pat</span><span class="hl-1">h&gt;</span>
+</code><button type="button">Copy</button></pre>
+
+<h4 id="_-4" class="tsd-anchor-link"><code>config apply</code><a href="#_-4" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Apply a config patch to the running service.</p>
+<pre><code class="bash"><span class="hl-0">jeeves-runner</span><span class="hl-1"> </span><span class="hl-2">config</span><span class="hl-1"> </span><span class="hl-2">apply</span><span class="hl-1"> [-p &lt;</span><span class="hl-2">por</span><span class="hl-1">t&gt;</span><span class="hl-2">]</span><span class="hl-1"> [-f &lt;</span><span class="hl-2">pat</span><span class="hl-1">h&gt;</span><span class="hl-2">]</span><span class="hl-1"> [--replace]</span>
+</code><button type="button">Copy</button></pre>
+
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-p, --port &lt;port&gt;</code></td>
+<td>Service port (default: 1937)</td>
+</tr>
+<tr>
+<td><code>-f, --file &lt;path&gt;</code></td>
+<td>Config patch file (JSON); reads stdin if omitted</td>
+</tr>
+<tr>
+<td><code>--replace</code></td>
+<td>Replace entire config instead of merging</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="_-5" class="tsd-anchor-link"><code>init</code><a href="#_-5" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Generate a default config file.</p>
+<pre><code class="bash"><span class="hl-0">jeeves-runner</span><span class="hl-1"> </span><span class="hl-2">init</span><span class="hl-1"> [-o &lt;</span><span class="hl-2">di</span><span class="hl-1">r&gt;</span><span class="hl-2">]</span>
+</code><button type="button">Copy</button></pre>
+
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-o, --output &lt;dir&gt;</code></td>
+<td>Platform config dir</td>
+<td>Output directory for <code>config.json</code></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="_-6" class="tsd-anchor-link"><code>service</code><a href="#_-6" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>System service management subcommands.</p>
+<h4 id="_-7" class="tsd-anchor-link"><code>service install</code><a href="#_-7" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Install as a system service.</p>
+<pre><code class="bash"><span class="hl-0">jeeves-runner</span><span class="hl-1"> </span><span class="hl-2">service</span><span class="hl-1"> </span><span class="hl-2">install</span><span class="hl-1"> [-c &lt;</span><span class="hl-2">pat</span><span class="hl-1">h&gt;</span><span class="hl-2">]</span><span class="hl-1"> [-n &lt;</span><span class="hl-2">nam</span><span class="hl-1">e&gt;</span><span class="hl-2">]</span>
+</code><button type="button">Copy</button></pre>
+
+<h4 id="_-8" class="tsd-anchor-link"><code>service uninstall</code><a href="#_-8" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Uninstall the system service.</p>
+<pre><code class="bash"><span class="hl-0">jeeves-runner</span><span class="hl-1"> </span><span class="hl-2">service</span><span class="hl-1"> </span><span class="hl-2">uninstall</span><span class="hl-1"> [-n &lt;</span><span class="hl-2">nam</span><span class="hl-1">e&gt;</span><span class="hl-2">]</span>
+</code><button type="button">Copy</button></pre>
+
+<h4 id="_-9" class="tsd-anchor-link"><code>service start</code><a href="#_-9" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Start the system service.</p>
+<pre><code class="bash"><span class="hl-0">jeeves-runner</span><span class="hl-1"> </span><span class="hl-2">service</span><span class="hl-1"> </span><span class="hl-2">start</span><span class="hl-1"> [-n &lt;</span><span class="hl-2">nam</span><span class="hl-1">e&gt;</span><span class="hl-2">]</span>
+</code><button type="button">Copy</button></pre>
+
+<h4 id="_-10" class="tsd-anchor-link"><code>service stop</code><a href="#_-10" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Stop the system service.</p>
+<pre><code class="bash"><span class="hl-0">jeeves-runner</span><span class="hl-1"> </span><span class="hl-2">service</span><span class="hl-1"> </span><span class="hl-2">stop</span><span class="hl-1"> [-n &lt;</span><span class="hl-2">nam</span><span class="hl-1">e&gt;</span><span class="hl-2">]</span>
+</code><button type="button">Copy</button></pre>
+
+<h4 id="_-11" class="tsd-anchor-link"><code>service restart</code><a href="#_-11" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Restart the system service.</p>
+<pre><code class="bash"><span class="hl-0">jeeves-runner</span><span class="hl-1"> </span><span class="hl-2">service</span><span class="hl-1"> </span><span class="hl-2">restart</span><span class="hl-1"> [-n &lt;</span><span class="hl-2">nam</span><span class="hl-1">e&gt;</span><span class="hl-2">]</span>
+</code><button type="button">Copy</button></pre>
+
+<h4 id="_-12" class="tsd-anchor-link"><code>service status</code><a href="#_-12" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Query system service state.</p>
+<pre><code class="bash"><span class="hl-0">jeeves-runner</span><span class="hl-1"> </span><span class="hl-2">service</span><span class="hl-1"> </span><span class="hl-2">status</span><span class="hl-1"> [-n &lt;</span><span class="hl-2">nam</span><span class="hl-1">e&gt;</span><span class="hl-2">]</span>
+</code><button type="button">Copy</button></pre>
+
+<hr>
+<h2 id="custom-commands" class="tsd-anchor-link">Custom Commands<a href="#custom-commands" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<h3 id="_-13" class="tsd-anchor-link"><code>add-job</code><a href="#_-13" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Register a new job in the database.</p>
+<pre><code class="bash"><span class="hl-0">jeeves-runner</span><span class="hl-1"> </span><span class="hl-2">add-job</span><span class="hl-1"> </span><span class="hl-4">\</span><br/><span class="hl-1">  </span><span class="hl-3">-c</span><span class="hl-1"> &lt;</span><span class="hl-2">confi</span><span class="hl-1">g&gt; </span><span class="hl-4">\</span><br/><span class="hl-1">  </span><span class="hl-3">--id</span><span class="hl-1"> &lt;</span><span class="hl-2">i</span><span class="hl-1">d&gt; </span><span class="hl-4">\</span><br/><span class="hl-1">  </span><span class="hl-3">--name</span><span class="hl-1"> &lt;</span><span class="hl-2">nam</span><span class="hl-1">e&gt; </span><span class="hl-4">\</span><br/><span class="hl-1">  </span><span class="hl-3">--schedule</span><span class="hl-1"> &lt;</span><span class="hl-2">cro</span><span class="hl-1">n&gt; </span><span class="hl-4">\</span><br/><span class="hl-1">  </span><span class="hl-3">--script</span><span class="hl-1"> &lt;</span><span class="hl-2">pat</span><span class="hl-1">h&gt; </span><span class="hl-4">\</span><br/><span class="hl-1">  [--type &lt;</span><span class="hl-2">typ</span><span class="hl-1">e&gt;</span><span class="hl-2">]</span><span class="hl-1"> </span><span class="hl-4">\</span><br/><span class="hl-1">  [--description &lt;</span><span class="hl-2">des</span><span class="hl-1">c&gt;</span><span class="hl-2">]</span><span class="hl-1"> </span><span class="hl-4">\</span><br/><span class="hl-1">  [--timeout &lt;</span><span class="hl-2">m</span><span class="hl-1">s&gt;</span><span class="hl-2">]</span><span class="hl-1"> </span><span class="hl-4">\</span><br/><span class="hl-1">  [--overlap &lt;</span><span class="hl-2">polic</span><span class="hl-1">y&gt;</span><span class="hl-2">]</span><span class="hl-1"> </span><span class="hl-4">\</span><br/><span class="hl-1">  [--on-failure &lt;</span><span class="hl-2">channe</span><span class="hl-1">l&gt;</span><span class="hl-2">]</span><span class="hl-1"> </span><span class="hl-4">\</span><br/><span class="hl-1">  [--on-success &lt;</span><span class="hl-2">channe</span><span class="hl-1">l&gt;</span><span class="hl-2">]</span>
+</code><button type="button">Copy</button></pre>
+
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Required</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-i, --id &lt;id&gt;</code></td>
+<td>Yes</td>
+<td>—</td>
+<td>Unique job identifier</td>
+</tr>
+<tr>
+<td><code>-n, --name &lt;name&gt;</code></td>
+<td>Yes</td>
+<td>—</td>
+<td>Human-readable name</td>
+</tr>
+<tr>
+<td><code>-s, --schedule &lt;schedule&gt;</code></td>
+<td>Yes</td>
+<td>—</td>
+<td>Cron expression or RRStack JSON (validated on input)</td>
+</tr>
+<tr>
+<td><code>--script &lt;path&gt;</code></td>
+<td>Yes</td>
+<td>—</td>
+<td>Absolute path to executable script</td>
+</tr>
+<tr>
+<td><code>-t, --type &lt;type&gt;</code></td>
+<td>No</td>
+<td><code>script</code></td>
+<td>Job type: <code>script</code> or <code>session</code></td>
+</tr>
+<tr>
+<td><code>-d, --description &lt;desc&gt;</code></td>
+<td>No</td>
+<td>—</td>
+<td>Job description</td>
+</tr>
+<tr>
+<td><code>--timeout &lt;ms&gt;</code></td>
+<td>No</td>
+<td>—</td>
+<td>Timeout in milliseconds</td>
+</tr>
+<tr>
+<td><code>--overlap &lt;policy&gt;</code></td>
+<td>No</td>
+<td><code>skip</code></td>
+<td>Overlap policy: <code>skip</code> or <code>allow</code></td>
+</tr>
+<tr>
+<td><code>--on-failure &lt;channel&gt;</code></td>
+<td>No</td>
+<td>—</td>
+<td>Slack channel ID for failure alerts</td>
+</tr>
+<tr>
+<td><code>--on-success &lt;channel&gt;</code></td>
+<td>No</td>
+<td>—</td>
+<td>Slack channel ID for success alerts</td>
+</tr>
+<tr>
+<td><code>-c, --config &lt;path&gt;</code></td>
+<td>No</td>
+<td>—</td>
+<td>Config file (for database path)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="_-14" class="tsd-anchor-link"><code>list-jobs</code><a href="#_-14" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>List all registered jobs.</p>
+<pre><code class="bash"><span class="hl-0">jeeves-runner</span><span class="hl-1"> </span><span class="hl-2">list-jobs</span><span class="hl-1"> </span><span class="hl-3">-c</span><span class="hl-1"> &lt;</span><span class="hl-2">pat</span><span class="hl-1">h&gt;</span>
+</code><button type="button">Copy</button></pre>
+
+<p>Output shows enabled/disabled status, job ID, schedule, and name.</p>
+<hr>
+<h3 id="_-15" class="tsd-anchor-link"><code>trigger</code><a href="#_-15" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Manually trigger a job via the API.</p>
+<pre><code class="bash"><span class="hl-0">jeeves-runner</span><span class="hl-1"> </span><span class="hl-2">trigger</span><span class="hl-1"> </span><span class="hl-3">-i</span><span class="hl-1"> &lt;</span><span class="hl-2">i</span><span class="hl-1">d&gt; </span><span class="hl-3">-c</span><span class="hl-1"> &lt;</span><span class="hl-2">pat</span><span class="hl-1">h&gt;</span>
+</code><button type="button">Copy</button></pre>
+
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-i, --id &lt;id&gt;</code></td>
+<td>Yes</td>
+<td>Job ID to trigger</td>
+</tr>
+<tr>
+<td><code>-c, --config &lt;path&gt;</code></td>
+<td>No</td>
+<td>Config file (for port)</td>
+</tr>
+</tbody>
+</table>
+<p>Calls <code>POST /jobs/:id/run</code> and prints the result.</p>
+<hr>
+<h3 id="_-16" class="tsd-anchor-link"><code>init-scripts</code><a href="#_-16" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Scaffold a new scripts project from the <code>jeeves-scripts-template</code>.</p>
+<pre><code class="bash"><span class="hl-0">jeeves-runner</span><span class="hl-1"> </span><span class="hl-2">init-scripts</span><span class="hl-1"> [-c &lt;</span><span class="hl-2">pat</span><span class="hl-1">h&gt;</span><span class="hl-2">]</span>
+</code><button type="button">Copy</button></pre>
+
+<table>
+<thead>
+<tr>
+<th>Flag</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>-c, --config &lt;path&gt;</code></td>
+<td>Config file path (determines scripts location)</td>
+</tr>
+</tbody>
+</table>
+<p>Clones the template into a <code>scripts/</code> directory next to the config, installs dependencies, and configures the <code>runners.ts</code> entry in the config file for TypeScript execution via tsx.</p>
+</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#cli-reference"><span>CLI <wbr/>Reference</span></a><ul><li><a href="#standard-commands"><span>Standard <wbr/>Commands</span></a></li><li><ul><li><a href="#_"><span></span></a></li><li><a href="#_-1"><span></span></a></li><li><a href="#_-2"><span></span></a></li><li><ul><li><a href="#_-3"><span></span></a></li><li><a href="#_-4"><span></span></a></li></ul></li><li><a href="#_-5"><span></span></a></li><li><a href="#_-6"><span></span></a></li><li><ul><li><a href="#_-7"><span></span></a></li><li><a href="#_-8"><span></span></a></li><li><a href="#_-9"><span></span></a></li><li><a href="#_-10"><span></span></a></li><li><a href="#_-11"><span></span></a></li><li><a href="#_-12"><span></span></a></li></ul></li></ul></li><li><a href="#custom-commands"><span>Custom <wbr/>Commands</span></a></li><li><ul><li><a href="#_-13"><span></span></a></li><li><a href="#_-14"><span></span></a></li><li><a href="#_-15"><span></span></a></li><li><a href="#_-16"><span></span></a></li></ul></li></ul></div></details></div><div class="site-menu"><nav id="tsd-sidebar-links" class="tsd-navigation"><a href="https://github.com/karmaniverous/jeeves-runner" class="tsd-nav-link">GitHub</a></nav><nav class="tsd-navigation"><a href="../index.html">@karmaniverous/jeeves-runner</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer><p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer><div class="overlay"></div></body></html>

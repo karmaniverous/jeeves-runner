@@ -1,0 +1,523 @@
+<!DOCTYPE html><html class="default" lang="en" data-base="../"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>OpenClaw Integration Guide | @karmaniverous/jeeves-runner</title><meta name="description" content="Documentation for @karmaniverous/jeeves-runner"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css"/><link rel="stylesheet" href="../assets/highlight.css"/><script defer src="../assets/main.js"></script><script async src="../assets/icons.js" id="tsd-icons-script"></script><script async src="../assets/search.js" id="tsd-search-script"></script><script async src="../assets/navigation.js" id="tsd-nav-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar"><div class="tsd-toolbar-contents container"><a href="../index.html" class="title">@karmaniverous/jeeves-runner</a><div id="tsd-toolbar-links"><a href="https://github.com/karmaniverous/jeeves-runner">GitHub</a></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/><ul role="listbox" id="tsd-search-results"></ul><div id="tsd-search-status" aria-live="polite" aria-atomic="true"><div>Preparing search index...</div></div></dialog><a href="#" class="tsd-widget menu" id="tsd-toolbar-menu-trigger" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-menu"></use></svg></a></div></header><div class="container container-main"><div class="col-content"><div class="tsd-page-title"><ul class="tsd-breadcrumb" aria-label="Breadcrumb"><li><a href="OpenClaw_Plugin_Guides.html">OpenClaw Plugin Guides</a></li><li><a href="" aria-current="page">OpenClaw Integration Guide</a></li></ul></div><div class="tsd-panel tsd-typography"><h1 id="openclaw-integration-guide" class="tsd-anchor-link">OpenClaw Integration Guide<a href="#openclaw-integration-guide" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h1>
+<p>The <code>@karmaniverous/jeeves-runner-openclaw</code> plugin gives your OpenClaw agent access to jeeves-runner's job management, monitoring, and inspection capabilities.</p>
+<h2 id="installation" class="tsd-anchor-link">Installation<a href="#installation" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<h3 id="standard-openclaw-cli" class="tsd-anchor-link">Standard (OpenClaw CLI)<a href="#standard-openclaw-cli" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<pre><code class="bash"><span class="hl-0">openclaw</span><span class="hl-1"> </span><span class="hl-2">plugins</span><span class="hl-1"> </span><span class="hl-2">install</span><span class="hl-1"> </span><span class="hl-2">@karmaniverous/jeeves-runner-openclaw</span>
+</code><button type="button">Copy</button></pre>
+
+<h3 id="self-installer" class="tsd-anchor-link">Self-Installer<a href="#self-installer" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>OpenClaw's <code>plugins install</code> command has a known bug on Windows where it fails with <code>spawn EINVAL</code> or <code>spawn npm ENOENT</code> (<a href="https://github.com/openclaw/openclaw/issues/9224" target="_blank" class="external">#9224</a>, <a href="https://github.com/openclaw/openclaw/issues/4557" target="_blank" class="external">#4557</a>, <a href="https://github.com/openclaw/openclaw/issues/6086" target="_blank" class="external">#6086</a>). This package includes a self-installer that works around the issue:</p>
+<pre><code class="bash"><span class="hl-0">npx</span><span class="hl-1"> </span><span class="hl-2">@karmaniverous/jeeves-runner-openclaw</span><span class="hl-1"> </span><span class="hl-2">install</span>
+</code><button type="button">Copy</button></pre>
+
+<p>The installer:</p>
+<ol>
+<li>Copies the plugin into OpenClaw's extensions directory (<code>~/.openclaw/extensions/jeeves-runner-openclaw/</code>)</li>
+<li>Adds the plugin to <code>plugins.entries</code> in <code>openclaw.json</code></li>
+<li>If <code>plugins.allow</code> or <code>tools.allow</code> are already populated (explicit allowlists), adds the plugin to those lists</li>
+</ol>
+<p>To remove:</p>
+<pre><code class="bash"><span class="hl-0">npx</span><span class="hl-1"> </span><span class="hl-2">@karmaniverous/jeeves-runner-openclaw</span><span class="hl-1"> </span><span class="hl-2">uninstall</span>
+</code><button type="button">Copy</button></pre>
+
+<h4 id="non-default-installations" class="tsd-anchor-link">Non-default installations<a href="#non-default-installations" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>If OpenClaw is installed at a non-default location, set one of these environment variables:</p>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>OPENCLAW_CONFIG</code></td>
+<td>Full path to <code>openclaw.json</code> (overrides all other detection)</td>
+</tr>
+<tr>
+<td><code>OPENCLAW_HOME</code></td>
+<td>Path to the <code>.openclaw</code> directory</td>
+</tr>
+</tbody>
+</table>
+<p>Default location: <code>~/.openclaw/openclaw.json</code></p>
+<p>After install or uninstall, restart the OpenClaw gateway to apply changes.</p>
+<h2 id="configuration" class="tsd-anchor-link">Configuration<a href="#configuration" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>The plugin is configured via <code>plugins.entries</code> in <code>openclaw.json</code>:</p>
+<pre><code class="json"><span class="hl-1">{</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;plugins&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">    </span><span class="hl-5">&quot;entries&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">      </span><span class="hl-5">&quot;@karmaniverous/jeeves-runner-openclaw&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">        </span><span class="hl-5">&quot;config&quot;</span><span class="hl-1">: {</span><br/><span class="hl-1">          </span><span class="hl-5">&quot;apiUrl&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;http://127.0.0.1:1937&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">          </span><span class="hl-5">&quot;configRoot&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;J:/jeeves&quot;</span><br/><span class="hl-1">        }</span><br/><span class="hl-1">      }</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">  }</span><br/><span class="hl-1">}</span>
+</code><button type="button">Copy</button></pre>
+
+<table>
+<thead>
+<tr>
+<th>Key</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>apiUrl</code></td>
+<td><code>http://127.0.0.1:1937</code></td>
+<td>Base URL of the jeeves-runner HTTP API</td>
+</tr>
+<tr>
+<td><code>configRoot</code></td>
+<td>—</td>
+<td>Root directory for platform content (<a href="http://TOOLS.md" target="_blank" class="external">TOOLS.md</a>, skills)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="platform-integration" class="tsd-anchor-link">Platform Integration<a href="#platform-integration" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>The plugin uses <code>@karmaniverous/jeeves</code> core's <code>ComponentWriter</code> to manage platform content:</p>
+<ul>
+<li><strong><a href="http://TOOLS.md" target="_blank" class="external">TOOLS.md</a> section</strong> — Writes a <code>## Runner</code> section into <a href="http://TOOLS.md" target="_blank" class="external">TOOLS.md</a> with service health, connected status, and tool descriptions. Updated on gateway startup.</li>
+<li><strong>Platform content</strong> — Can contribute to <a href="http://SOUL.md" target="_blank" class="external">SOUL.md</a>, <a href="http://AGENTS.md" target="_blank" class="external">AGENTS.md</a>, and other platform files via the <code>configRoot</code> directory.</li>
+</ul>
+<p>This replaces the previous <code>JEEVES_RUNNER_URL</code> environment variable approach.</p>
+<h2 id="available-tools" class="tsd-anchor-link">Available Tools<a href="#available-tools" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>The plugin registers 20 tools: 4 standard platform tools (via <code>createPluginToolset</code>) plus 16 custom runner tools across three tiers.</p>
+<h3 id="standard-platform-tools" class="tsd-anchor-link">Standard Platform Tools<a href="#standard-platform-tools" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<h4 id="_" class="tsd-anchor-link"><code>runner_status</code><a href="#_" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Get service status including version, uptime, and health metrics (<code>{ name, version, uptime, status, health }</code>).</p>
+<p><strong>Parameters:</strong> None</p>
+<h4 id="_-1" class="tsd-anchor-link"><code>runner_config</code><a href="#_-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Query resolved service configuration. Supports optional JSONPath filtering.</p>
+<p><strong>Parameters:</strong> None (or optional JSONPath)</p>
+<h4 id="_-2" class="tsd-anchor-link"><code>runner_config_apply</code><a href="#_-2" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Apply a configuration patch to the running service.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>patch</code></td>
+<td><code>object</code></td>
+<td>Yes</td>
+<td>Configuration fields to update</td>
+</tr>
+<tr>
+<td><code>replace</code></td>
+<td><code>boolean</code></td>
+<td>No</td>
+<td>Replace entire config instead of merging</td>
+</tr>
+</tbody>
+</table>
+<h4 id="_-3" class="tsd-anchor-link"><code>runner_service</code><a href="#_-3" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>System service management (install, uninstall, start, stop, restart, status).</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>action</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>Service action to perform</td>
+</tr>
+</tbody>
+</table>
+<h3 id="custom-monitoring-tools" class="tsd-anchor-link">Custom Monitoring Tools<a href="#custom-monitoring-tools" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<h4 id="_-4" class="tsd-anchor-link"><code>runner_jobs</code><a href="#_-4" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>List all jobs with enabled state, schedule, last run status, and last run time.</p>
+<p><strong>Parameters:</strong> None</p>
+<h4 id="_-5" class="tsd-anchor-link"><code>runner_trigger</code><a href="#_-5" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Manually trigger a job. Blocks until the job completes.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>jobId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>The job ID to trigger</td>
+</tr>
+</tbody>
+</table>
+<h4 id="_-6" class="tsd-anchor-link"><code>runner_runs</code><a href="#_-6" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Get recent run history for a job.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>jobId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>The job ID</td>
+</tr>
+<tr>
+<td><code>limit</code></td>
+<td><code>number</code></td>
+<td>No</td>
+<td>Maximum runs to return (default 50)</td>
+</tr>
+</tbody>
+</table>
+<h4 id="_-7" class="tsd-anchor-link"><code>runner_job_detail</code><a href="#_-7" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Get full configuration for a single job.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>jobId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>The job ID</td>
+</tr>
+</tbody>
+</table>
+<h4 id="_-8" class="tsd-anchor-link"><code>runner_enable</code><a href="#_-8" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Enable a disabled job. Takes effect immediately.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>jobId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>The job ID to enable</td>
+</tr>
+</tbody>
+</table>
+<h4 id="_-9" class="tsd-anchor-link"><code>runner_disable</code><a href="#_-9" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Disable a job. It will not run until re-enabled.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>jobId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>The job ID to disable</td>
+</tr>
+</tbody>
+</table>
+<h3 id="management-tools" class="tsd-anchor-link">Management Tools<a href="#management-tools" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<h4 id="_-10" class="tsd-anchor-link"><code>runner_create_job</code><a href="#_-10" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Create a new runner job.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>Unique job identifier</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>Human-readable name</td>
+</tr>
+<tr>
+<td><code>schedule</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>Cron expression or RRStack JSON</td>
+</tr>
+<tr>
+<td><code>script</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>Script path or inline content</td>
+</tr>
+<tr>
+<td><code>source_type</code></td>
+<td><code>string</code></td>
+<td>No</td>
+<td><code>&quot;path&quot;</code> (default) or <code>&quot;inline&quot;</code></td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td><code>string</code></td>
+<td>No</td>
+<td><code>&quot;script&quot;</code> (default) or <code>&quot;session&quot;</code></td>
+</tr>
+<tr>
+<td><code>timeout_seconds</code></td>
+<td><code>number</code></td>
+<td>No</td>
+<td>Kill after N seconds</td>
+</tr>
+<tr>
+<td><code>overlap_policy</code></td>
+<td><code>string</code></td>
+<td>No</td>
+<td><code>&quot;skip&quot;</code> (default) or <code>&quot;allow&quot;</code></td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td><code>boolean</code></td>
+<td>No</td>
+<td>Default: true</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>string</code></td>
+<td>No</td>
+<td>Job description</td>
+</tr>
+<tr>
+<td><code>on_failure</code></td>
+<td><code>string</code></td>
+<td>No</td>
+<td>Slack channel ID for failure alerts</td>
+</tr>
+<tr>
+<td><code>on_success</code></td>
+<td><code>string</code></td>
+<td>No</td>
+<td>Slack channel ID for success alerts</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example:</strong></p>
+<pre><code class="json"><span class="hl-1">{</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;id&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;poll-email&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;name&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;Poll Email&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;schedule&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;*/11 * * * *&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;script&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;/path/to/scripts/poll-email.js&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;on_failure&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;C0123456789&quot;</span><br/><span class="hl-1">}</span>
+</code><button type="button">Copy</button></pre>
+
+<h4 id="_-11" class="tsd-anchor-link"><code>runner_update_job</code><a href="#_-11" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Update an existing job. Only supplied fields are changed.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>jobId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>The job to update</td>
+</tr>
+<tr>
+<td><em>(others)</em></td>
+<td></td>
+<td>No</td>
+<td>Any field from <code>runner_create_job</code> except <code>id</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Example:</strong> Change schedule and timeout:</p>
+<pre><code class="json"><span class="hl-1">{</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;jobId&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;poll-email&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;schedule&quot;</span><span class="hl-1">: </span><span class="hl-2">&quot;*/5 * * * *&quot;</span><span class="hl-1">,</span><br/><span class="hl-1">  </span><span class="hl-5">&quot;timeout_seconds&quot;</span><span class="hl-1">: </span><span class="hl-6">120</span><br/><span class="hl-1">}</span>
+</code><button type="button">Copy</button></pre>
+
+<h4 id="_-12" class="tsd-anchor-link"><code>runner_delete_job</code><a href="#_-12" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Delete a job and all its run history. <strong>Irreversible.</strong></p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>jobId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>The job to delete</td>
+</tr>
+</tbody>
+</table>
+<h4 id="_-13" class="tsd-anchor-link"><code>runner_update_script</code><a href="#_-13" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Update a job's script content or path without changing other fields.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>jobId</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>The job to update</td>
+</tr>
+<tr>
+<td><code>script</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>New script path or inline content</td>
+</tr>
+<tr>
+<td><code>source_type</code></td>
+<td><code>string</code></td>
+<td>No</td>
+<td><code>&quot;path&quot;</code> or <code>&quot;inline&quot;</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="inspection-tools" class="tsd-anchor-link">Inspection Tools<a href="#inspection-tools" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<h4 id="_-14" class="tsd-anchor-link"><code>runner_list_queues</code><a href="#_-14" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>List all queues that have items.</p>
+<p><strong>Parameters:</strong> None</p>
+<h4 id="_-15" class="tsd-anchor-link"><code>runner_queue_status</code><a href="#_-15" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Get queue depth, claimed count, failed count, and oldest item age.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>queueName</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>Queue name</td>
+</tr>
+</tbody>
+</table>
+<h4 id="_-16" class="tsd-anchor-link"><code>runner_queue_peek</code><a href="#_-16" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Non-claiming read of pending queue items.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>queueName</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>Queue name</td>
+</tr>
+<tr>
+<td><code>limit</code></td>
+<td><code>number</code></td>
+<td>No</td>
+<td>Max items (default 10)</td>
+</tr>
+</tbody>
+</table>
+<h4 id="_-17" class="tsd-anchor-link"><code>runner_list_namespaces</code><a href="#_-17" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>List all state namespaces.</p>
+<p><strong>Parameters:</strong> None</p>
+<h4 id="_-18" class="tsd-anchor-link"><code>runner_query_state</code><a href="#_-18" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Read all scalar state for a namespace with optional JSONPath filtering.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>namespace</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>State namespace</td>
+</tr>
+<tr>
+<td><code>path</code></td>
+<td><code>string</code></td>
+<td>No</td>
+<td>JSONPath expression</td>
+</tr>
+</tbody>
+</table>
+<h4 id="_-19" class="tsd-anchor-link"><code>runner_query_collection</code><a href="#_-19" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Read collection items for a state key within a namespace.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Required</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>namespace</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>State namespace</td>
+</tr>
+<tr>
+<td><code>key</code></td>
+<td><code>string</code></td>
+<td>Yes</td>
+<td>Collection key</td>
+</tr>
+</tbody>
+</table>
+<h2 id="skill" class="tsd-anchor-link">Skill<a href="#skill" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>The plugin includes a consumer skill that teaches the agent how to operate the runner: checking status, investigating failures, triggering jobs, managing job lifecycle, and inspecting queues and state. The skill is automatically loaded when the plugin is installed.</p>
+</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#openclaw-integration-guide"><span>Open<wbr/>Claw <wbr/>Integration <wbr/>Guide</span></a><ul><li><a href="#installation"><span>Installation</span></a></li><li><ul><li><a href="#standard-openclaw-cli"><span>Standard (<wbr/>Open<wbr/>Claw <wbr/>CLI)</span></a></li><li><a href="#self-installer"><span>Self-<wbr/>Installer</span></a></li><li><ul><li><a href="#non-default-installations"><span>Non-<wbr/>default installations</span></a></li></ul></li></ul></li><li><a href="#configuration"><span>Configuration</span></a></li><li><a href="#platform-integration"><span>Platform <wbr/>Integration</span></a></li><li><a href="#available-tools"><span>Available <wbr/>Tools</span></a></li><li><ul><li><a href="#standard-platform-tools"><span>Standard <wbr/>Platform <wbr/>Tools</span></a></li><li><ul><li><a href="#_"><span></span></a></li><li><a href="#_-1"><span></span></a></li><li><a href="#_-2"><span></span></a></li><li><a href="#_-3"><span></span></a></li></ul></li><li><a href="#custom-monitoring-tools"><span>Custom <wbr/>Monitoring <wbr/>Tools</span></a></li><li><ul><li><a href="#_-4"><span></span></a></li><li><a href="#_-5"><span></span></a></li><li><a href="#_-6"><span></span></a></li><li><a href="#_-7"><span></span></a></li><li><a href="#_-8"><span></span></a></li><li><a href="#_-9"><span></span></a></li></ul></li><li><a href="#management-tools"><span>Management <wbr/>Tools</span></a></li><li><ul><li><a href="#_-10"><span></span></a></li><li><a href="#_-11"><span></span></a></li><li><a href="#_-12"><span></span></a></li><li><a href="#_-13"><span></span></a></li></ul></li><li><a href="#inspection-tools"><span>Inspection <wbr/>Tools</span></a></li><li><ul><li><a href="#_-14"><span></span></a></li><li><a href="#_-15"><span></span></a></li><li><a href="#_-16"><span></span></a></li><li><a href="#_-17"><span></span></a></li><li><a href="#_-18"><span></span></a></li><li><a href="#_-19"><span></span></a></li></ul></li></ul></li><li><a href="#skill"><span>Skill</span></a></li></ul></div></details></div><div class="site-menu"><nav id="tsd-sidebar-links" class="tsd-navigation"><a href="https://github.com/karmaniverous/jeeves-runner" class="tsd-nav-link">GitHub</a></nav><nav class="tsd-navigation"><a href="../index.html">@karmaniverous/jeeves-runner</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer><p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer><div class="overlay"></div></body></html>

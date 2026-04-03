@@ -1,0 +1,347 @@
+<!DOCTYPE html><html class="default" lang="en" data-base="../"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>Architecture | @karmaniverous/jeeves-runner</title><meta name="description" content="Documentation for @karmaniverous/jeeves-runner"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="../assets/style.css"/><link rel="stylesheet" href="../assets/highlight.css"/><script defer src="../assets/main.js"></script><script async src="../assets/icons.js" id="tsd-icons-script"></script><script async src="../assets/search.js" id="tsd-search-script"></script><script async src="../assets/navigation.js" id="tsd-nav-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar"><div class="tsd-toolbar-contents container"><a href="../index.html" class="title">@karmaniverous/jeeves-runner</a><div id="tsd-toolbar-links"><a href="https://github.com/karmaniverous/jeeves-runner">GitHub</a></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/><ul role="listbox" id="tsd-search-results"></ul><div id="tsd-search-status" aria-live="polite" aria-atomic="true"><div>Preparing search index...</div></div></dialog><a href="#" class="tsd-widget menu" id="tsd-toolbar-menu-trigger" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-menu"></use></svg></a></div></header><div class="container container-main"><div class="col-content"><div class="tsd-page-title"><ul class="tsd-breadcrumb" aria-label="Breadcrumb"><li><a href="Service_Guides.html">Service Guides</a></li><li><a href="" aria-current="page">Architecture</a></li></ul></div><div class="tsd-panel tsd-typography"><h1 id="architecture" class="tsd-anchor-link">Architecture<a href="#architecture" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h1>
+<p>High-level architectural overview of <code>jeeves-runner</code> for contributors and advanced users.</p>
+<h2 id="design-principles" class="tsd-anchor-link">Design Principles<a href="#design-principles" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<ol>
+<li><strong>Graph-aware, domain-agnostic</strong> — The runner knows about sources, sinks, datastores, queues, and processes. It does not know about &quot;emails&quot; or &quot;meetings.&quot;</li>
+<li><strong>SQLite is the source of truth</strong> — Jobs, runs, state, and queues all live in a single SQLite database.</li>
+<li><strong>Two execution modes</strong> — Script jobs spawn child processes; session jobs dispatch to the OpenClaw Gateway.</li>
+<li><strong>File + table duality</strong> — Datastores that produce artifacts for indexing or serving use the filesystem; operational state uses SQLite.</li>
+<li><strong>Schedule-driven</strong> — All job execution is driven by cron expressions with prime-offset scheduling to spread load.</li>
+</ol>
+<hr>
+<h2 id="system-architecture" class="tsd-anchor-link">System Architecture<a href="#system-architecture" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p><img src="../media/system-architecture.png" alt="System Architecture"></p>
+<p>The runner consists of several layered components:</p>
+<ul>
+<li><strong>Configuration Layer</strong> — Zod-validated config with sensible defaults</li>
+<li><strong>Scheduler Layer</strong> — Cron registry, job reconciliation, and execution dispatching</li>
+<li><strong>Execution Layer</strong> — Script executor (child processes) and session executor (Gateway dispatch)</li>
+<li><strong>Persistence Layer</strong> — SQLite database with jobs, runs, state, state_items, queues, and queue_items tables</li>
+<li><strong>API Layer</strong> — Fastify HTTP server for job management and monitoring</li>
+<li><strong>Client API</strong> — Programmatic access to state and queue operations</li>
+<li><strong>Notification Layer</strong> — Slack integration for job completion alerts</li>
+</ul>
+<hr>
+<h2 id="job-lifecycle" class="tsd-anchor-link">Job Lifecycle<a href="#job-lifecycle" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p><img src="../media/job-lifecycle.png" alt="Job Lifecycle"></p>
+<p>Jobs transition through these states:</p>
+<ol>
+<li><strong>Disabled</strong> — Job exists but will not be scheduled</li>
+<li><strong>Idle</strong> — Job is enabled and waiting for the next cron trigger</li>
+<li><strong>Scheduled</strong> — Cron has fired; job is queued for execution</li>
+<li><strong>Running</strong> — Executor is actively running the job</li>
+<li><strong>OK</strong> — Job completed successfully (exit code 0)</li>
+<li><strong>Error</strong> — Job failed (non-zero exit code or exception)</li>
+<li><strong>Timeout</strong> — Job exceeded its configured timeout</li>
+</ol>
+<h3 id="overlap-policy" class="tsd-anchor-link">Overlap Policy<a href="#overlap-policy" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Each job has an <code>overlap_policy</code>:</p>
+<ul>
+<li><strong>skip</strong> (default) — If the job is already running when the next cron fires, the new run is skipped</li>
+<li><strong>allow</strong> — Multiple instances can run concurrently</li>
+</ul>
+<hr>
+<h2 id="data-flow" class="tsd-anchor-link">Data Flow<a href="#data-flow" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p><img src="../media/data-flow.png" alt="Data Flow"></p>
+<h3 id="job-registration" class="tsd-anchor-link">Job Registration<a href="#job-registration" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Jobs are registered via the <code>jeeves-runner add-job</code> CLI command or programmatically via a seed script (e.g., <code>scripts/seed-jobs.ts</code>). Registration upserts into the SQLite <code>jobs</code> table — the database is the live source of truth.</p>
+<h3 id="execution-pipeline" class="tsd-anchor-link">Execution Pipeline<a href="#execution-pipeline" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<ol>
+<li><strong>Cron Registry</strong> fires at the scheduled time</li>
+<li><strong>Scheduler</strong> checks overlap policy and concurrency limits</li>
+<li><strong>Executor</strong> dispatches the job:
+<ul>
+<li><strong>Script jobs</strong>: spawns a child process with the configured script path</li>
+<li><strong>Session jobs</strong>: calls the OpenClaw Gateway <code>/tools/invoke</code> endpoint with <code>sessions_spawn</code></li>
+</ul>
+</li>
+<li><strong>Run record</strong> is written to the <code>runs</code> table with status, duration, exit code, stdout/stderr</li>
+<li><strong>Notifications</strong> are sent via Slack if configured (per-job or default channels)</li>
+</ol>
+<h3 id="state-and-queue-tables" class="tsd-anchor-link">State and Queue Tables<a href="#state-and-queue-tables" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Scripts can persist state and exchange data through the runner's client API:</p>
+<ul>
+<li><strong>State tables</strong> — Scalar key-value store (<code>state</code>) with optional TTL, plus collection state (<code>state_items</code>) for tracking sets of items. Scripts use <code>getState</code>/<code>setState</code>/<code>deleteState</code> for scalar state and <code>hasItem</code>/<code>getItem</code>/<code>setItem</code>/<code>deleteItem</code>/<code>countItems</code>/<code>pruneItems</code>/<code>listItemKeys</code> for collection state.</li>
+<li><strong>Queue tables</strong> — Queue metadata (<code>queues</code>) with dedup config and retention, plus ordered queue items (<code>queue_items</code>) with claim semantics. Producers enqueue items; consumers claim and complete them. Used for inter-process data passing.</li>
+</ul>
+<hr>
+<h2 id="sqlite-schema" class="tsd-anchor-link">SQLite Schema<a href="#sqlite-schema" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<h3 id="table" class="tsd-anchor-link"><code>jobs</code> Table<a href="#table" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Stores job configuration. Registered via CLI or seed script, mutable via API.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>TEXT PK</td>
+<td>Unique job identifier</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td>TEXT</td>
+<td>Human-readable name</td>
+</tr>
+<tr>
+<td><code>schedule</code></td>
+<td>TEXT</td>
+<td>Cron expression</td>
+</tr>
+<tr>
+<td><code>script</code></td>
+<td>TEXT</td>
+<td>Absolute path to executable script</td>
+</tr>
+<tr>
+<td><code>type</code></td>
+<td>TEXT</td>
+<td><code>script</code> or <code>session</code></td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td>INTEGER</td>
+<td>1 = enabled, 0 = disabled</td>
+</tr>
+<tr>
+<td><code>timeout_ms</code></td>
+<td>INTEGER</td>
+<td>Timeout in milliseconds (null = no timeout)</td>
+</tr>
+<tr>
+<td><code>overlap_policy</code></td>
+<td>TEXT</td>
+<td><code>skip</code> or <code>allow</code></td>
+</tr>
+<tr>
+<td><code>on_failure</code></td>
+<td>TEXT</td>
+<td>Slack channel for failure alerts</td>
+</tr>
+<tr>
+<td><code>on_success</code></td>
+<td>TEXT</td>
+<td>Slack channel for success alerts</td>
+</tr>
+</tbody>
+</table>
+<h3 id="table-1" class="tsd-anchor-link"><code>runs</code> Table<a href="#table-1" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Stores execution history. Automatically pruned based on <code>runRetentionDays</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>INTEGER PK</td>
+<td>Auto-increment run ID</td>
+</tr>
+<tr>
+<td><code>job_id</code></td>
+<td>TEXT FK</td>
+<td>References <code>jobs.id</code></td>
+</tr>
+<tr>
+<td><code>started_at</code></td>
+<td>TEXT</td>
+<td>ISO 8601 timestamp</td>
+</tr>
+<tr>
+<td><code>finished_at</code></td>
+<td>TEXT</td>
+<td>ISO 8601 timestamp</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>TEXT</td>
+<td><code>ok</code>, <code>error</code>, or <code>timeout</code></td>
+</tr>
+<tr>
+<td><code>exit_code</code></td>
+<td>INTEGER</td>
+<td>Process exit code</td>
+</tr>
+<tr>
+<td><code>stdout</code></td>
+<td>TEXT</td>
+<td>Captured standard output</td>
+</tr>
+<tr>
+<td><code>stderr</code></td>
+<td>TEXT</td>
+<td>Captured standard error</td>
+</tr>
+<tr>
+<td><code>duration_ms</code></td>
+<td>INTEGER</td>
+<td>Execution duration</td>
+</tr>
+</tbody>
+</table>
+<h3 id="table-2" class="tsd-anchor-link"><code>state</code> Table<a href="#table-2" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Scalar key-value store for script operational state.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>namespace</code></td>
+<td>TEXT</td>
+<td>Logical grouping (typically job ID)</td>
+</tr>
+<tr>
+<td><code>key</code></td>
+<td>TEXT</td>
+<td>State key</td>
+</tr>
+<tr>
+<td><code>value</code></td>
+<td>TEXT</td>
+<td>JSON-encoded value</td>
+</tr>
+<tr>
+<td><code>expires_at</code></td>
+<td>TEXT</td>
+<td>Optional TTL timestamp</td>
+</tr>
+</tbody>
+</table>
+<h3 id="table-3" class="tsd-anchor-link"><code>state_items</code> Table<a href="#table-3" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Collection state for tracking sets of items within a namespace.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>namespace</code></td>
+<td>TEXT</td>
+<td>Logical grouping (typically job ID)</td>
+</tr>
+<tr>
+<td><code>key</code></td>
+<td>TEXT</td>
+<td>Collection key</td>
+</tr>
+<tr>
+<td><code>item_key</code></td>
+<td>TEXT</td>
+<td>Individual item identifier</td>
+</tr>
+<tr>
+<td><code>value</code></td>
+<td>TEXT</td>
+<td>JSON-encoded value</td>
+</tr>
+<tr>
+<td><code>expires_at</code></td>
+<td>TEXT</td>
+<td>Optional TTL timestamp</td>
+</tr>
+</tbody>
+</table>
+<h3 id="table-4" class="tsd-anchor-link"><code>queues</code> Table<a href="#table-4" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Queue-level metadata including deduplication and retention configuration.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>TEXT PK</td>
+<td>Queue identifier</td>
+</tr>
+<tr>
+<td><code>dedup_config</code></td>
+<td>TEXT</td>
+<td>JSON deduplication configuration</td>
+</tr>
+<tr>
+<td><code>retention</code></td>
+<td>TEXT</td>
+<td>JSON retention policy</td>
+</tr>
+</tbody>
+</table>
+<h3 id="table-5" class="tsd-anchor-link"><code>queue_items</code> Table<a href="#table-5" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Ordered message queue with claim semantics.</p>
+<table>
+<thead>
+<tr>
+<th>Column</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td>INTEGER PK</td>
+<td>Auto-increment</td>
+</tr>
+<tr>
+<td><code>queue_id</code></td>
+<td>TEXT FK</td>
+<td>References <code>queues.id</code></td>
+</tr>
+<tr>
+<td><code>payload</code></td>
+<td>TEXT</td>
+<td>JSON-encoded payload</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>TEXT</td>
+<td><code>pending</code>, <code>claimed</code>, <code>completed</code>, <code>failed</code></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td>TEXT</td>
+<td>Enqueue timestamp</td>
+</tr>
+<tr>
+<td><code>claimed_at</code></td>
+<td>TEXT</td>
+<td>Claim timestamp</td>
+</tr>
+<tr>
+<td><code>completed_at</code></td>
+<td>TEXT</td>
+<td>Completion timestamp</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="gateway-integration" class="tsd-anchor-link">Gateway Integration<a href="#gateway-integration" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="../assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Session-type jobs delegate execution to the OpenClaw Gateway:</p>
+<ol>
+<li>Runner reads the gateway <code>url</code> and <code>tokenPath</code> from config</li>
+<li>On trigger, the session executor calls <code>POST /tools/invoke</code> with <code>sessions_spawn</code></li>
+<li>The gateway creates an isolated agent session that executes the task</li>
+<li>Results flow back through the gateway response</li>
+</ol>
+<p><strong>Requirement:</strong> The gateway must have <code>sessions_spawn</code> in <code>gateway.tools.allow</code> (it is on the default HTTP deny list).</p>
+</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="../assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#architecture"><span>Architecture</span></a><ul><li><a href="#design-principles"><span>Design <wbr/>Principles</span></a></li><li><a href="#system-architecture"><span>System <wbr/>Architecture</span></a></li><li><a href="#job-lifecycle"><span>Job <wbr/>Lifecycle</span></a></li><li><ul><li><a href="#overlap-policy"><span>Overlap <wbr/>Policy</span></a></li></ul></li><li><a href="#data-flow"><span>Data <wbr/>Flow</span></a></li><li><ul><li><a href="#job-registration"><span>Job <wbr/>Registration</span></a></li><li><a href="#execution-pipeline"><span>Execution <wbr/>Pipeline</span></a></li><li><a href="#state-and-queue-tables"><span>State and <wbr/>Queue <wbr/>Tables</span></a></li></ul></li><li><a href="#sqlite-schema"><span>SQ<wbr/>Lite <wbr/>Schema</span></a></li><li><ul><li><a href="#table"><span> <wbr/>Table</span></a></li><li><a href="#table-1"><span> <wbr/>Table</span></a></li><li><a href="#table-2"><span> <wbr/>Table</span></a></li><li><a href="#table-3"><span> <wbr/>Table</span></a></li><li><a href="#table-4"><span> <wbr/>Table</span></a></li><li><a href="#table-5"><span> <wbr/>Table</span></a></li></ul></li><li><a href="#gateway-integration"><span>Gateway <wbr/>Integration</span></a></li></ul></div></details></div><div class="site-menu"><nav id="tsd-sidebar-links" class="tsd-navigation"><a href="https://github.com/karmaniverous/jeeves-runner" class="tsd-nav-link">GitHub</a></nav><nav class="tsd-navigation"><a href="../index.html">@karmaniverous/jeeves-runner</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer><p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer><div class="overlay"></div></body></html>
