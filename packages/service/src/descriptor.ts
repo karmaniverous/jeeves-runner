@@ -16,6 +16,7 @@ import { fileURLToPath } from 'node:url';
 
 import {
   type JeevesComponentDescriptor,
+  RUNNER_PORT,
   SECTION_IDS,
 } from '@karmaniverous/jeeves';
 
@@ -66,7 +67,7 @@ export function createRunnerDescriptor(
     version: VERSION,
     servicePackage: '@karmaniverous/jeeves-runner',
     pluginPackage: '@karmaniverous/jeeves-runner-openclaw',
-    defaultPort: 1937,
+    defaultPort: RUNNER_PORT,
     configSchema: configSchemaCompat,
     configFileName: 'config.json',
     initTemplate: () =>

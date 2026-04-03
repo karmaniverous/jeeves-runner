@@ -244,17 +244,20 @@ describe('Gateway client', () => {
     // Use a special tool that doesn't respond
     await expect(
       (async () => {
-        const response = (await import('../lib/http.js')).httpPost(
+        const { fetchJson } = await import('@karmaniverous/jeeves');
+        return fetchJson(
           `http://127.0.0.1:${String(port)}/tools/invoke`,
           {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer test-token',
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: 'Bearer test-token',
+            },
+            body: JSON.stringify({ tool: 'timeout_test', args: {} }),
+            signal: AbortSignal.timeout(100),
           },
-          JSON.stringify({ tool: 'timeout_test', args: {} }),
-          100,
         );
-        return response;
       })(),
-    ).rejects.toThrow('timed out');
+    ).rejects.toThrow();
   });
 });

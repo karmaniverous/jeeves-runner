@@ -4,7 +4,7 @@
  * @module
  */
 
-import { httpPost } from '../lib/http.js';
+import { fetchJson } from '@karmaniverous/jeeves';
 
 /** Options for creating a Gateway client. */
 export interface GatewayClientOptions {
@@ -78,16 +78,15 @@ function invokeGateway(
   args: Record<string, unknown>,
   timeoutMs = 30000,
 ): Promise<unknown> {
-  const payload = JSON.stringify({ tool, args });
-  return httpPost(
-    `${url}/tools/invoke`,
-    {
+  return fetchJson(`${url}/tools/invoke`, {
+    method: 'POST',
+    headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    payload,
-    timeoutMs,
-  );
+    body: JSON.stringify({ tool, args }),
+    signal: AbortSignal.timeout(timeoutMs),
+  });
 }
 
 /** Create a Gateway client. */

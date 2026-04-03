@@ -4,7 +4,7 @@
  * @module
  */
 
-import { httpPost } from '../lib/http.js';
+import { fetchJson } from '@karmaniverous/jeeves';
 
 /** Notification configuration. */
 export interface NotifyConfig {
@@ -49,15 +49,14 @@ async function postToSlack(
   channel: string,
   text: string,
 ): Promise<void> {
-  const payload = JSON.stringify({ channel, text });
-  await httpPost(
-    'https://slack.com/api/chat.postMessage',
-    {
+  await fetchJson('https://slack.com/api/chat.postMessage', {
+    method: 'POST',
+    headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${token}`,
     },
-    payload,
-  );
+    body: JSON.stringify({ channel, text }),
+  });
 }
 
 /**
