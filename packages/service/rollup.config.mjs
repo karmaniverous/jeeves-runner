@@ -26,7 +26,6 @@ import aliasPlugin from '@rollup/plugin-alias';
 import commonjsPlugin from '@rollup/plugin-commonjs';
 import jsonPlugin from '@rollup/plugin-json';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
-import replacePlugin from '@rollup/plugin-replace';
 import typescriptPlugin from '@rollup/plugin-typescript';
 import fs from 'fs-extra';
 import copyPlugin from 'rollup-plugin-copy';
@@ -55,10 +54,6 @@ const typescript = typescriptPlugin({
 });
 
 const commonPlugins = [
-  replacePlugin({
-    preventAssignment: true,
-    values: {},
-  }),
   commonjsPlugin(),
   jsonPlugin(),
   nodeResolve(),
