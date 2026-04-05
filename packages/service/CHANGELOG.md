@@ -2,7 +2,20 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [0.9.1](https://github.com/karmaniverous/jeeves-runner/compare/service/0.9.0...0.9.1)
+#### [0.9.2](https://github.com/karmaniverous/jeeves-runner/compare/service/0.9.1...0.9.2)
+
+- fix: consume core importMetaUrl in plugin CLI (#67) [`#68`](https://github.com/karmaniverous/jeeves-runner/pull/68)
+- fix: resolve runner version at runtime instead of build time [`#66`](https://github.com/karmaniverous/jeeves-runner/pull/66)
+- fix: resolve runner version at runtime instead of build time [`#65`](https://github.com/karmaniverous/jeeves-runner/issues/65)
+- [67] fix: consume core importMetaUrl in plugin CLI, bump @karmaniverous/jeeves to ^0.5.4 [`6b6406d`](https://github.com/karmaniverous/jeeves-runner/commit/6b6406d59a024f552270a7599631388c85716bf6)
+- npmn audit fix [`4367dad`](https://github.com/karmaniverous/jeeves-runner/commit/4367dadae3f1f8c450e41e6cc971a12689382d08)
+- chore: release @karmaniverous/jeeves-runner-openclaw v0.7.1 [`1b467d7`](https://github.com/karmaniverous/jeeves-runner/commit/1b467d708d48489590365b410ec4b744696dfcfb)
+- [65] fix: remove redundant replace plugin from runner rollup config [`6509f6e`](https://github.com/karmaniverous/jeeves-runner/commit/6509f6ed7324ed5ed0757c6358c0e4f6a2842fc0)
+- [65] chore: remove stale docs/** from knip ignore [`ad97e8e`](https://github.com/karmaniverous/jeeves-runner/commit/ad97e8e79a79cf63ef76421060569959f9a99d4f)
+
+#### [service/0.9.1](https://github.com/karmaniverous/jeeves-runner/compare/service/0.9.0...service/0.9.1)
+
+> 5 April 2026
 
 - chore: update deps, bump @karmaniverous/jeeves to ^0.5.3 [`#63`](https://github.com/karmaniverous/jeeves-runner/pull/63)
 - chore: gitignore docs and remove from cache [`ad762ab`](https://github.com/karmaniverous/jeeves-runner/commit/ad762ab0484c58385a3848336464e0495da71181)
@@ -10,6 +23,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - chore: remove duplicate service_CHANGELOG.html (per Gemini review) [`c4cb4a3`](https://github.com/karmaniverous/jeeves-runner/commit/c4cb4a376a88c8169cb98e27992ed95bf3fe3ca5)
 - npm audit fix [`faf7e2e`](https://github.com/karmaniverous/jeeves-runner/commit/faf7e2ecba38f652733677980b55069a4ee4f870)
 - chore: release @karmaniverous/jeeves-runner-openclaw v0.7.0 [`2ab3632`](https://github.com/karmaniverous/jeeves-runner/commit/2ab36323a8a979a022f6cf7ced037eba801a7ae0)
+- chore: release @karmaniverous/jeeves-runner v0.9.1 [`ea6d395`](https://github.com/karmaniverous/jeeves-runner/commit/ea6d395266718dac7d1831d7590766690f2842ac)
 
 #### [service/0.9.0](https://github.com/karmaniverous/jeeves-runner/compare/service/0.8.3...service/0.9.0)
 
