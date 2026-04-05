@@ -15,6 +15,7 @@ import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  getPackageVersion,
   type JeevesComponentDescriptor,
   RUNNER_PORT,
   SECTION_IDS,
@@ -32,8 +33,8 @@ import { runnerConfigSchema } from './schemas/config.js';
 const configSchemaCompat =
   runnerConfigSchema as unknown as JeevesComponentDescriptor['configSchema'];
 
-/** Version injected at build time by rollup plugin-replace. */
-const VERSION: string = '__VERSION__';
+/** Version resolved at runtime from the closest package.json. */
+const VERSION = getPackageVersion(import.meta.url);
 
 /** Resolve the directory of this module at runtime. */
 const MODULE_DIR = fileURLToPath(new URL('.', import.meta.url));
