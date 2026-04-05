@@ -19,3 +19,5 @@ context/
 .stan/imports/
 dev-config.json
 .stan/context/
+
+docs/
