@@ -12,21 +12,15 @@
  * @module cli
  */
 
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
-
 import { createPluginCli } from '@karmaniverous/jeeves';
 
 import { PLUGIN_ID } from './constants.js';
-
-const thisFile = fileURLToPath(import.meta.url);
-const distDir = resolve(dirname(thisFile), '..');
 
 // Type assertion bridges @commander-js/extra-typings Command (core dep)
 // with the base commander types available here.
 const program = createPluginCli({
   pluginId: PLUGIN_ID,
-  distDir,
+  importMetaUrl: import.meta.url,
   pluginPackage: '@karmaniverous/jeeves-runner-openclaw',
   componentName: 'runner',
 }) as { parse: (argv?: string[]) => void };
