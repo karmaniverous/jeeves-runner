@@ -2,294 +2,294 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/index.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/hierarchy.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/documents/service_CHANGELOG.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/documents/Service_Guides.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/documents/Service_Guides.Getting_Started.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/documents/Service_Guides.Configuration.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/documents/Service_Guides.Architecture.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/documents/Service_Guides.API_Reference.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/documents/Service_Guides.CLI_Reference.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/documents/Service_Guides.Script_Helper_Utilities.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/documents/Service_Guides.Deployment.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/documents/Service_Guides.CHANGELOG.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/documents/OpenClaw_Plugin_Guides.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/documents/OpenClaw_Plugin_Guides.OpenClaw_Integration_Guide.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/documents/OpenClaw_Plugin_Guides.CHANGELOG.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/modules/index.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.DispatchOptions.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.ExecutionOptions.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.ExecutionResult.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.GatewayClient.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.GatewayClientOptions.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.Maintenance.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.MaintenanceConfig.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.Notifier.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.NotifyConfig.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.NotifyLogger.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.QueueItem.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.ResolvedCommand.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.Runner.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.RunnerClient.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.RunnerDeps.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.ScheduleInvalid.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.Scheduler.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.SchedulerDeps.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.ScheduleValid.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.SessionExecutionOptions.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.SessionInfo.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.SessionMessage.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.SpawnSessionOptions.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/interfaces/index.SpawnSessionResult.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/types/index.Job.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/types/index.OnConfigApplyCallback.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/types/index.Queue.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/types/index.Run.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/types/index.RunnerConfig.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/types/index.RunStatus.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/types/index.RunTrigger.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/types/index.ScheduleValidation.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/variables/index.jobSchema.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/variables/index.queueSchema.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/variables/index.runnerConfigSchema.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/variables/index.runSchema.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/variables/index.runStatusSchema.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/variables/index.runTriggerSchema.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.closeConnection.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.createClient.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.createConnection.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.createGatewayClient.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.createMaintenance.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.createNotifier.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.createRunner.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.createRunnerDescriptor.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.createScheduler.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.dispatchSession.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.executeJob.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.executeSession.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.getNextFireTime.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.getRunnerClient.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.migrateConfig.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.resolveCommand.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.runDispatcher.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.runMigrations.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 	<url>
 		<loc>https://docs.karmanivero.us/jeeves-runner/functions/index.validateSchedule.html</loc>
-		<lastmod>2026-04-03T08:43:14.607Z</lastmod>
+		<lastmod>2026-04-05T03:23:56.634Z</lastmod>
 	</url>
 </urlset>
