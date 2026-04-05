@@ -57,9 +57,7 @@ const typescript = typescriptPlugin({
 const commonPlugins = [
   replacePlugin({
     preventAssignment: true,
-    values: {
-      __VERSION__: JSON.stringify(pkg.version ?? '0.0.0'),
-    },
+    values: {},
   }),
   commonjsPlugin(),
   jsonPlugin(),
