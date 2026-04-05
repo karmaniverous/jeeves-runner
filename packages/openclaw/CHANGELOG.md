@@ -2,10 +2,18 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [0.7.3](https://github.com/karmaniverous/jeeves-runner/compare/openclaw/0.7.2...0.7.3)
+#### [0.7.4](https://github.com/karmaniverous/jeeves-runner/compare/openclaw/0.7.3...0.7.4)
+
+- unhoisted jeeves [`0efe7a1`](https://github.com/karmaniverous/jeeves-runner/commit/0efe7a1718faaedc043f01eb2dd3acd059f013b4)
+- chore: release @karmaniverous/jeeves-runner v0.9.4 [`bb3881b`](https://github.com/karmaniverous/jeeves-runner/commit/bb3881b7c28a18c6677cca43b2e8fefd5b37ec21)
+
+#### [openclaw/0.7.3](https://github.com/karmaniverous/jeeves-runner/compare/openclaw/0.7.2...openclaw/0.7.3)
+
+> 5 April 2026
 
 - hoisted jeeves [`8b66870`](https://github.com/karmaniverous/jeeves-runner/commit/8b6687068b140150272170ef17b361bd9188b7b2)
 - removed knip from packages [`360c828`](https://github.com/karmaniverous/jeeves-runner/commit/360c82896a474f7c92e76351cedb4b830532320f)
+- chore: release @karmaniverous/jeeves-runner-openclaw v0.7.3 [`3b38401`](https://github.com/karmaniverous/jeeves-runner/commit/3b3840147f7d5fba839fb3202afe30a507bb3409)
 - chore: release @karmaniverous/jeeves-runner v0.9.3 [`6091c3c`](https://github.com/karmaniverous/jeeves-runner/commit/6091c3c807789c8514566891438859f0b97f973e)
 
 #### [openclaw/0.7.2](https://github.com/karmaniverous/jeeves-runner/compare/openclaw/0.7.1...openclaw/0.7.2)
