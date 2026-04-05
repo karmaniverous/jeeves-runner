@@ -2,7 +2,18 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [0.7.0](https://github.com/karmaniverous/jeeves-runner/compare/openclaw/0.6.2...0.7.0)
+#### [0.7.1](https://github.com/karmaniverous/jeeves-runner/compare/openclaw/0.7.0...0.7.1)
+
+- chore: update deps, bump @karmaniverous/jeeves to ^0.5.3 [`#63`](https://github.com/karmaniverous/jeeves-runner/pull/63)
+- chore: gitignore docs and remove from cache [`ad762ab`](https://github.com/karmaniverous/jeeves-runner/commit/ad762ab0484c58385a3848336464e0495da71181)
+- chore: update dependencies, bump @karmaniverous/jeeves to ^0.5.3 [`783d9ed`](https://github.com/karmaniverous/jeeves-runner/commit/783d9ed4bd8591a158173f08ccf644733fc3e73f)
+- chore: remove duplicate service_CHANGELOG.html (per Gemini review) [`c4cb4a3`](https://github.com/karmaniverous/jeeves-runner/commit/c4cb4a376a88c8169cb98e27992ed95bf3fe3ca5)
+- npm audit fix [`faf7e2e`](https://github.com/karmaniverous/jeeves-runner/commit/faf7e2ecba38f652733677980b55069a4ee4f870)
+- chore: release @karmaniverous/jeeves-runner v0.9.1 [`ea6d395`](https://github.com/karmaniverous/jeeves-runner/commit/ea6d395266718dac7d1831d7590766690f2842ac)
+
+#### [openclaw/0.7.0](https://github.com/karmaniverous/jeeves-runner/compare/openclaw/0.6.2...openclaw/0.7.0)
+
+> 4 April 2026
 
 - feat: v0.9.0 — Core v0.5.1 Adoption + Cleanup [`#62`](https://github.com/karmaniverous/jeeves-runner/pull/62)
 - refactor: remove hoisted script utilities from runner [`#61`](https://github.com/karmaniverous/jeeves-runner/pull/61)
@@ -18,6 +29,7 @@ All notable changes to this project will be documented in this file. Dates are d
 - feat: bump @karmaniverous/jeeves to ^0.5.1 [`43bb504`](https://github.com/karmaniverous/jeeves-runner/commit/43bb504b81d7182c48e57f06e964dcd52e74d750)
 - feat: bump @karmaniverous/jeeves to ^0.5.1 [`65a40f0`](https://github.com/karmaniverous/jeeves-runner/commit/65a40f0c1609056101e950fe335a7f9531a0c193)
 - npm audit fix [`92f6e25`](https://github.com/karmaniverous/jeeves-runner/commit/92f6e252c303133387ca39cc3ea8349abd5f2f45)
+- chore: release @karmaniverous/jeeves-runner-openclaw v0.7.0 [`2ab3632`](https://github.com/karmaniverous/jeeves-runner/commit/2ab36323a8a979a022f6cf7ced037eba801a7ae0)
 - chore: release @karmaniverous/jeeves-runner v0.9.0 [`de14df2`](https://github.com/karmaniverous/jeeves-runner/commit/de14df2aa430b63d14aa73391c8ad7ba873ae04b)
 - fix: correct getRunnerClient import source in SKILL.md [`6bbb6e1`](https://github.com/karmaniverous/jeeves-runner/commit/6bbb6e100ea221c5abf58271c65c8e4aab39d2b3)
 - chore: remove temp script [`22fb24b`](https://github.com/karmaniverous/jeeves-runner/commit/22fb24be6913f0a81f124c1551b320a0fb01e377)
