@@ -2,9 +2,17 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [0.7.4](https://github.com/karmaniverous/jeeves-runner/compare/openclaw/0.7.3...0.7.4)
+#### [0.7.5](https://github.com/karmaniverous/jeeves-runner/compare/openclaw/0.7.4...0.7.5)
+
+- npm audit fix [`7a65640`](https://github.com/karmaniverous/jeeves-runner/commit/7a656406f02a939294ccea3219e22ebb21050797)
+- chore: release @karmaniverous/jeeves-runner v0.9.5 [`1cbc557`](https://github.com/karmaniverous/jeeves-runner/commit/1cbc557ff9c0ee6086836d24c920b9681b12cf0e)
+
+#### [openclaw/0.7.4](https://github.com/karmaniverous/jeeves-runner/compare/openclaw/0.7.3...openclaw/0.7.4)
+
+> 5 April 2026
 
 - unhoisted jeeves [`0efe7a1`](https://github.com/karmaniverous/jeeves-runner/commit/0efe7a1718faaedc043f01eb2dd3acd059f013b4)
+- chore: release @karmaniverous/jeeves-runner-openclaw v0.7.4 [`88c4903`](https://github.com/karmaniverous/jeeves-runner/commit/88c4903c57edb3418d52da6a12e1bb5637e4f1a8)
 - chore: release @karmaniverous/jeeves-runner v0.9.4 [`bb3881b`](https://github.com/karmaniverous/jeeves-runner/commit/bb3881b7c28a18c6677cca43b2e8fefd5b37ec21)
 
 #### [openclaw/0.7.3](https://github.com/karmaniverous/jeeves-runner/compare/openclaw/0.7.2...openclaw/0.7.3)
