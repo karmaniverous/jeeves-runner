@@ -2,10 +2,18 @@
 
 All notable changes to this project will be documented in this file. Dates are displayed in UTC.
 
-#### [0.9.6](https://github.com/karmaniverous/jeeves-runner/compare/service/0.9.5...0.9.6)
+#### [0.9.7](https://github.com/karmaniverous/jeeves-runner/compare/service/0.9.6...0.9.7)
+
+- updated jeeves core [`0488181`](https://github.com/karmaniverous/jeeves-runner/commit/04881816f65ced98094cd2b5871c2e5a112af4e9)
+- chore: release @karmaniverous/jeeves-runner-openclaw v0.7.6 [`5170ef7`](https://github.com/karmaniverous/jeeves-runner/commit/5170ef7b1e08cd06737351e3f56b23db3b277c33)
+
+#### [service/0.9.6](https://github.com/karmaniverous/jeeves-runner/compare/service/0.9.5...service/0.9.6)
+
+> 15 April 2026
 
 - updated jeeves-core [`a369d84`](https://github.com/karmaniverous/jeeves-runner/commit/a369d841fc23692227f11bfabfb8a2af474f7449)
 - chore: release @karmaniverous/jeeves-runner-openclaw v0.7.5 [`8632327`](https://github.com/karmaniverous/jeeves-runner/commit/8632327b76f7d03aa22ec29f719f94916ba68ebe)
+- chore: release @karmaniverous/jeeves-runner v0.9.6 [`86c18e8`](https://github.com/karmaniverous/jeeves-runner/commit/86c18e8982ff2de9c14f09efdbd241c92c075f2c)
 
 #### [service/0.9.5](https://github.com/karmaniverous/jeeves-runner/compare/service/0.9.4...service/0.9.5)
 
