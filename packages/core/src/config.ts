@@ -1,9 +1,3 @@
-/**
- * Runner configuration schema and types.
- *
- * @module
- */
-
 import { DEFAULT_BIND_ADDRESS, RUNNER_PORT } from '@karmaniverous/jeeves';
 import { z } from 'zod';
 
