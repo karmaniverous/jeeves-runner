@@ -5,35 +5,29 @@
  * - bundled type definitions (dist/index.d.ts)
  * - CLI commands (dist/cli/*)
  *
- * Authored as ESM JavaScript to avoid Rollup config-plugin TypeScript warnings.
- *
  * @module rollup.config
  */
 
-import { createRequire } from 'node:module';
-
-/**
- * Minimal package.json shape used by this config.
- *
- * @typedef {{
- *   version?: string,
- *   dependencies?: Record<string, string>,
- *   peerDependencies?: Record<string, string>
- * }} PackageJson
- */
-
+import type { Alias } from '@rollup/plugin-alias';
 import aliasPlugin from '@rollup/plugin-alias';
 import commonjsPlugin from '@rollup/plugin-commonjs';
 import jsonPlugin from '@rollup/plugin-json';
 import { nodeResolve } from '@rollup/plugin-node-resolve';
 import typescriptPlugin from '@rollup/plugin-typescript';
 import fs from 'fs-extra';
+import type { RollupOptions } from 'rollup';
 import copyPlugin from 'rollup-plugin-copy';
 import dtsPlugin from 'rollup-plugin-dts';
 
-const require = createRequire(import.meta.url);
-/** @type {PackageJson} */
-const pkg = require('./package.json');
+interface PackageJson {
+  version?: string;
+  dependencies?: Record<string, string>;
+  peerDependencies?: Record<string, string>;
+}
+
+const pkg: PackageJson = JSON.parse(
+  await fs.readFile('./package.json', 'utf-8'),
+) as PackageJson;
 
 const outputPath = 'dist';
 
@@ -63,8 +57,7 @@ const commonPlugins = [
   }),
 ];
 
-/** @type {import('@rollup/plugin-alias').Alias[]} */
-const commonAliases = [];
+const commonAliases: Alias[] = [];
 
 const dependencyExternals = [
   ...Object.keys(pkg.dependencies ?? {}),
@@ -82,11 +75,10 @@ const commonInputOptions = {
 };
 
 /** Discover CLI commands under src/cli. */
-const cliCommands = await fs.readdir('src/cli').catch(() => []);
+const cliCommands: string[] = await fs.readdir('src/cli').catch(() => []);
 
 /** Build the library (ESM only). */
-/** @param {string} dest */
-export const buildLibrary = (dest) => ({
+const buildLibrary = (dest: string): RollupOptions => ({
   ...commonInputOptions,
   output: [
     {
@@ -98,8 +90,7 @@ export const buildLibrary = (dest) => ({
 });
 
 /** Build bundled .d.ts at dest/index.d.ts. */
-/** @param {string} dest */
-export const buildTypes = (dest) => ({
+const buildTypes = (dest: string): RollupOptions => ({
   input: 'src/index.ts',
   external: [...dependencyExternals, /^node:/],
   output: [{ file: `${dest}/index.d.ts`, format: 'esm' }],
@@ -107,21 +98,23 @@ export const buildTypes = (dest) => ({
 });
 
 /** Assemble complete config (ESM library, types, and CLI outputs). */
-const config = [
+const config: RollupOptions[] = [
   buildLibrary(outputPath),
   buildTypes(outputPath),
-  ...cliCommands.map((c) => ({
-    ...commonInputOptions,
-    input: `src/cli/${c}/index.ts`,
-    output: [
-      {
-        dir: `${outputPath}/cli/${c}`,
-        extend: true,
-        format: 'esm',
-        banner: '#!/usr/bin/env node',
-      },
-    ],
-  })),
+  ...cliCommands.map(
+    (c): RollupOptions => ({
+      ...commonInputOptions,
+      input: `src/cli/${c}/index.ts`,
+      output: [
+        {
+          dir: `${outputPath}/cli/${c}`,
+          extend: true,
+          format: 'esm',
+          banner: '#!/usr/bin/env node',
+        },
+      ],
+    }),
+  ),
 ];
 
 export default config;
