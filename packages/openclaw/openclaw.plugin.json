@@ -21,6 +21,30 @@
       }
     }
   },
+  "contracts": {
+    "tools": [
+      "runner_status",
+      "runner_config",
+      "runner_config_apply",
+      "runner_service",
+      "runner_list_queues",
+      "runner_queue_status",
+      "runner_queue_peek",
+      "runner_list_namespaces",
+      "runner_query_state",
+      "runner_query_collection",
+      "runner_create_job",
+      "runner_update_job",
+      "runner_delete_job",
+      "runner_update_script",
+      "runner_jobs",
+      "runner_trigger",
+      "runner_runs",
+      "runner_job_detail",
+      "runner_enable",
+      "runner_disable"
+    ]
+  },
   "uiHints": {
     "apiUrl": {
       "label": "Runner API URL",
