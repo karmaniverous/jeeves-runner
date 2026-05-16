@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 💼 Other
+
+- [ISSUES-50] fix: resolve dispatcher issues and update skill docs (#50, #64, #70, #78)
+
+- Use resolveCommand() in dispatchSession instead of hardcoded 'node' (#78)
+- Add runners option to DispatchOptions for custom command resolution
+- Fix session completion polling to use status from sessions_list (#70)
+- Fall back to history-based check when session not in sessions_list
+- Add outputChannel to job schema and DB migration (#64)
+- Change dispatchSession to capture stdout and return DispatchResult
+- Update SKILL.md with script authoring reference and job patterns (#50)
+- Add tests for resolveCommand in dispatchSession, status-based completion,
+  outputChannel schema validation, and stdout capture
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+## [0.7.9] - 2026-05-13
+
 ### 🚀 Features
 
 - Add contracts.tools to openclaw plugin manifest (#72)
@@ -16,6 +33,7 @@ All notable changes to this project will be documented in this file.
 - Bump @karmaniverous/jeeves to ^0.5.10
 - Apply minor/patch dependency updates via ncu
 - Standardize all packages to rollup with TS config
+- Release @karmaniverous/jeeves-runner-openclaw v0.7.9
 ## [0.7.8] - 2026-05-03
 
 ### 💼 Other
