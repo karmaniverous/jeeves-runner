@@ -118,9 +118,10 @@ export function runDispatcher(
 
   dispatchSession(task, options, workerPath)
     .then(({ exitCode, stdout }) => {
-      if (options.outputChannel && stdout.trim()) {
+      const trimmedStdout = stdout.trim();
+      if (options.outputChannel && trimmedStdout) {
         console.log(
-          `JR_RESULT:${JSON.stringify({ output: stdout.trim(), outputChannel: options.outputChannel })}`,
+          `JR_RESULT:${JSON.stringify({ output: trimmedStdout, outputChannel: options.outputChannel })}`,
         );
       }
       process.exit(exitCode);
