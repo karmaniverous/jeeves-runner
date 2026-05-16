@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 🐛 Bug Fixes
+
+- Pin jeeves-runner-core dependency to ^0.1.1
+## [0.9.10] - 2026-05-16
+
 ### 💼 Other
 
 - [ISSUES-50] fix: resolve dispatcher issues and update skill docs (#50, #64, #70, #78)
@@ -20,6 +25,10 @@ All notable changes to this project will be documented in this file.
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 - [ISSUES-50] fix: cache trimmed stdout, keep String() for lint compliance (review feedback)
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner v0.9.10
 ## [0.9.9] - 2026-05-13
 
 ### 🚀 Features
