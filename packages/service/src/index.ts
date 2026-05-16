@@ -79,5 +79,5 @@ export { migrateConfig } from './lib/migrate-config.js';
 
 // Client utilities (runner-specific; general utilities moved to @karmaniverous/jeeves)
 export { getRunnerClient } from './client/runner-client.js';
-export type { DispatchOptions } from './client/spawn-worker.js';
+export type { DispatchOptions, DispatchResult } from './client/spawn-worker.js';
 export { dispatchSession, runDispatcher } from './client/spawn-worker.js';

@@ -7,6 +7,8 @@
 
 import { spawn } from 'node:child_process';
 
+import { resolveCommand } from '../scheduler/executor.js';
+
 /** Options for dispatching an LLM session. */
 export interface DispatchOptions {
   /** Job identifier. */
@@ -17,6 +19,18 @@ export interface DispatchOptions {
   thinking?: 'low' | 'medium' | 'high';
   /** Timeout in seconds (default 300). */
   timeout?: number;
+  /** Custom command runners keyed by file extension (e.g. `{ ts: "node /path/to/tsx/cli.mjs" }`). */
+  runners?: Record<string, string>;
+  /** Output channel identifier for routing session results. */
+  outputChannel?: string;
+}
+
+/** Result of a dispatched session. */
+export interface DispatchResult {
+  /** Exit code from the worker process. */
+  exitCode: number;
+  /** Captured stdout from the worker process. */
+  stdout: string;
 }
 
 /**
@@ -26,37 +40,49 @@ export interface DispatchOptions {
  * @param task - Prompt text for the LLM session.
  * @param options - Dispatch configuration.
  * @param workerPath - Path to the spawn-worker script.
- * @returns Exit code from the worker process.
+ * @returns Exit code and captured stdout from the worker process.
  */
 export function dispatchSession(
   task: string,
   options: DispatchOptions,
   workerPath: string,
-): Promise<number> {
+): Promise<DispatchResult> {
   return new Promise((resolve, reject) => {
-    const args = [
+    const { command, args: resolvedArgs } = resolveCommand(
       workerPath,
+      options.runners,
+    );
+
+    const flagArgs = [
       `--job-id=${options.jobId}`,
       `--timeout=${String(options.timeout ?? 300)}`,
     ];
 
     if (options.label) {
-      args.push(`--label=${options.label}`);
+      flagArgs.push(`--label=${options.label}`);
     }
 
     if (options.thinking) {
-      args.push(`--thinking=${options.thinking}`);
+      flagArgs.push(`--thinking=${options.thinking}`);
     }
 
-    const child = spawn('node', args, {
-      stdio: ['pipe', 'inherit', 'inherit'],
+    const child = spawn(command, [...resolvedArgs, ...flagArgs], {
+      stdio: ['pipe', 'pipe', 'inherit'],
+    });
+
+    const chunks: Buffer[] = [];
+    child.stdout.on('data', (chunk: Buffer) => {
+      chunks.push(chunk);
     });
 
     child.stdin.write(task);
     child.stdin.end();
 
     child.on('close', (code) => {
-      resolve(code ?? 1);
+      resolve({
+        exitCode: code ?? 1,
+        stdout: Buffer.concat(chunks).toString(),
+      });
     });
 
     child.on('error', (err) => {
@@ -91,8 +117,14 @@ export function runDispatcher(
   }
 
   dispatchSession(task, options, workerPath)
-    .then((code) => {
-      process.exit(code);
+    .then(({ exitCode, stdout }) => {
+      const trimmedStdout = stdout.trim();
+      if (options.outputChannel && trimmedStdout) {
+        console.log(
+          `JR_RESULT:${JSON.stringify({ output: trimmedStdout, outputChannel: options.outputChannel })}`,
+        );
+      }
+      process.exit(exitCode);
     })
     .catch((err: unknown) => {
       console.error(

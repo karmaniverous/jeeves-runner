@@ -53,6 +53,8 @@ export interface SessionInfo {
   model: string;
   /** Transcript file path (if available). */
   transcriptPath?: string;
+  /** Session status from sessions_list (e.g. 'done', 'error', 'timeout'). */
+  status?: string;
 }
 
 /** Gateway client for invoking tools via /tools/invoke. */
@@ -161,7 +163,9 @@ export function createGatewayClient(
         timeoutMs,
       )) as {
         ok: boolean;
-        result: Array<{ sessionKey: string } & SessionInfo>;
+        result: Array<
+          { sessionKey: string; status?: string } & Omit<SessionInfo, 'status'>
+        >;
       };
 
       if (!response.ok) {
@@ -175,10 +179,26 @@ export function createGatewayClient(
         totalTokens: session.totalTokens,
         model: session.model,
         transcriptPath: session.transcriptPath,
+        status: session.status,
       };
     },
 
     async isSessionComplete(sessionKey: string): Promise<boolean> {
+      // Primary: check session status via sessions_list
+      const info = await this.getSessionInfo(sessionKey);
+      if (info) {
+        if (
+          info.status === 'done' ||
+          info.status === 'error' ||
+          info.status === 'timeout'
+        ) {
+          return true;
+        }
+        // Session found and still active
+        return false;
+      }
+
+      // Fallback: session not found in sessions_list (may have aged out)
       const history = await this.getSessionHistory(sessionKey, 3);
       if (history.length === 0) return false;
 

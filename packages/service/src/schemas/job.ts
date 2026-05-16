@@ -30,6 +30,8 @@ export const jobSchema = z.object({
   onFailure: z.string().nullable().default(null),
   /** Slack channel ID for success notifications. */
   onSuccess: z.string().nullable().default(null),
+  /** Output channel identifier for routing session results. */
+  outputChannel: z.string().nullable().default(null),
 });
 
 /** Inferred Job type from schema. */
