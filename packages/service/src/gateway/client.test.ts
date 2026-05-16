@@ -83,6 +83,13 @@ describe('Gateway client', () => {
                   totalTokens: 1500,
                   model: 'claude-3-sonnet',
                   transcriptPath: '/path/to/transcript.jsonl',
+                  status: 'done',
+                },
+                {
+                  sessionKey: 'active-session',
+                  totalTokens: 200,
+                  model: 'claude-3-sonnet',
+                  status: 'running',
                 },
                 {
                   sessionKey: 'other-session',
@@ -201,27 +208,36 @@ describe('Gateway client', () => {
     expect(info).toBeNull();
   });
 
-  it('should detect complete session', async () => {
+  it('should detect complete session via status', async () => {
     const client = createGatewayClient({
       url: `http://127.0.0.1:${String(port)}`,
       token: 'test-token',
     });
 
+    // test-session-123 has status: 'done'
     const isComplete = await client.isSessionComplete('test-session-123');
-
     expect(isComplete).toBe(true);
   });
 
-  it('should detect incomplete session (no stopReason)', async () => {
-    // Create a modified server response for this test
+  it('should detect incomplete session via status', async () => {
     const client = createGatewayClient({
       url: `http://127.0.0.1:${String(port)}`,
       token: 'test-token',
     });
 
-    // The mock returns a session with stopReason, so isComplete should be true
-    const isComplete = await client.isSessionComplete('test-session-123');
-    expect(isComplete).toBe(true);
+    // active-session has status: 'running'
+    const isComplete = await client.isSessionComplete('active-session');
+    expect(isComplete).toBe(false);
+  });
+
+  it('should capture status field in session info', async () => {
+    const client = createGatewayClient({
+      url: `http://127.0.0.1:${String(port)}`,
+      token: 'test-token',
+    });
+
+    const info = await client.getSessionInfo('test-session-123');
+    expect(info?.status).toBe('done');
   });
 
   it('should handle connection refused', async () => {

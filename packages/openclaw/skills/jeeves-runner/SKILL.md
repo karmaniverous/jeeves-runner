@@ -509,6 +509,8 @@ Get-Content <log-path> -Tail 20   # Recent logs
 
 ## Script Authoring
 
+For script authoring patterns (repo setup, TypeScript execution, script structure, quality gates), see the [jeeves-scripts README](https://github.com/karmaniverous/jeeves-scripts/blob/main/README.md).
+
 ### Template Repo
 
 New script projects start from `karmaniverous/jeeves-scripts-template`. Use the CLI to scaffold:
@@ -587,7 +589,7 @@ Scripts should pass these quality gates before deployment:
 
 ### Job Registration
 
-Register jobs via the HTTP API or CLI:
+Register jobs via the `runner_create_job` tool or CLI. Required fields: `id`, `name`, `schedule`, `script`.
 
 ```bash
 # Via CLI
@@ -595,6 +597,26 @@ jeeves-runner add-job -i my-job -n "My Job" -s "*/5 * * * *" --script /path/to/s
 
 # Via API tool
 runner_create_job id="my-job" name="My Job" schedule="*/5 * * * *" script="/path/to/script.ts"
+```
+
+#### Dispatcher pattern (`type='script'`)
+
+For jobs that need both mechanical data prep and LLM reasoning. The script gathers data, builds context, then calls `dispatchSession()` to spawn an LLM session for the reasoning step:
+
+```bash
+runner_create_job id="daily-digest" name="Daily Digest" schedule="0 8 * * *" script="/path/to/digest.ts" type="script"
+```
+
+#### Direct session pattern (`type='session'`)
+
+For pure LLM tasks where the prompt is either raw text or a `.md`/`.txt` file. No script execution — the runner spawns a Gateway session directly:
+
+```bash
+# Prompt text inline
+runner_create_job id="morning-brief" name="Morning Brief" schedule="0 7 * * *" script="Summarize today's priorities from the queue." type="session"
+
+# Prompt from file
+runner_create_job id="weekly-review" name="Weekly Review" schedule="0 9 * * MON" script="/path/to/weekly-review.md" type="session"
 ```
 
 ## Engineering Standards for Process Scripts

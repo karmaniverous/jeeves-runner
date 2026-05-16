@@ -146,12 +146,18 @@ const MIGRATION_004 = `
 ALTER TABLE jobs ADD COLUMN source_type TEXT DEFAULT 'path';
 `;
 
+/** Migration 005: Add output_channel column to jobs. */
+const MIGRATION_005 = `
+ALTER TABLE jobs ADD COLUMN output_channel TEXT DEFAULT NULL;
+`;
+
 /** Registry of all migrations keyed by version number. */
 const MIGRATIONS: Record<number, string> = {
   1: MIGRATION_001,
   2: MIGRATION_002,
   3: MIGRATION_003,
   4: MIGRATION_004,
+  5: MIGRATION_005,
 };
 
 /**
