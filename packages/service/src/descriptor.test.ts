@@ -27,7 +27,7 @@ describe('createRunnerDescriptor', () => {
     expect(config).toHaveProperty('port', 1937);
     expect(config).toHaveProperty('maxConcurrency');
     expect(config).toHaveProperty('notifications');
-    expect(config).toHaveProperty('log');
+    expect(config).toHaveProperty('logging');
   });
 
   it('startCommand produces a node CLI invocation', () => {

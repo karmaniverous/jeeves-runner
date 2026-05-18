@@ -36,12 +36,12 @@ function testConfig(dbPath: string, port: number) {
     shutdownGraceMs: 1000,
     runRetentionDays: 30,
     stateCleanupIntervalMs: 3600000,
-    log: { level: 'fatal' as const },
+    logging: { level: 'fatal' as const },
     notifications: {
       defaultOnSuccess: null,
       defaultOnFailure: null,
     },
-    gateway: { url: 'http://127.0.0.1:18789' },
+    gatewayUrl: 'http://127.0.0.1:18789',
     runners: {},
   };
 }
