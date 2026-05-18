@@ -4,9 +4,29 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 💼 Other
+
+- [81] feat: config harmonization (gatewayUrl, gatewayApiKey, logging) #81
+
+Replace nested gateway.url/gateway.tokenPath with flat gatewayUrl/gatewayApiKey.
+Replace log.level/log.file with logging.level/logging.file.
+Add backward-compat preprocess transform for old config shape.
+gatewayApiKey is a direct string value (no more file indirection via tokenPath).
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+- [81] fix: update stale error message and add combined migration test
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+- Updated dependency
+## [0.9.11] - 2026-05-16
+
 ### 🐛 Bug Fixes
 
 - Pin jeeves-runner-core dependency to ^0.1.1
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner v0.9.11
 ## [0.9.10] - 2026-05-16
 
 ### 💼 Other
