@@ -104,7 +104,7 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
       if (type === 'session') {
         if (!gatewayClient) {
           throw new Error(
-            'Session job requires Gateway client (gateway.tokenPath not configured)',
+            'Session job requires Gateway client (gatewayUrl/gatewayApiKey not configured)',
           );
         }
         result = await executeSession({

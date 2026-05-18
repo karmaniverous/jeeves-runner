@@ -47,7 +47,7 @@ export function createRunner(config: RunnerConfig, deps?: RunnerDeps): Runner {
   let server: FastifyInstance | null = null;
   let maintenance: Maintenance | null = null;
 
-  const logger = deps?.logger ?? pino(buildPinoOptions(config.log));
+  const logger = deps?.logger ?? pino(buildPinoOptions(config.logging));
 
   return {
     async start(): Promise<void> {
@@ -65,13 +65,12 @@ export function createRunner(config: RunnerConfig, deps?: RunnerDeps): Runner {
       const notifier = createNotifier({ slackToken });
 
       // Gateway client (optional, for session-type jobs)
-      const gatewayToken = config.gateway.tokenPath
-        ? readFileSync(config.gateway.tokenPath, 'utf-8').trim()
-        : (process.env.OPENCLAW_GATEWAY_TOKEN ?? null);
+      const gatewayToken =
+        config.gatewayApiKey ?? process.env.OPENCLAW_GATEWAY_TOKEN ?? null;
       const gatewayClient =
-        gatewayToken && config.gateway.url
+        gatewayToken && config.gatewayUrl
           ? createGatewayClient({
-              url: config.gateway.url,
+              url: config.gatewayUrl,
               token: gatewayToken,
             })
           : undefined;
@@ -117,7 +116,7 @@ export function createRunner(config: RunnerConfig, deps?: RunnerDeps): Runner {
         scheduler,
         getConfig: () => config,
         descriptor,
-        logConfig: config.log,
+        logConfig: config.logging,
       });
       let effectiveHost = config.host;
       try {
