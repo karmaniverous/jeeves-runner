@@ -83,6 +83,48 @@ describe('runnerConfigSchema', () => {
     });
 
     expect(config.logging.level).toBe('error');
+    // Should still warn and remove the deprecated key
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('"log" is deprecated'),
+    );
+
+    warnSpy.mockRestore();
+  });
+
+  it('warns specifically about gateway.tokenPath removal', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const config = runnerConfigSchema.parse({
+      gateway: {
+        url: 'http://old-gateway:8080',
+        tokenPath: '/path/to/token',
+      },
+    });
+
+    expect(config.gatewayUrl).toBe('http://old-gateway:8080');
+    expect(config.gatewayApiKey).toBeUndefined();
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('"gateway.tokenPath"'),
+    );
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining('"gateway" is deprecated'),
+    );
+
+    warnSpy.mockRestore();
+  });
+
+  it('removes deprecated log key even when logging is present', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    // Simulate the preprocess output — log should be stripped
+    const config = runnerConfigSchema.parse({
+      logging: { level: 'error' },
+      log: { level: 'debug' },
+    });
+
+    // The parsed config should not have a 'log' key
+    expect(config).not.toHaveProperty('log');
+    expect(config.logging.level).toBe('error');
 
     warnSpy.mockRestore();
   });

@@ -36,11 +36,17 @@ function migrateDeprecatedKeys(input: unknown): unknown {
 
   const obj = { ...(input as Record<string, unknown>) };
 
-  // gateway → gatewayUrl
+  // gateway → gatewayUrl / gatewayApiKey
   if ('gateway' in obj && typeof obj.gateway === 'object' && obj.gateway) {
     const gw = obj.gateway as Record<string, unknown>;
     if (!('gatewayUrl' in obj) && 'url' in gw) {
       obj.gatewayUrl = gw.url;
+    }
+    if ('tokenPath' in gw) {
+      console.warn(
+        '[jeeves-runner] DEPRECATED: config key "gateway.tokenPath" (file-based token) has been removed. ' +
+          'Set "gatewayApiKey" to a direct API key string, or use the OPENCLAW_GATEWAY_TOKEN environment variable.',
+      );
     }
     delete obj.gateway;
     console.warn(
@@ -49,8 +55,10 @@ function migrateDeprecatedKeys(input: unknown): unknown {
   }
 
   // log → logging
-  if ('log' in obj && !('logging' in obj)) {
-    obj.logging = obj.log;
+  if ('log' in obj) {
+    if (!('logging' in obj)) {
+      obj.logging = obj.log;
+    }
     delete obj.log;
     console.warn(
       '[jeeves-runner] DEPRECATED: config key "log" is deprecated. Use "logging" instead.',
