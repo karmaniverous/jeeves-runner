@@ -1,6 +1,6 @@
 {
   "name": "@karmaniverous/jeeves-runner-core",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": "Jason Williscroft",
   "description": "Shared configuration schema and types for jeeves-runner packages.",
   "license": "BSD-3-Clause",
