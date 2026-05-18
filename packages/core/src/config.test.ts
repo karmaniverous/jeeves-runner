@@ -57,6 +57,23 @@ describe('runnerConfigSchema', () => {
     warnSpy.mockRestore();
   });
 
+  it('migrates full old config shape (gateway + log) in one pass', () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const config = runnerConfigSchema.parse({
+      gateway: { url: 'http://old-gateway:8080' },
+      log: { level: 'warn', file: '/tmp/old.log' },
+    });
+
+    expect(config.gatewayUrl).toBe('http://old-gateway:8080');
+    expect(config.gatewayApiKey).toBeUndefined();
+    expect(config.logging.level).toBe('warn');
+    expect(config.logging.file).toBe('/tmp/old.log');
+    expect(warnSpy).toHaveBeenCalledTimes(2);
+
+    warnSpy.mockRestore();
+  });
+
   it('prefers new keys when both old and new are present', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
