@@ -6,6 +6,11 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [81] chore: update dependencies
+## [0.9.12] - 2026-05-18
+
+### 💼 Other
+
 - [81] feat: config harmonization (gatewayUrl, gatewayApiKey, logging) #81
 
 Replace nested gateway.url/gateway.tokenPath with flat gatewayUrl/gatewayApiKey.
@@ -18,6 +23,10 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 - Updated dependency
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner v0.9.12
 ## [0.9.11] - 2026-05-16
 
 ### 🐛 Bug Fixes
