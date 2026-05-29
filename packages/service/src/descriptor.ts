@@ -70,8 +70,7 @@ export function createRunnerDescriptor(
     defaultPort: RUNNER_PORT,
     configSchema: configSchemaCompat,
     configFileName: 'config.json',
-    initTemplate: () =>
-      runnerConfigSchema.parse({}) as unknown as Record<string, unknown>,
+    initTemplate: () => runnerConfigSchema.parse({}),
     onConfigApply: options?.onConfigApply,
     // MODULE_DIR resolves to the bundled CLI entry's directory at runtime
     // (dist/cli/jeeves-runner/), so index.js is a sibling, not nested deeper.
