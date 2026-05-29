@@ -11,7 +11,6 @@ import {
   createSchedulerMocks,
   createTestConfig,
 } from '../test-utils/scheduler.js';
-import type { ExecutionOptions, ExecutionResult } from './executor.js';
 import { createScheduler } from './scheduler.js';
 
 describe('cron-registry reconciliation', () => {
@@ -37,9 +36,7 @@ describe('cron-registry reconciliation', () => {
     const mocks = createSchedulerMocks();
     const scheduler = createScheduler({
       db,
-      executor: mocks.executorMock as unknown as (
-        opts: ExecutionOptions,
-      ) => Promise<ExecutionResult>,
+      executor: mocks.executorMock,
       notifier: mocks.notifier,
       config: createTestConfig(),
       logger: mocks.logger as unknown as Logger,
@@ -86,9 +83,7 @@ describe('cron-registry reconciliation', () => {
     const mocks = createSchedulerMocks();
     const scheduler = createScheduler({
       db,
-      executor: mocks.executorMock as unknown as (
-        opts: ExecutionOptions,
-      ) => Promise<ExecutionResult>,
+      executor: mocks.executorMock,
       notifier: mocks.notifier,
       config: createTestConfig(),
       logger: mocks.logger as unknown as Logger,
@@ -130,9 +125,7 @@ describe('cron-registry reconciliation', () => {
     const mocks = createSchedulerMocks();
     const scheduler = createScheduler({
       db,
-      executor: mocks.executorMock as unknown as (
-        opts: ExecutionOptions,
-      ) => Promise<ExecutionResult>,
+      executor: mocks.executorMock,
       notifier: mocks.notifier,
       config: createTestConfig(),
       logger: mocks.logger as unknown as Logger,

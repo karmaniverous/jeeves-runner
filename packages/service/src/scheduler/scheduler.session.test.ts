@@ -14,7 +14,7 @@ import {
   createMockLogger,
   createMockNotifier,
 } from '../test-utils/scheduler.js';
-import type { ExecutionOptions, ExecutionResult } from './executor.js';
+import type { ExecutionOptions } from './executor.js';
 import { createScheduler } from './scheduler.js';
 
 describe('Scheduler session execution', () => {
@@ -79,9 +79,7 @@ describe('Scheduler session execution', () => {
 
     const scheduler = createScheduler({
       db,
-      executor: scriptExecutor as unknown as (
-        options: ExecutionOptions,
-      ) => Promise<ExecutionResult>,
+      executor: scriptExecutor,
       notifier: createMockNotifier(),
       config: { ...runnerConfigSchema.parse({}), reconcileIntervalMs: 0 },
       logger: createMockLogger() as unknown as Logger,
@@ -150,9 +148,7 @@ describe('Scheduler session execution', () => {
 
     const scheduler = createScheduler({
       db,
-      executor: scriptExecutor as unknown as (
-        options: ExecutionOptions,
-      ) => Promise<ExecutionResult>,
+      executor: scriptExecutor,
       notifier: createMockNotifier(),
       config: { ...runnerConfigSchema.parse({}), reconcileIntervalMs: 0 },
       logger: createMockLogger() as unknown as Logger,
@@ -188,9 +184,7 @@ describe('Scheduler session execution', () => {
 
     const scheduler = createScheduler({
       db,
-      executor: vi.fn() as unknown as (
-        options: ExecutionOptions,
-      ) => Promise<ExecutionResult>,
+      executor: vi.fn(),
       notifier: createMockNotifier(),
       config: { ...runnerConfigSchema.parse({}), reconcileIntervalMs: 0 },
       logger: createMockLogger() as unknown as Logger,

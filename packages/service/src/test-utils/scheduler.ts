@@ -32,15 +32,9 @@ export const DEFAULT_EXECUTION_RESULT: ExecutionResult = {
 /** Create a mock notifier with vi.fn() stubs. */
 export function createMockNotifier(): Notifier {
   return {
-    notifySuccess: vi.fn(() =>
-      Promise.resolve(undefined),
-    ) as unknown as Notifier['notifySuccess'],
-    notifyFailure: vi.fn(() =>
-      Promise.resolve(undefined),
-    ) as unknown as Notifier['notifyFailure'],
-    dispatchResult: vi.fn(
-      async () => {},
-    ) as unknown as Notifier['dispatchResult'],
+    notifySuccess: vi.fn(() => Promise.resolve(undefined)),
+    notifyFailure: vi.fn(() => Promise.resolve(undefined)),
+    dispatchResult: vi.fn(async () => {}),
   };
 }
 
@@ -59,11 +53,9 @@ export function createSchedulerMocks() {
   const notifyFailureMock = vi.fn(() => Promise.resolve(undefined));
 
   const notifier: Notifier = {
-    notifySuccess: notifySuccessMock as unknown as Notifier['notifySuccess'],
-    notifyFailure: notifyFailureMock as unknown as Notifier['notifyFailure'],
-    dispatchResult: vi.fn(
-      async () => {},
-    ) as unknown as Notifier['dispatchResult'],
+    notifySuccess: notifySuccessMock,
+    notifyFailure: notifyFailureMock,
+    dispatchResult: vi.fn(async () => {}),
   };
 
   const logger = createMockLogger();
@@ -96,9 +88,7 @@ export function createTestScheduler(
 ) {
   return createScheduler({
     db,
-    executor: mocks.executorMock as unknown as (
-      options: ExecutionOptions,
-    ) => Promise<ExecutionResult>,
+    executor: mocks.executorMock,
     notifier: mocks.notifier,
     config: createTestConfig(configOverrides),
     logger: mocks.logger as unknown as Logger,

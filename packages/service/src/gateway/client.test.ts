@@ -29,7 +29,7 @@ describe('Gateway client', () => {
           req.on('end', () => {
             requestLog.push({
               url: req.url ?? '',
-              headers: req.headers as Record<string, unknown>,
+              headers: req.headers,
               body,
             });
 
