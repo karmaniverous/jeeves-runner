@@ -19,7 +19,9 @@ interface PackageJson {
   peerDependencies?: Record<string, string>;
 }
 
-const pkg = JSON.parse(readFileSync('./package.json', 'utf-8')) as PackageJson;
+const pkg = JSON.parse(
+  readFileSync(new URL('./package.json', import.meta.url), 'utf-8'),
+) as PackageJson;
 
 const dependencyExternals = [
   ...Object.keys(pkg.dependencies ?? {}),
@@ -38,7 +40,11 @@ function onwarn(warning: RollupLog, defaultHandler: (w: RollupLog) => void) {
 
 const pluginConfig: RollupOptions = {
   input: 'src/index.ts',
-  external: [...dependencyExternals, /^node:/],
+  external: [
+    ...dependencyExternals,
+    ...dependencyExternals.map((dep) => new RegExp('^' + dep + '/')),
+    /^node:/,
+  ],
   onwarn,
   output: {
     dir: 'dist',
@@ -65,7 +71,11 @@ const pluginConfig: RollupOptions = {
 
 const cliConfig: RollupOptions = {
   input: 'src/cli.ts',
-  external: [...dependencyExternals, /^node:/],
+  external: [
+    ...dependencyExternals,
+    ...dependencyExternals.map((dep) => new RegExp('^' + dep + '/')),
+    /^node:/,
+  ],
   onwarn,
   output: {
     file: 'dist/cli.js',
