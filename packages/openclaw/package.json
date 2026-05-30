@@ -48,9 +48,11 @@
       "./dist/index.js"
     ]
   },
+  "dependencies": {
+    "@karmaniverous/jeeves": "^0.5.10"
+  },
   "devDependencies": {
     "@dotenvx/dotenvx": "^1.65.0",
-    "@karmaniverous/jeeves": "^0.5.10",
     "@rollup/plugin-commonjs": "^29.0.2",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
