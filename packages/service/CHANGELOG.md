@@ -4,9 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 🐛 Bug Fixes
+
+- Bump @karmaniverous/jeeves to ^0.5.11 across all packages
+
+### 💼 Other
+
+- Updated core
+## [0.9.13] - 2026-05-29
+
 ### 💼 Other
 
 - [81] chore: update dependencies
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner v0.9.13
 ## [0.9.12] - 2026-05-18
 
 ### 💼 Other
