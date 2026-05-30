@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 🐛 Bug Fixes
+
+- Externalize @karmaniverous/jeeves across core and openclaw packages
+- Bump @karmaniverous/jeeves to ^0.5.11 across all packages
+- Use import.meta.url for package.json resolution and add subpath externals
+## [0.1.2] - 2026-05-18
+
 ### 💼 Other
 
 - [81] feat: config harmonization (gatewayUrl, gatewayApiKey, logging) #81
@@ -18,6 +25,10 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 - [81] fix: address review — warn on tokenPath removal, consistent log key cleanup
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner-core v0.1.2
 ## [0.1.1] - 2026-05-13
 
 ### 🚀 Features
