@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 🐛 Bug Fixes
+
+- Externalize @karmaniverous/jeeves across core and openclaw packages
+- Bump @karmaniverous/jeeves to ^0.5.11 across all packages
+- Use import.meta.url for package.json resolution and add subpath externals
+## [0.7.10] - 2026-05-16
+
 ### 💼 Other
 
 - [ISSUES-50] fix: resolve dispatcher issues and update skill docs (#50, #64, #70, #78)
@@ -19,6 +26,10 @@ All notable changes to this project will be documented in this file.
   outputChannel schema validation, and stdout capture
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner-openclaw v0.7.10
 ## [0.7.9] - 2026-05-13
 
 ### 🚀 Features
