@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 💼 Other
+
+- [87] feat: add jobsDir config field and sync-jobs command (#87)
+
+Add optional jobsDir field to runnerConfigSchema for specifying job
+definition file locations. Add sync-jobs CLI command that reads JSON
+files from the jobs directory and upserts job definitions into the
+SQLite database with schedule validation.
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+- [87] fix: use UPSERT, guard inline scripts, validate field types (review feedback)
+- Updated core
+## [0.9.14] - 2026-05-30
+
 ### 🐛 Bug Fixes
 
 - Bump @karmaniverous/jeeves to ^0.5.11 across all packages
@@ -11,6 +25,10 @@ All notable changes to this project will be documented in this file.
 ### 💼 Other
 
 - Updated core
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner v0.9.14
 ## [0.9.13] - 2026-05-29
 
 ### 💼 Other
