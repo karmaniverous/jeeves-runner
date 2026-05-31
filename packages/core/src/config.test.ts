@@ -113,6 +113,18 @@ describe('runnerConfigSchema', () => {
     warnSpy.mockRestore();
   });
 
+  it('accepts optional jobsDir field', () => {
+    const config = runnerConfigSchema.parse({
+      jobsDir: '/opt/jeeves/scripts/jobs',
+    });
+    expect(config.jobsDir).toBe('/opt/jeeves/scripts/jobs');
+  });
+
+  it('defaults jobsDir to undefined when omitted', () => {
+    const config = runnerConfigSchema.parse({});
+    expect(config.jobsDir).toBeUndefined();
+  });
+
   it('removes deprecated log key even when logging is present', () => {
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
