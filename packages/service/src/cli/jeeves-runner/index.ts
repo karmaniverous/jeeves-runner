@@ -21,34 +21,10 @@ import {
 } from '@karmaniverous/jeeves';
 import type { Command as BaseCommand } from 'commander';
 
-import { createConnection } from '../../db/connection.js';
-import { runMigrations } from '../../db/migrations.js';
 import { createRunnerDescriptor } from '../../descriptor.js';
 import { validateSchedule } from '../../scheduler/schedule-utils.js';
-import { runnerConfigSchema } from '../../schemas/config.js';
-
-/** Load and validate config from a JSON file path, or return defaults. */
-function loadConfig(configPath?: string) {
-  if (configPath) {
-    const raw = readFileSync(resolve(configPath), 'utf-8');
-    return runnerConfigSchema.parse(JSON.parse(raw));
-  }
-  return runnerConfigSchema.parse({});
-}
-
-/** Open a migrated DB connection, run `fn`, then close. */
-function withDb<T>(
-  dbPath: string,
-  fn: (db: ReturnType<typeof createConnection>) => T,
-): T {
-  const db = createConnection(dbPath);
-  runMigrations(db);
-  try {
-    return fn(db);
-  } finally {
-    db.close();
-  }
-}
+import { loadConfig, withDb } from './config-helpers.js';
+import { syncJobs } from './sync-jobs.js';
 
 const descriptor = createRunnerDescriptor({
   customCliCommands: (program: BaseCommand) => {
@@ -256,6 +232,60 @@ const descriptor = createRunnerDescriptor({
           }
 
           console.log('Scripts initialized successfully.');
+        },
+      );
+
+    program
+      .command('sync-jobs')
+      .description('Sync job definitions from JSON files into the database')
+      .option('-c, --config <path>', 'Path to config file')
+      .option('--jobs-dir <dir>', 'Path to jobs directory (overrides config)')
+      .option(
+        '-w, --workspace <path>',
+        'Workspace root path',
+        WORKSPACE_CONFIG_DEFAULTS.core.workspace,
+      )
+      .option(
+        '--config-root <path>',
+        'Platform config root path',
+        WORKSPACE_CONFIG_DEFAULTS.core.configRoot,
+      )
+      .action(
+        (options: {
+          config?: string;
+          jobsDir?: string;
+          workspace: string;
+          configRoot: string;
+        }) => {
+          init({
+            workspacePath: options.workspace,
+            configRoot: options.configRoot,
+          });
+
+          const config = loadConfig(options.config);
+          const configDir = options.config
+            ? dirname(resolve(options.config))
+            : getComponentConfigDir('runner');
+          const resolvedJobsDir =
+            options.jobsDir ??
+            config.jobsDir ??
+            join(configDir, 'scripts/jobs');
+
+          withDb(config.dbPath, (db) => {
+            const syncResult = syncJobs(db, resolvedJobsDir);
+
+            console.log(
+              `Sync complete: ${String(syncResult.added)} added, ${String(syncResult.updated)} updated, ${String(syncResult.skipped)} skipped`,
+            );
+
+            if (syncResult.errors.length > 0) {
+              console.error('Errors:');
+              for (const e of syncResult.errors) {
+                console.error(`  - ${e}`);
+              }
+              process.exit(1);
+            }
+          });
         },
       );
   },

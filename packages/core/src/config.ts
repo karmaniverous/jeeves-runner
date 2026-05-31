@@ -101,6 +101,8 @@ export const runnerConfigSchema = z.preprocess(
     gatewayApiKey: z.string().optional(),
     /** Custom command runners keyed by file extension. The command string is split on whitespace; first token is the executable, rest are prefix args before the script path. Falls back to built-in defaults for unconfigured extensions. */
     runners: z.record(z.string(), z.string().trim().min(1)).default({}),
+    /** Absolute path to directory containing job definition files. When omitted, sync-jobs falls back to join(configDir, 'scripts/jobs'). */
+    jobsDir: z.string().optional(),
   }),
 );
 
