@@ -69,10 +69,24 @@ export function syncJobs(db: DatabaseSync, jobsDir: string): SyncResult {
   );
 
   const stmt = db.prepare(
-    `INSERT OR REPLACE INTO jobs
+    `INSERT INTO jobs
        (id, name, schedule, script, type, description, enabled, timeout_ms,
         overlap_policy, on_failure, on_success, output_channel, source_type, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+     ON CONFLICT(id) DO UPDATE SET
+       name = excluded.name,
+       schedule = excluded.schedule,
+       script = excluded.script,
+       type = excluded.type,
+       description = excluded.description,
+       enabled = excluded.enabled,
+       timeout_ms = excluded.timeout_ms,
+       overlap_policy = excluded.overlap_policy,
+       on_failure = excluded.on_failure,
+       on_success = excluded.on_success,
+       output_channel = excluded.output_channel,
+       source_type = excluded.source_type,
+       updated_at = datetime('now')`,
   );
 
   for (const file of files) {
@@ -103,15 +117,40 @@ export function syncJobs(db: DatabaseSync, jobsDir: string): SyncResult {
       }
 
       const obj = raw as Record<string, unknown>;
-      if (!obj.id || !obj.name || !obj.script || obj.schedule == null) {
+      if (
+        typeof obj.id !== 'string' ||
+        typeof obj.name !== 'string' ||
+        typeof obj.script !== 'string' ||
+        obj.schedule == null
+      ) {
         result.errors.push(
-          `${file}: job missing required fields (id, name, script, schedule)`,
+          `${file}: job missing or has invalid required fields (id, name, script must be strings, schedule must be defined)`,
         );
         result.skipped++;
         continue;
       }
 
       const job = obj as unknown as JobDefinition;
+
+      if (
+        job.timeout_seconds != null &&
+        typeof job.timeout_seconds !== 'number'
+      ) {
+        result.errors.push(
+          `${file}: job '${job.id}' has invalid timeout_seconds (must be a number)`,
+        );
+        result.skipped++;
+        continue;
+      }
+
+      if (job.enabled != null && typeof job.enabled !== 'boolean') {
+        result.errors.push(
+          `${file}: job '${job.id}' has invalid enabled field (must be a boolean)`,
+        );
+        result.skipped++;
+        continue;
+      }
+
       const scheduleStr =
         typeof job.schedule === 'object'
           ? JSON.stringify(job.schedule)
@@ -126,7 +165,10 @@ export function syncJobs(db: DatabaseSync, jobsDir: string): SyncResult {
         continue;
       }
 
-      const scriptPath = resolve(scriptsRoot, job.script);
+      const scriptPath =
+        (job.source_type ?? 'path') === 'path'
+          ? resolve(scriptsRoot, job.script)
+          : job.script;
       const isUpdate = existingIds.has(job.id);
 
       stmt.run(
