@@ -4,11 +4,27 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 💼 Other
+
+- [87] feat: add jobsDir config field and sync-jobs command (#87)
+
+Add optional jobsDir field to runnerConfigSchema for specifying job
+definition file locations. Add sync-jobs CLI command that reads JSON
+files from the jobs directory and upserts job definitions into the
+SQLite database with schedule validation.
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+## [0.1.3] - 2026-05-30
+
 ### 🐛 Bug Fixes
 
 - Externalize @karmaniverous/jeeves across core and openclaw packages
 - Bump @karmaniverous/jeeves to ^0.5.11 across all packages
 - Use import.meta.url for package.json resolution and add subpath externals
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner-core v0.1.3
 ## [0.1.2] - 2026-05-18
 
 ### 💼 Other
