@@ -6,6 +6,11 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- Updated deps
+## [0.9.15] - 2026-05-31
+
+### 💼 Other
+
 - [87] feat: add jobsDir config field and sync-jobs command (#87)
 
 Add optional jobsDir field to runnerConfigSchema for specifying job
@@ -16,6 +21,10 @@ SQLite database with schedule validation.
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 - [87] fix: use UPSERT, guard inline scripts, validate field types (review feedback)
 - Updated core
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner v0.9.15
 ## [0.9.14] - 2026-05-30
 
 ### 🐛 Bug Fixes
