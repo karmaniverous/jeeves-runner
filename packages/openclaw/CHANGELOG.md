@@ -2,13 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
-## [unreleased]
+## [0.7.11] - 2026-05-30
 
 ### 🐛 Bug Fixes
 
 - Externalize @karmaniverous/jeeves across core and openclaw packages
 - Bump @karmaniverous/jeeves to ^0.5.11 across all packages
 - Use import.meta.url for package.json resolution and add subpath externals
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner-openclaw v0.7.11
 ## [0.7.10] - 2026-05-16
 
 ### 💼 Other
