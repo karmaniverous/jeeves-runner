@@ -90,14 +90,19 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
     } = job;
 
     // Parse per-job env and args from JSON TEXT columns (script-type jobs only)
-    const jobEnv =
-      type === 'script' && envJson
-        ? (JSON.parse(envJson) as Record<string, string>)
-        : undefined;
-    const jobArgs =
-      type === 'script' && argsJson
-        ? (JSON.parse(argsJson) as string[])
-        : undefined;
+    let jobEnv: Record<string, string> | undefined;
+    let jobArgs: string[] | undefined;
+    if (type === 'script') {
+      try {
+        if (envJson) jobEnv = JSON.parse(envJson) as Record<string, string>;
+        if (argsJson) jobArgs = JSON.parse(argsJson) as string[];
+      } catch (err) {
+        logger.warn(
+          { jobId: id, err },
+          'Failed to parse job env/args JSON, ignoring',
+        );
+      }
+    }
 
     // Check concurrency limit
     if (runningJobs.size >= config.maxConcurrency) {
