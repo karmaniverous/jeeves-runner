@@ -2,6 +2,52 @@
 
 All notable changes to this project will be documented in this file.
 
+## [unreleased]
+
+### 🐛 Bug Fixes
+
+- Sync plugin manifest version to 0.7.12
+
+### 💼 Other
+
+- [77][89] feat: add output_channel, env, args to plugin tool descriptors
+
+- Add output_channel, env (object), args (string array) to JOB_MUTABLE_FIELDS
+- Fields automatically propagated to runner_create_job and runner_update_job tools
+- buildJobBody picks up new fields via Object.keys iteration
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+- [77] feat: wire catalog derivation end-to-end
+
+Plugin:
+- Add @karmaniverous/jeeves-runner-core dependency
+- Add catalogTool() helper that derives method, description from RUNNER_ENDPOINTS
+- Refactor all 16 custom tools (runnerTools, inspectionTools, managementTools) to use catalogTool()
+- Fix test mock to include DEFAULT_BIND_ADDRESS for core import chain
+
+Service:
+- routes.ts: reference getEndpoint() for /status and /jobs paths
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+- [77][89] docs: sync README, SKILL.md with new fields and config harmonization
+
+README.md:
+- jobs schema table: add output_channel, source_type, description, env, args
+- runs trigger: remove 'retry' (DD#46)
+- Quick Start config: gateway.url/tokenPath → gatewayUrl/gatewayApiKey, log → logging
+- CLI table: add sync-jobs command
+
+SKILL.md:
+- jobs table listing: add output_channel, env, args
+- Job parameters table: add output_channel, description, env, args with session-only notes
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+- Updated core
+## [0.7.12] - 2026-06-11
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner-openclaw v0.7.12
 ## [0.7.11] - 2026-05-30
 
 ### 🐛 Bug Fixes
