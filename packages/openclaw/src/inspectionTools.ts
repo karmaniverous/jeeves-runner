@@ -6,7 +6,7 @@
 
 import type { PluginApi } from '@karmaniverous/jeeves';
 
-import { type ApiToolConfig, registerApiTool } from './toolHelpers.js';
+import { catalogTool, registerApiTool } from './toolHelpers.js';
 
 /** URL-encode a path segment for safe interpolation. */
 function enc(value: unknown): string {
@@ -15,18 +15,21 @@ function enc(value: unknown): string {
 
 /** Register queue and state inspection tools. */
 export function registerInspectionTools(api: PluginApi, baseUrl: string): void {
-  const tools: ApiToolConfig[] = [
-    {
-      name: 'runner_list_queues',
-      description: 'List all queues that have items.',
-      parameters: { type: 'object', properties: {} },
-      buildRequest: () => ['/queues'],
-    },
-    {
-      name: 'runner_queue_status',
-      description:
-        'Get queue depth, claimed count, failed count, and oldest item age.',
-      parameters: {
+  const tools = [
+    catalogTool(
+      'listQueues',
+      'runner_list_queues',
+      {
+        type: 'object',
+        properties: {},
+      },
+      () => ['/queues'],
+    ),
+
+    catalogTool(
+      'queueStatus',
+      'runner_queue_status',
+      {
         type: 'object',
         properties: {
           queueName: {
@@ -36,13 +39,13 @@ export function registerInspectionTools(api: PluginApi, baseUrl: string): void {
         },
         required: ['queueName'],
       },
-      buildRequest: (params) => [`/queues/${enc(params.queueName)}/status`],
-    },
-    {
-      name: 'runner_queue_peek',
-      description:
-        'Non-claiming read of pending queue items (does not consume them).',
-      parameters: {
+      (params) => [`/queues/${enc(params.queueName)}/status`],
+    ),
+
+    catalogTool(
+      'queuePeek',
+      'runner_queue_peek',
+      {
         type: 'object',
         properties: {
           queueName: {
@@ -56,25 +59,29 @@ export function registerInspectionTools(api: PluginApi, baseUrl: string): void {
         },
         required: ['queueName'],
       },
-      buildRequest: (params) => {
+      (params) => {
         const query =
           params.limit !== undefined
             ? `?limit=${String(Number(params.limit))}`
             : '';
         return [`/queues/${enc(params.queueName)}/peek${query}`];
       },
-    },
-    {
-      name: 'runner_list_namespaces',
-      description: 'List all state namespaces.',
-      parameters: { type: 'object', properties: {} },
-      buildRequest: () => ['/state'],
-    },
-    {
-      name: 'runner_query_state',
-      description:
-        'Read all scalar state for a namespace. Supports optional JSONPath filtering.',
-      parameters: {
+    ),
+
+    catalogTool(
+      'listNamespaces',
+      'runner_list_namespaces',
+      {
+        type: 'object',
+        properties: {},
+      },
+      () => ['/state'],
+    ),
+
+    catalogTool(
+      'queryState',
+      'runner_query_state',
+      {
         type: 'object',
         properties: {
           namespace: {
@@ -88,16 +95,17 @@ export function registerInspectionTools(api: PluginApi, baseUrl: string): void {
         },
         required: ['namespace'],
       },
-      buildRequest: (params) => {
+      (params) => {
         const query =
           params.path !== undefined ? `?path=${enc(params.path)}` : '';
         return [`/state/${enc(params.namespace)}${query}`];
       },
-    },
-    {
-      name: 'runner_query_collection',
-      description: 'Read collection items for a state key within a namespace.',
-      parameters: {
+    ),
+
+    catalogTool(
+      'queryCollection',
+      'runner_query_collection',
+      {
         type: 'object',
         properties: {
           namespace: {
@@ -111,10 +119,8 @@ export function registerInspectionTools(api: PluginApi, baseUrl: string): void {
         },
         required: ['namespace', 'key'],
       },
-      buildRequest: (params) => [
-        `/state/${enc(params.namespace)}/${enc(params.key)}`,
-      ],
-    },
+      (params) => [`/state/${enc(params.namespace)}/${enc(params.key)}`],
+    ),
   ];
 
   for (const tool of tools) {

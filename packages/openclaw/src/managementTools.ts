@@ -7,7 +7,7 @@
 import type { PluginApi } from '@karmaniverous/jeeves';
 
 import {
-  type ApiToolConfig,
+  catalogTool,
   JOB_ID_PARAM,
   jobPath,
   registerApiTool,
@@ -82,12 +82,11 @@ function buildJobBody(
 
 /** Register job management tools (create, update, delete, update_script). */
 export function registerManagementTools(api: PluginApi, baseUrl: string): void {
-  const tools: ApiToolConfig[] = [
-    {
-      name: 'runner_create_job',
-      description:
-        'Create a new runner job. Requires id, name, schedule, and script.',
-      parameters: {
+  const tools = [
+    catalogTool(
+      'createJob',
+      'runner_create_job',
+      {
         type: 'object',
         properties: {
           id: { type: 'string', description: 'Unique job identifier.' },
@@ -95,17 +94,16 @@ export function registerManagementTools(api: PluginApi, baseUrl: string): void {
         },
         required: ['id', 'name', 'schedule', 'script'],
       },
-      method: 'POST',
-      buildRequest: (params) => {
+      (params) => {
         const body = { id: params.id, ...buildJobBody(params) };
         return ['/jobs', body];
       },
-    },
-    {
-      name: 'runner_update_job',
-      description:
-        'Update an existing runner job. Only supplied fields are changed.',
-      parameters: {
+    ),
+
+    catalogTool(
+      'updateJob',
+      'runner_update_job',
+      {
         type: 'object',
         properties: {
           ...JOB_ID_PARAM.properties,
@@ -113,21 +111,17 @@ export function registerManagementTools(api: PluginApi, baseUrl: string): void {
         },
         required: ['jobId'],
       },
-      method: 'PATCH',
-      buildRequest: (params) => [jobPath(params), buildJobBody(params)],
-    },
-    {
-      name: 'runner_delete_job',
-      description: 'Delete a runner job and all its run history. Irreversible.',
-      parameters: JOB_ID_PARAM,
-      method: 'DELETE',
-      buildRequest: (params) => [jobPath(params)],
-    },
-    {
-      name: 'runner_update_script',
-      description:
-        "Update a job's script content or path without changing other fields.",
-      parameters: {
+      (params) => [jobPath(params), buildJobBody(params)],
+    ),
+
+    catalogTool('deleteJob', 'runner_delete_job', JOB_ID_PARAM, (params) => [
+      jobPath(params),
+    ]),
+
+    catalogTool(
+      'updateScript',
+      'runner_update_script',
+      {
         type: 'object',
         properties: {
           ...JOB_ID_PARAM.properties,
@@ -142,15 +136,14 @@ export function registerManagementTools(api: PluginApi, baseUrl: string): void {
         },
         required: ['jobId', 'script'],
       },
-      method: 'PUT',
-      buildRequest: (params) => {
+      (params) => {
         const body: Record<string, unknown> = { script: params.script };
         if (params.source_type !== undefined) {
           body.source_type = params.source_type;
         }
         return [jobPath(params, '/script'), body];
       },
-    },
+    ),
   ];
 
   for (const tool of tools) {

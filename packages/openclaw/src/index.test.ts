@@ -9,6 +9,7 @@ type MockFn = ReturnType<typeof vi.fn>;
 
 vi.mock('@karmaniverous/jeeves', () => {
   return {
+    DEFAULT_BIND_ADDRESS: '0.0.0.0',
     init: vi.fn(),
     getPackageVersion: vi.fn(() => '0.0.0-test'),
     loadWorkspaceConfig: vi.fn(() => null),

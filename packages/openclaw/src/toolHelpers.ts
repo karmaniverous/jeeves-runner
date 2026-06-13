@@ -11,6 +11,10 @@ import {
   type PluginApi,
   type ToolResult,
 } from '@karmaniverous/jeeves';
+import {
+  type EndpointName,
+  getEndpoint,
+} from '@karmaniverous/jeeves-runner-core';
 
 import { PLUGIN_ID } from './constants.js';
 
@@ -81,4 +85,26 @@ export const JOB_ID_PARAM = {
 /** URL-encode the jobId param for safe path interpolation. */
 export function jobPath(params: Record<string, unknown>, suffix = ''): string {
   return `/jobs/${encodeURIComponent(String(params.jobId))}${suffix}`;
+}
+
+/**
+ * Build an ApiToolConfig from the endpoint catalog.
+ *
+ * Derives method, description, and base path from `RUNNER_ENDPOINTS`.
+ * The caller supplies the tool name, parameters, and request builder.
+ */
+export function catalogTool(
+  endpointName: EndpointName,
+  toolName: string,
+  parameters: Record<string, unknown>,
+  buildRequest: ApiToolConfig['buildRequest'],
+): ApiToolConfig {
+  const ep = getEndpoint(endpointName);
+  return {
+    name: toolName,
+    description: ep.description,
+    parameters,
+    method: ep.method,
+    buildRequest,
+  };
 }

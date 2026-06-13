@@ -13,7 +13,7 @@ import type { PluginApi } from '@karmaniverous/jeeves';
 import { registerInspectionTools } from './inspectionTools.js';
 import { registerManagementTools } from './managementTools.js';
 import {
-  type ApiToolConfig,
+  catalogTool,
   JOB_ID_PARAM,
   jobPath,
   registerApiTool,
@@ -24,27 +24,26 @@ export function registerRunnerCustomTools(
   api: PluginApi,
   baseUrl: string,
 ): void {
-  const coreTools: ApiToolConfig[] = [
-    {
-      name: 'runner_jobs',
-      description:
-        'List all runner jobs with enabled state, schedule, last run status, and last run time.',
-      parameters: { type: 'object', properties: {} },
-      buildRequest: () => ['/jobs'],
-    },
-    {
-      name: 'runner_trigger',
-      description:
-        'Manually trigger a runner job. Blocks until the job completes and returns the run result.',
-      parameters: JOB_ID_PARAM,
-      method: 'POST',
-      buildRequest: (params) => [jobPath(params, '/run'), {}],
-    },
-    {
-      name: 'runner_runs',
-      description:
-        'Get recent run history for a runner job, including status, duration, exit code, and error details.',
-      parameters: {
+  const coreTools = [
+    catalogTool(
+      'listJobs',
+      'runner_jobs',
+      {
+        type: 'object',
+        properties: {},
+      },
+      () => ['/jobs'],
+    ),
+
+    catalogTool('triggerJob', 'runner_trigger', JOB_ID_PARAM, (params) => [
+      jobPath(params, '/run'),
+      {},
+    ]),
+
+    catalogTool(
+      'jobRuns',
+      'runner_runs',
+      {
         ...JOB_ID_PARAM,
         properties: {
           ...JOB_ID_PARAM.properties,
@@ -54,36 +53,28 @@ export function registerRunnerCustomTools(
           },
         },
       },
-      buildRequest: (params) => {
+      (params) => {
         const query =
           params.limit !== undefined
             ? `?limit=${String(Number(params.limit))}`
             : '';
         return [jobPath(params, `/runs${query}`)];
       },
-    },
-    {
-      name: 'runner_job_detail',
-      description:
-        'Get full configuration details for a single runner job, including script path, schedule, timeout, and overlap policy.',
-      parameters: JOB_ID_PARAM,
-      buildRequest: (params) => [jobPath(params)],
-    },
-    {
-      name: 'runner_enable',
-      description: 'Enable a disabled runner job. Takes effect immediately.',
-      parameters: JOB_ID_PARAM,
-      method: 'PATCH',
-      buildRequest: (params) => [jobPath(params, '/enable'), {}],
-    },
-    {
-      name: 'runner_disable',
-      description:
-        'Disable a runner job. The job will not run until re-enabled. Takes effect immediately.',
-      parameters: JOB_ID_PARAM,
-      method: 'PATCH',
-      buildRequest: (params) => [jobPath(params, '/disable'), {}],
-    },
+    ),
+
+    catalogTool('jobDetail', 'runner_job_detail', JOB_ID_PARAM, (params) => [
+      jobPath(params),
+    ]),
+
+    catalogTool('enableJob', 'runner_enable', JOB_ID_PARAM, (params) => [
+      jobPath(params, '/enable'),
+      {},
+    ]),
+
+    catalogTool('disableJob', 'runner_disable', JOB_ID_PARAM, (params) => [
+      jobPath(params, '/disable'),
+      {},
+    ]),
   ];
 
   for (const tool of coreTools) {
