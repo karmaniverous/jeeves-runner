@@ -50,6 +50,21 @@ const JOB_MUTABLE_FIELDS = {
     type: 'string',
     description: 'Slack channel ID for success alerts.',
   },
+  output_channel: {
+    type: 'string',
+    description: 'Slack channel ID for stdout relay.',
+  },
+  env: {
+    type: 'object',
+    description:
+      'Environment variables for script-type jobs. Record<string, string> spread into spawn env alongside JR_* vars. Ignored for session jobs.',
+  },
+  args: {
+    type: 'array',
+    description:
+      'Arguments for script-type jobs. String array appended after the script path in spawn. Ignored for session jobs.',
+    items: { type: 'string' },
+  },
 } as const;
 
 /** Build the request body from params, stripping undefined values. */
