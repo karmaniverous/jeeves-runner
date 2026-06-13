@@ -6,8 +6,12 @@
 
 import type { DatabaseSync } from 'node:sqlite';
 
+import {
+  createJobSchema,
+  updateJobSchema,
+  updateScriptSchema,
+} from '@karmaniverous/jeeves-runner-core';
 import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
 
 import { validateSchedule } from '../scheduler/schedule-utils.js';
 import type { Scheduler } from '../scheduler/scheduler.js';
@@ -17,31 +21,6 @@ export interface JobRouteDeps {
   db: DatabaseSync;
   scheduler: Scheduler;
 }
-
-/** Zod schema for job creation/update request body. */
-const createJobSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1),
-  schedule: z.string().min(1),
-  script: z.string().min(1),
-  source_type: z.enum(['path', 'inline']).default('path'),
-  type: z.enum(['script', 'session']).default('script'),
-  timeout_seconds: z.number().positive().optional(),
-  overlap_policy: z.enum(['skip', 'allow']).default('skip'),
-  enabled: z.boolean().default(true),
-  description: z.string().optional(),
-  on_failure: z.string().nullable().optional(),
-  on_success: z.string().nullable().optional(),
-});
-
-/** Zod schema for job update (all fields optional except what's set). */
-const updateJobSchema = createJobSchema.omit({ id: true }).partial();
-
-/** Zod schema for script update request body. */
-const updateScriptSchema = z.object({
-  script: z.string().min(1),
-  source_type: z.enum(['path', 'inline']).optional(),
-});
 
 /** Standard error message for missing job resources. */
 const JOB_NOT_FOUND = 'Job not found';
@@ -74,8 +53,8 @@ export function registerJobRoutes(
 
     db.prepare(
       `INSERT INTO jobs (id, name, schedule, script, source_type, type, timeout_ms,
-       overlap_policy, enabled, description, on_failure, on_success)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       overlap_policy, enabled, description, on_failure, on_success, output_channel, env, args)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).run(
       data.id,
       data.name,
@@ -89,6 +68,9 @@ export function registerJobRoutes(
       data.description ?? null,
       data.on_failure ?? null,
       data.on_success ?? null,
+      data.output_channel ?? null,
+      data.env ? JSON.stringify(data.env) : null,
+      data.args ? JSON.stringify(data.args) : null,
     );
 
     scheduler.reconcileNow();
@@ -147,6 +129,17 @@ export function registerJobRoutes(
       { input: 'description', column: 'description' },
       { input: 'on_failure', column: 'on_failure' },
       { input: 'on_success', column: 'on_success' },
+      { input: 'output_channel', column: 'output_channel' },
+      {
+        input: 'env',
+        column: 'env',
+        transform: (v) => (v ? JSON.stringify(v) : null),
+      },
+      {
+        input: 'args',
+        column: 'args',
+        transform: (v) => (v ? JSON.stringify(v) : null),
+      },
     ];
 
     const sets: string[] = [];

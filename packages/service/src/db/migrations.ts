@@ -151,6 +151,12 @@ const MIGRATION_005 = `
 ALTER TABLE jobs ADD COLUMN output_channel TEXT DEFAULT NULL;
 `;
 
+/** Migration 006: Add env and args columns to jobs for per-job configuration (#89). */
+const MIGRATION_006 = `
+ALTER TABLE jobs ADD COLUMN env TEXT DEFAULT NULL;
+ALTER TABLE jobs ADD COLUMN args TEXT DEFAULT NULL;
+`;
+
 /** Registry of all migrations keyed by version number. */
 const MIGRATIONS: Record<number, string> = {
   1: MIGRATION_001,
@@ -158,6 +164,7 @@ const MIGRATIONS: Record<number, string> = {
   3: MIGRATION_003,
   4: MIGRATION_004,
   5: MIGRATION_005,
+  6: MIGRATION_006,
 };
 
 /**

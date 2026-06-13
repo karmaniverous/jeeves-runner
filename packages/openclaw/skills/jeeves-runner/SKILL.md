@@ -257,6 +257,10 @@ jeeves-runner add-job \
 | `overlap_policy` | No | `skip` | `skip` (don't start if already running) or `allow` |
 | `on_failure` | No | config default | Slack channel ID for failure alerts |
 | `on_success` | No | config default | Slack channel ID for success alerts |
+| `output_channel` | No | — | Slack channel ID for stdout relay |
+| `description` | No | — | Human-readable job description |
+| `env` | No | — | `Record<string, string>` — environment variables spread into spawn env alongside `JR_*` vars (script-type jobs only) |
+| `args` | No | — | `string[]` — arguments appended after the script path in the spawn call (script-type jobs only) |
 
 After adding the job, trigger it manually to verify:
 ```bash
@@ -450,7 +454,7 @@ db.prepare('UPDATE jobs SET script = ? WHERE id = ?').run('/path/to/new-script.j
 
 ## Tables
 
-- **jobs** — Job definitions (id, name, schedule, script, source_type, type, enabled, timeout_ms, overlap_policy, description, on_failure, on_success)
+- **jobs** — Job definitions (id, name, schedule, script, source_type, type, enabled, timeout_ms, overlap_policy, description, on_failure, on_success, output_channel, env, args)
 - **runs** — Run history (job_id, status, started_at, duration_ms, exit_code, tokens, error, stdout_tail, stderr_tail, trigger)
 - **state** — Key-value state store with namespaces and optional expiry
 - **state_items** — Collection state (namespace, key, item_key, value)

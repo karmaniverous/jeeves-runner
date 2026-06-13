@@ -75,16 +75,14 @@ Or create `jeeves-runner/config.json` manually:
   "runners": {
     "ts": "node ./scripts/node_modules/tsx/dist/cli.mjs"
   },
-  "gateway": {
-    "url": "http://127.0.0.1:18789",
-    "tokenPath": "./credentials/gateway-token"
-  },
+  "gatewayUrl": "http://127.0.0.1:18789",
+  "gatewayApiKey": "your-api-key-or-use-OPENCLAW_GATEWAY_TOKEN-env",
   "notifications": {
     "slackTokenPath": "./credentials/slack-bot-token",
     "defaultOnFailure": "YOUR_SLACK_CHANNEL_ID",
     "defaultOnSuccess": null
   },
-  "log": {
+  "logging": {
     "level": "info",
     "file": "./data/runner.log"
   }
@@ -139,6 +137,7 @@ Built with `createServiceCli(descriptor)` from core. Standard commands plus cust
 | `list-jobs` | List all configured jobs |
 | `trigger` | Manually trigger a job run (queries the HTTP API) |
 | `init-scripts` | Scaffold a scripts project from the template |
+| `sync-jobs` | Sync job definitions from JSON files into the database |
 
 ## HTTP API
 
@@ -204,6 +203,11 @@ Each job has an ID, name, cron schedule, script path, and behavioral configurati
 | `overlap_policy` | TEXT | `skip` (default) or `allow` |
 | `on_failure` | TEXT | Slack channel ID for failure alerts |
 | `on_success` | TEXT | Slack channel ID for success alerts |
+| `output_channel` | TEXT | Slack channel ID for stdout relay |
+| `source_type` | TEXT | `path` (file reference) or `inline` (script content) |
+| `description` | TEXT | Human-readable description |
+| `env` | TEXT | JSON `Record<string, string>` — per-job env vars (script-type only) |
+| `args` | TEXT | JSON `string[]` — per-job arguments (script-type only) |
 
 ### `runs` — Run History
 
@@ -220,7 +224,7 @@ Every execution is recorded with status, timing, output capture, and optional to
 | `result_meta` | TEXT | JSON from `JR_RESULT:{json}` stdout lines |
 | `stdout_tail` | TEXT | Last 100 lines of stdout |
 | `stderr_tail` | TEXT | Last 100 lines of stderr |
-| `trigger` | TEXT | `schedule`, `manual`, or `retry` |
+| `trigger` | TEXT | `schedule` or `manual` |
 
 Runs older than `runRetentionDays` are automatically pruned.
 
@@ -389,13 +393,14 @@ Config file: `jeeves-runner/config.json` (legacy `jeeves-runner.config.json` is 
 | `reconcileIntervalMs` | number | `60000` | Job reconciliation interval (ms) |
 | `shutdownGraceMs` | number | `30000` | Grace period for running jobs on shutdown |
 | `runners` | Record | `{}` | Custom command runners keyed by file extension |
-| `gateway.url` | string | `http://127.0.0.1:18789` | OpenClaw Gateway URL (for session jobs) |
-| `gateway.tokenPath` | string | — | Path to gateway auth token file |
+| `gatewayUrl` | string | `http://127.0.0.1:18789` | OpenClaw Gateway URL (for session jobs) |
+| `gatewayApiKey` | string | — | Gateway API key (falls back to `OPENCLAW_GATEWAY_TOKEN` env var) |
+| `jobsDir` | string | — | Directory containing job definition JSON files (for `sync-jobs`) |
 | `notifications.slackTokenPath` | string | — | Path to Slack bot token file |
 | `notifications.defaultOnFailure` | string \| null | `null` | Default Slack channel for failures |
 | `notifications.defaultOnSuccess` | string \| null | `null` | Default Slack channel for successes |
-| `log.level` | string | `info` | Log level (trace/debug/info/warn/error/fatal) |
-| `log.file` | string | — | Log file path (stdout if omitted) |
+| `logging.level` | string | `info` | Log level (trace/debug/info/warn/error/fatal) |
+| `logging.file` | string | — | Log file path (stdout if omitted) |
 
 ## OpenClaw Plugin
 

@@ -107,6 +107,47 @@ describe('executeJob', () => {
     expect(parsed.JR_RUN_ID).toBe('99');
   });
 
+  it('should pass jobEnv to child process', async () => {
+    const script = join(testDir, 'jobenv.js');
+    writeFileSync(
+      script,
+      `console.log(JSON.stringify({ CUSTOMER: process.env.CUSTOMER, MODE: process.env.MODE }));`,
+    );
+
+    const result = await executeJob({
+      script,
+      dbPath: ':memory:',
+      jobId: 'test',
+      runId: 1,
+      jobEnv: { CUSTOMER: 'veterancrowd', MODE: 'live' },
+    });
+
+    expect(result.status).toBe('ok');
+    const parsed = JSON.parse(result.stdoutTail) as Record<string, string>;
+    expect(parsed.CUSTOMER).toBe('veterancrowd');
+    expect(parsed.MODE).toBe('live');
+  });
+
+  it('should append jobArgs after script path', async () => {
+    const script = join(testDir, 'jobargs.js');
+    writeFileSync(
+      script,
+      `console.log(JSON.stringify(process.argv.slice(2)));`,
+    );
+
+    const result = await executeJob({
+      script,
+      dbPath: ':memory:',
+      jobId: 'test',
+      runId: 1,
+      jobArgs: ['--customer', 'veterancrowd', '--live'],
+    });
+
+    expect(result.status).toBe('ok');
+    const parsed = JSON.parse(result.stdoutTail) as string[];
+    expect(parsed).toEqual(['--customer', 'veterancrowd', '--live']);
+  });
+
   it.skipIf(!isWindows)('should execute a .cmd script', async () => {
     const script = join(testDir, 'test.cmd');
     writeFileSync(script, '@echo off\r\necho cmd-output\r\nexit /b 0\r\n');

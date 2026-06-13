@@ -55,6 +55,10 @@ export interface ExecutionOptions {
   sourceType?: 'path' | 'inline';
   /** Custom command runners keyed by file extension (e.g. `".ts": "node /path/to/tsx/cli.mjs"`). */
   runners?: Record<string, string>;
+  /** Optional per-job environment variables. Spread into spawn env after JR_* vars. */
+  jobEnv?: Record<string, string>;
+  /** Optional per-job arguments. Appended after the script path in the spawn call. */
+  jobArgs?: string[];
 }
 
 /** Ring buffer for capturing last N lines of output. */
@@ -156,6 +160,8 @@ export function executeJob(
     commandResolver,
     sourceType = 'path',
     runners,
+    jobEnv,
+    jobArgs,
   } = options;
   const startTime = Date.now();
 
@@ -173,15 +179,16 @@ export function executeJob(
     const stdoutBuffer = new RingBuffer(100);
     const stderrBuffer = new RingBuffer(100);
 
-    const { command, args } = commandResolver
+    const { command, args: resolvedArgs } = commandResolver
       ? commandResolver(effectiveScript)
       : resolveCommand(effectiveScript, runners);
-    const child = spawn(command, args, {
+    const child = spawn(command, [...resolvedArgs, ...(jobArgs ?? [])], {
       env: {
         ...process.env,
         JR_DB_PATH: dbPath,
         JR_JOB_ID: jobId,
         JR_RUN_ID: String(runId),
+        ...(jobEnv ?? {}),
       },
       stdio: ['ignore', 'pipe', 'pipe'],
     });

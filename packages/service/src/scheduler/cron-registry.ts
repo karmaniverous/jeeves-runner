@@ -22,6 +22,9 @@ export interface JobRow {
   on_failure: string | null;
   on_success: string | null;
   source_type?: 'path' | 'inline';
+  output_channel?: string | null;
+  env?: string | null;
+  args?: string | null;
 }
 
 /** Handle for a scheduled job (timeout-based). */

@@ -15,6 +15,7 @@ import {
   createStatusHandler,
   type JeevesComponentDescriptor,
 } from '@karmaniverous/jeeves';
+import { getEndpoint } from '@karmaniverous/jeeves-runner-core';
 import type { FastifyInstance } from 'fastify';
 
 import type { Scheduler } from '../scheduler/scheduler.js';
@@ -72,7 +73,8 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
     },
   });
 
-  app.get('/status', async (_request, reply) => {
+  // Route paths reference RUNNER_ENDPOINTS catalog for consistency.
+  app.get(getEndpoint('status').path, async (_request, reply) => {
     const result = await statusHandler();
     return reply.status(result.status).send(result.body);
   });
@@ -92,7 +94,7 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
   );
 
   // --- GET /jobs ---
-  app.get('/jobs', () => {
+  app.get(getEndpoint('listJobs').path, () => {
     const rows = db
       .prepare(
         `SELECT j.*,

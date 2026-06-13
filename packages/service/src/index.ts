@@ -11,8 +11,13 @@ export { createRunnerDescriptor } from './descriptor.js';
 // Schemas
 export type { RunnerConfig } from './schemas/config.js';
 export { runnerConfigSchema } from './schemas/config.js';
-export type { Job } from './schemas/job.js';
-export { jobSchema } from './schemas/job.js';
+export type { CreateJob, Job, UpdateJob, UpdateScript } from './schemas/job.js';
+export {
+  createJobSchema,
+  jobSchema,
+  updateJobSchema,
+  updateScriptSchema,
+} from './schemas/job.js';
 export type { Queue } from './schemas/queue.js';
 export { queueSchema } from './schemas/queue.js';
 export type { Run, RunStatus, RunTrigger } from './schemas/run.js';
