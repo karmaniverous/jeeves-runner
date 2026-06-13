@@ -6,7 +6,63 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [77][89] feat: adopt core schemas, add per-job env/args, migration 006, resolve DD#44/DD#45
+
+Service adoption of core endpoint catalog and canonical schemas:
+- schemas/job.ts, run.ts, queue.ts: re-export from @karmaniverous/jeeves-runner-core
+- job-routes.ts: import createJobSchema/updateJobSchema/updateScriptSchema from core
+- job-routes.ts: add output_channel, env, args to POST and PATCH (resolves DD#44)
+- Remove 'retry' from runTriggerSchema (DD#46)
+
+Per-job arguments (#89):
+- Migration 006: add env TEXT and args TEXT columns to jobs
+- executor.ts: add jobEnv/jobArgs to ExecutionOptions, thread into spawn
+- scheduler.ts: parse env/args JSON from job row, pass to executor (script jobs only)
+- sync-jobs.ts: add env/args to JobDefinition and UPSERT
+- cron-registry.ts: add env/args/output_channel to JobRow type
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+- [77] feat: wire catalog derivation end-to-end
+
+Plugin:
+- Add @karmaniverous/jeeves-runner-core dependency
+- Add catalogTool() helper that derives method, description from RUNNER_ENDPOINTS
+- Refactor all 16 custom tools (runnerTools, inspectionTools, managementTools) to use catalogTool()
+- Fix test mock to include DEFAULT_BIND_ADDRESS for core import chain
+
+Service:
+- routes.ts: reference getEndpoint() for /status and /jobs paths
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+- [77] [89] fix: guard JSON.parse for job env/args with try/catch
+
+Malformed JSON in the env or args DB columns would crash the scheduler.
+Wrap parsing in try/catch with a warn-level log. Job proceeds without
+the malformed env/args rather than failing to start.
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+- [77][89] test: add coverage for jobEnv, jobArgs, output_channel; remove trivial test
+
+New tests:
+- executor: jobEnv vars arrive in child process env
+- executor: jobArgs appear in child process argv
+- job-routes: POST /jobs round-trips output_channel, env, args
+- job-routes: PATCH /jobs/:id updates output_channel, env, args
+
+Removed:
+- endpoints: 'should have valid HTTP methods' (redundant with TypeScript satisfies constraint)
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+- Updated core
+## [0.9.16] - 2026-06-11
+
+### 💼 Other
+
 - Updated deps
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner v0.9.16
 ## [0.9.15] - 2026-05-31
 
 ### 💼 Other
