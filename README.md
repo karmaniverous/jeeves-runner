@@ -393,13 +393,14 @@ Config file: `jeeves-runner/config.json` (legacy `jeeves-runner.config.json` is 
 | `reconcileIntervalMs` | number | `60000` | Job reconciliation interval (ms) |
 | `shutdownGraceMs` | number | `30000` | Grace period for running jobs on shutdown |
 | `runners` | Record | `{}` | Custom command runners keyed by file extension |
-| `gateway.url` | string | `http://127.0.0.1:18789` | OpenClaw Gateway URL (for session jobs) |
-| `gateway.tokenPath` | string | — | Path to gateway auth token file |
+| `gatewayUrl` | string | `http://127.0.0.1:18789` | OpenClaw Gateway URL (for session jobs) |
+| `gatewayApiKey` | string | — | Gateway API key (falls back to `OPENCLAW_GATEWAY_TOKEN` env var) |
+| `jobsDir` | string | — | Directory containing job definition JSON files (for `sync-jobs`) |
 | `notifications.slackTokenPath` | string | — | Path to Slack bot token file |
 | `notifications.defaultOnFailure` | string \| null | `null` | Default Slack channel for failures |
 | `notifications.defaultOnSuccess` | string \| null | `null` | Default Slack channel for successes |
-| `log.level` | string | `info` | Log level (trace/debug/info/warn/error/fatal) |
-| `log.file` | string | — | Log file path (stdout if omitted) |
+| `logging.level` | string | `info` | Log level (trace/debug/info/warn/error/fatal) |
+| `logging.file` | string | — | Log file path (stdout if omitted) |
 
 ## OpenClaw Plugin
 
