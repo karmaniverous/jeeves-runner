@@ -27,6 +27,8 @@ interface JobDefinition {
   source_type?: 'path' | 'inline';
   domain?: string;
   prerequisite?: string | null;
+  env?: Record<string, string>;
+  args?: string[];
 }
 
 /** Result counts from a sync operation. */
@@ -71,8 +73,8 @@ export function syncJobs(db: DatabaseSync, jobsDir: string): SyncResult {
   const stmt = db.prepare(
     `INSERT INTO jobs
        (id, name, schedule, script, type, description, enabled, timeout_ms,
-        overlap_policy, on_failure, on_success, output_channel, source_type, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+        overlap_policy, on_failure, on_success, output_channel, source_type, env, args, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
      ON CONFLICT(id) DO UPDATE SET
        name = excluded.name,
        schedule = excluded.schedule,
@@ -86,6 +88,8 @@ export function syncJobs(db: DatabaseSync, jobsDir: string): SyncResult {
        on_success = excluded.on_success,
        output_channel = excluded.output_channel,
        source_type = excluded.source_type,
+       env = excluded.env,
+       args = excluded.args,
        updated_at = datetime('now')`,
   );
 
@@ -185,6 +189,8 @@ export function syncJobs(db: DatabaseSync, jobsDir: string): SyncResult {
         job.on_success ?? null,
         job.output_channel ?? null,
         job.source_type ?? 'path',
+        job.env ? JSON.stringify(job.env) : null,
+        job.args ? JSON.stringify(job.args) : null,
       );
 
       if (isUpdate) {

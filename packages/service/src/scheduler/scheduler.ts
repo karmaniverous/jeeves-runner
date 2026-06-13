@@ -85,7 +85,19 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
       on_success,
       on_failure,
       source_type,
+      env: envJson,
+      args: argsJson,
     } = job;
+
+    // Parse per-job env and args from JSON TEXT columns (script-type jobs only)
+    const jobEnv =
+      type === 'script' && envJson
+        ? (JSON.parse(envJson) as Record<string, string>)
+        : undefined;
+    const jobArgs =
+      type === 'script' && argsJson
+        ? (JSON.parse(argsJson) as string[])
+        : undefined;
 
     // Check concurrency limit
     if (runningJobs.size >= config.maxConcurrency) {
@@ -123,6 +135,8 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
           timeoutMs: timeout_ms ?? undefined,
           sourceType: source_type ?? 'path',
           runners: config.runners,
+          jobEnv,
+          jobArgs,
         });
       }
 
