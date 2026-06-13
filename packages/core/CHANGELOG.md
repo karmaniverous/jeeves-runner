@@ -6,7 +6,36 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [77] feat: add endpoint catalog, canonical schemas, and shared contracts to core
+
+- RUNNER_ENDPOINTS catalog (19 entries) with EndpointDescriptor type and getEndpoint() helper
+- Canonical Zod schemas: jobSchema (with sourceType, outputChannel, env, args), createJobSchema, updateJobSchema, updateScriptSchema, runSchema, queueSchema
+- Remove 'retry' from runTriggerSchema (DD#46)
+- Shared response contracts: JobListItem, RunRecord, QueueStatusResponse, etc.
+- 35 tests (endpoints + schemas + existing config)
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+- [77][89] test: add coverage for jobEnv, jobArgs, output_channel; remove trivial test
+
+New tests:
+- executor: jobEnv vars arrive in child process env
+- executor: jobArgs appear in child process argv
+- job-routes: POST /jobs round-trips output_channel, env, args
+- job-routes: PATCH /jobs/:id updates output_channel, env, args
+
+Removed:
+- endpoints: 'should have valid HTTP methods' (redundant with TypeScript satisfies constraint)
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+## [0.1.5] - 2026-06-11
+
+### 💼 Other
+
 - Updated jeeves core
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner-core v0.1.5
 ## [0.1.4] - 2026-05-31
 
 ### 💼 Other
