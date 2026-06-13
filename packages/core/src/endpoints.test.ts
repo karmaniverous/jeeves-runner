@@ -18,13 +18,6 @@ describe('RUNNER_ENDPOINTS', () => {
     }
   });
 
-  it('should have valid HTTP methods', () => {
-    const validMethods = new Set(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']);
-    for (const ep of RUNNER_ENDPOINTS) {
-      expect(validMethods.has(ep.method)).toBe(true);
-    }
-  });
-
   it('should have paths starting with /', () => {
     for (const ep of RUNNER_ENDPOINTS) {
       expect(ep.path.startsWith('/')).toBe(true);

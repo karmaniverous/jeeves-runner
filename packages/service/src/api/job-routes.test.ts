@@ -251,4 +251,65 @@ describe('Job CRUD routes', () => {
     expect(job.script).toBe('console.log("hi")');
     expect(job.source_type).toBe('inline');
   });
+
+  it('POST /jobs should accept output_channel, env, and args', async () => {
+    const response = await app.inject({
+      method: 'POST',
+      url: '/jobs',
+      payload: {
+        id: 'full-job',
+        name: 'Full Job',
+        schedule: '0 * * * *',
+        script: '/path/to/script.ts',
+        output_channel: 'C123CHAN',
+        env: { CUSTOMER: 'vc', MODE: 'live' },
+        args: ['--verbose', '--dry-run'],
+      },
+    });
+
+    expect(response.statusCode).toBe(201);
+
+    const job = testDb.db
+      .prepare('SELECT output_channel, env, args FROM jobs WHERE id = ?')
+      .get('full-job') as {
+      output_channel: string | null;
+      env: string | null;
+      args: string | null;
+    };
+    expect(job.output_channel).toBe('C123CHAN');
+    expect(JSON.parse(job.env!)).toEqual({ CUSTOMER: 'vc', MODE: 'live' });
+    expect(JSON.parse(job.args!)).toEqual(['--verbose', '--dry-run']);
+  });
+
+  it('PATCH /jobs/:id should update output_channel, env, and args', async () => {
+    testDb.db
+      .prepare(
+        `INSERT INTO jobs (id, name, schedule, script, enabled)
+         VALUES (?, ?, ?, ?, ?)`,
+      )
+      .run('patch-fields', 'Patch', '0 0 * * *', '/script.js', 1);
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/jobs/patch-fields',
+      payload: {
+        output_channel: 'C456CHAN',
+        env: { KEY: 'value' },
+        args: ['--flag'],
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+
+    const job = testDb.db
+      .prepare('SELECT output_channel, env, args FROM jobs WHERE id = ?')
+      .get('patch-fields') as {
+      output_channel: string | null;
+      env: string | null;
+      args: string | null;
+    };
+    expect(job.output_channel).toBe('C456CHAN');
+    expect(JSON.parse(job.env!)).toEqual({ KEY: 'value' });
+    expect(JSON.parse(job.args!)).toEqual(['--flag']);
+  });
 });
