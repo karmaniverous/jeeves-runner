@@ -185,10 +185,10 @@ export function executeJob(
     const child = spawn(command, [...resolvedArgs, ...(jobArgs ?? [])], {
       env: {
         ...process.env,
+        ...(jobEnv ?? {}),
         JR_DB_PATH: dbPath,
         JR_JOB_ID: jobId,
         JR_RUN_ID: String(runId),
-        ...(jobEnv ?? {}),
       },
       stdio: ['ignore', 'pipe', 'pipe'],
     });

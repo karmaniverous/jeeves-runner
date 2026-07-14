@@ -107,6 +107,36 @@ describe('executeJob', () => {
     expect(parsed.JR_RUN_ID).toBe('99');
   });
 
+  it('jobEnv cannot override JR_* runner vars', async () => {
+    const script = join(testDir, 'jr-override.js');
+    writeFileSync(
+      script,
+      `console.log(JSON.stringify({ JR_DB_PATH: process.env.JR_DB_PATH, JR_JOB_ID: process.env.JR_JOB_ID, JR_RUN_ID: process.env.JR_RUN_ID, CUSTOM_VAR: process.env.CUSTOM_VAR }));`,
+    );
+
+    const result = await executeJob({
+      script,
+      dbPath: '/real/path.db',
+      jobId: 'real-job',
+      runId: 42,
+      jobEnv: {
+        JR_DB_PATH: '/wrong/path.db',
+        JR_JOB_ID: 'wrong-job',
+        CUSTOM_VAR: 'value',
+      },
+      jobArgs: ['--live', '--verbose'],
+    });
+
+    expect(result.status).toBe('ok');
+    const parsed = JSON.parse(result.stdoutTail) as Record<string, string>;
+    // JR_* vars from runner must win
+    expect(parsed.JR_DB_PATH).toBe('/real/path.db');
+    expect(parsed.JR_JOB_ID).toBe('real-job');
+    expect(parsed.JR_RUN_ID).toBe('42');
+    // jobEnv custom var should still come through
+    expect(parsed.CUSTOM_VAR).toBe('value');
+  });
+
   it('should pass jobEnv to child process', async () => {
     const script = join(testDir, 'jobenv.js');
     writeFileSync(

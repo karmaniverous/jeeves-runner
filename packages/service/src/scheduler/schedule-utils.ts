@@ -35,13 +35,31 @@ function tryParseRRStack(schedule: string): RRStackOptions | null {
   try {
     const parsed: unknown = JSON.parse(schedule);
     if (
-      typeof parsed === 'object' &&
-      parsed !== null &&
-      !Array.isArray(parsed)
+      typeof parsed !== 'object' ||
+      parsed === null ||
+      Array.isArray(parsed)
     ) {
-      return parsed as RRStackOptions;
+      return null;
     }
-    return null;
+
+    const obj = parsed as Record<string, unknown>;
+
+    // Already valid RRStack format (has rules array)
+    if (Array.isArray(obj.rules)) {
+      return obj as unknown as RRStackOptions;
+    }
+
+    // Flat convenience format: { freq, timezone, interval?, byhour?, ... }
+    if (typeof obj.freq === 'string' && typeof obj.timezone === 'string') {
+      const { timezone, ...ruleOptions } = obj;
+      return {
+        timezone: timezone,
+        rules: [{ effect: 'event', options: ruleOptions }],
+      };
+    }
+
+    // Unknown JSON object shape — pass through and let RRStack validate
+    return obj as unknown as RRStackOptions;
   } catch {
     return null;
   }
@@ -57,11 +75,15 @@ function tryParseRRStack(schedule: string): RRStackOptions | null {
 export function getNextFireTime(schedule: string): Date | null {
   const rrOpts = tryParseRRStack(schedule);
   if (rrOpts) {
-    const stack = new RRStack(rrOpts);
-    const next = stack.nextEvent();
-    if (!next) return null;
-    const unit = stack.timeUnit;
-    return new Date(unit === 's' ? next.at * 1000 : next.at);
+    try {
+      const stack = new RRStack(rrOpts);
+      const next = stack.nextEvent();
+      if (!next) return null;
+      const unit = stack.timeUnit;
+      return new Date(unit === 's' ? next.at * 1000 : next.at);
+    } catch {
+      return null;
+    }
   }
 
   const cron = new Cron(schedule);
