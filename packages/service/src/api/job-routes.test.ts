@@ -312,4 +312,45 @@ describe('Job CRUD routes', () => {
     expect(JSON.parse(job.env!)).toEqual({ KEY: 'value' });
     expect(JSON.parse(job.args!)).toEqual(['--flag']);
   });
+
+  it('GET /jobs/:id returns stored env, args, and output_channel', async () => {
+    testDb.db
+      .prepare(
+        `INSERT INTO jobs (id, name, schedule, script, enabled, output_channel, env, args)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        'get-fields',
+        'Get Fields',
+        '0 * * * *',
+        '/path/to/script.js',
+        1,
+        'C789CHAN',
+        JSON.stringify({ REGION: 'us-east-1' }),
+        JSON.stringify(['--prod']),
+      );
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/jobs/get-fields',
+    });
+
+    expect(response.statusCode).toBe(200);
+
+    const body = JSON.parse(response.body) as {
+      job: { output_channel: string; env: string; args: string };
+    };
+    expect(body.job.output_channel).toBe('C789CHAN');
+    expect(JSON.parse(body.job.env)).toEqual({ REGION: 'us-east-1' });
+    expect(JSON.parse(body.job.args)).toEqual(['--prod']);
+  });
+
+  it('GET /jobs/:id returns 404 for unknown job', async () => {
+    const response = await app.inject({
+      method: 'GET',
+      url: '/jobs/no-such-job',
+    });
+
+    expect(response.statusCode).toBe(404);
+  });
 });

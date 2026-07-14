@@ -8,7 +8,10 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
 
-import { validateSchedule } from '../../scheduler/schedule-utils.js';
+import {
+  getNextFireTime,
+  validateSchedule,
+} from '../../scheduler/schedule-utils.js';
 
 /** Shape of a single job definition in a JSON file. */
 interface JobDefinition {
@@ -164,6 +167,15 @@ export function syncJobs(db: DatabaseSync, jobsDir: string): SyncResult {
       if (!validation.valid) {
         result.errors.push(
           `${file}: job '${job.id}' has invalid schedule: ${validation.error}`,
+        );
+        result.skipped++;
+        continue;
+      }
+
+      const nextFire = getNextFireTime(scheduleStr);
+      if (!nextFire) {
+        result.errors.push(
+          `${file}: job '${job.id}' has a valid schedule that produces no upcoming fire time — job will never run`,
         );
         result.skipped++;
         continue;

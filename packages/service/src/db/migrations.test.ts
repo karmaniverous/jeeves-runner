@@ -45,6 +45,23 @@ describe('Migrations', () => {
     expect(row.v).toBeGreaterThanOrEqual(3);
   });
 
+  it('migration 006 adds env and args columns', () => {
+    // After runMigrations, check columns exist
+    const columns = testDb.db
+      .prepare("PRAGMA table_info('jobs')")
+      .all() as Array<{ name: string }>;
+    const columnNames = columns.map((c) => c.name);
+    expect(columnNames).toContain('env');
+    expect(columnNames).toContain('args');
+  });
+
+  it('schema_version reaches 6', () => {
+    const row = testDb.db
+      .prepare('SELECT MAX(version) as v FROM schema_version')
+      .get() as { v: number };
+    expect(row.v).toBe(6);
+  });
+
   it('should preserve existing data across re-migration', () => {
     testDb.db
       .prepare(
