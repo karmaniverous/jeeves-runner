@@ -10,14 +10,18 @@ export { type RunnerConfig, runnerConfigSchema } from './config.js';
 
 // Contracts (shared response types)
 export type {
+  CollectionResponse,
   JobDetailResponse,
   JobListItem,
   JobsResponse,
+  NamespacesResponse,
   QueuePeekItem,
   QueuePeekResponse,
   QueueStatusResponse,
   RunRecord,
   RunsResponse,
+  StateCollectionItem,
+  StateResponse,
 } from './contracts.js';
 
 // Endpoints
