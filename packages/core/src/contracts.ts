@@ -70,3 +70,27 @@ export interface QueuePeekItem {
 export interface QueuePeekResponse {
   items: QueuePeekItem[];
 }
+
+/** GET /state response — list of distinct namespaces. */
+export interface NamespacesResponse {
+  namespaces: string[];
+}
+
+/** GET /state/:namespace response — scalar state as key-value map. */
+export interface StateResponse {
+  [key: string]: string | null;
+}
+
+/** Single item in a state collection. */
+export interface StateCollectionItem {
+  itemKey: string;
+  value: string | null;
+  updatedAt: string;
+}
+
+/** GET /state/:namespace/:key response — scalar value + collection items. */
+export interface CollectionResponse {
+  value: string | null;
+  items: StateCollectionItem[];
+  count: number;
+}
