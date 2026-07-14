@@ -86,8 +86,12 @@ export function getNextFireTime(schedule: string): Date | null {
     }
   }
 
-  const cron = new Cron(schedule);
-  return cron.nextRun() ?? null;
+  try {
+    const cron = new Cron(schedule);
+    return cron.nextRun() ?? null;
+  } catch {
+    return null;
+  }
 }
 
 /**

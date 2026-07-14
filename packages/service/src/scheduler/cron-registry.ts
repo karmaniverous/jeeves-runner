@@ -59,12 +59,14 @@ export function createCronRegistry(deps: CronRegistryDeps): CronRegistry {
   /**
    * Schedule the next fire for a job. Computes next fire time, sets a
    * setTimeout, and re-arms after each fire.
+   *
+   * @returns true if a timer was set, false if there is no upcoming fire time.
    */
-  function scheduleNext(jobId: string, schedule: string): void {
+  function scheduleNext(jobId: string, schedule: string): boolean {
     const nextDate = getNextFireTime(schedule);
     if (!nextDate) {
       logger.warn({ jobId }, 'No upcoming fire time, job will not fire');
-      return;
+      return false;
     }
 
     const fireTimeMs = nextDate.getTime();
@@ -104,11 +106,21 @@ export function createCronRegistry(deps: CronRegistryDeps): CronRegistry {
         clearTimeout(timeout);
       },
     });
+
+    return true;
   }
 
   function registerSchedule(job: JobRow): boolean {
     try {
-      scheduleNext(job.id, job.schedule);
+      const scheduled = scheduleNext(job.id, job.schedule);
+      if (!scheduled) {
+        logger.error(
+          { jobId: job.id },
+          'No upcoming fire time — job will never run',
+        );
+        failedRegistrations.add(job.id);
+        return false;
+      }
       scheduleStrings.set(job.id, job.schedule);
       failedRegistrations.delete(job.id);
       logger.info({ jobId: job.id, schedule: job.schedule }, 'Scheduled job');

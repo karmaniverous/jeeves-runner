@@ -48,14 +48,17 @@ export interface RunsResponse {
   runs: RunRecord[];
 }
 
+/** GET /queues response — list of distinct queue names with items. */
+export interface QueuesResponse {
+  queues: string[];
+}
+
 /** GET /queues/:name/status response. */
 export interface QueueStatusResponse {
-  queue: string;
-  pending: number;
-  processing: number;
-  done: number;
-  failed: number;
-  oldest_pending_age_ms: number | null;
+  depth: number;
+  claimedCount: number;
+  failedCount: number;
+  oldestAge: number | null;
 }
 
 /** Queue peek item. */

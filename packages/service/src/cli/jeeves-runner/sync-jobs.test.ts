@@ -1,31 +1,24 @@
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { createConnection } from '../../db/connection.js';
-import { runMigrations } from '../../db/migrations.js';
+import type { TestDb } from '../../test-utils/db.js';
+import { createTestDb } from '../../test-utils/db.js';
 import { syncJobs } from './sync-jobs.js';
 
 describe('syncJobs', () => {
-  let dbPath: string;
+  let testDb: TestDb;
   let jobsDir: string;
-  let tempDir: string;
 
   beforeEach(() => {
-    tempDir = join(tmpdir(), `runner-sync-test-${String(Date.now())}`);
-    mkdirSync(tempDir, { recursive: true });
-    jobsDir = join(tempDir, 'jobs');
-    mkdirSync(jobsDir);
-    dbPath = join(tempDir, 'test.sqlite');
-    const db = createConnection(dbPath);
-    runMigrations(db);
-    db.close();
+    testDb = createTestDb();
+    jobsDir = join(testDb.dbPath, '..', 'jobs');
+    mkdirSync(jobsDir, { recursive: true });
   });
 
   afterEach(() => {
-    rmSync(tempDir, { recursive: true, force: true });
+    testDb.cleanup();
   });
 
   it('skips job with never-firing schedule', () => {
@@ -39,9 +32,7 @@ describe('syncJobs', () => {
     ];
     writeFileSync(join(jobsDir, 'test.json'), JSON.stringify(jobDef));
 
-    const db = createConnection(dbPath);
-    const result = syncJobs(db, jobsDir);
-    db.close();
+    const result = syncJobs(testDb.db, jobsDir);
 
     expect(result.skipped).toBeGreaterThanOrEqual(1);
     expect(result.errors.some((e) => e.includes('no upcoming fire time'))).toBe(
@@ -62,13 +53,12 @@ describe('syncJobs', () => {
     ];
     writeFileSync(join(jobsDir, 'test.json'), JSON.stringify(jobDef));
 
-    const db = createConnection(dbPath);
-    const result = syncJobs(db, jobsDir);
+    const result = syncJobs(testDb.db, jobsDir);
 
     expect(result.added).toBe(1);
     expect(result.errors).toHaveLength(0);
 
-    const row = db
+    const row = testDb.db
       .prepare('SELECT env, args FROM jobs WHERE id = ?')
       .get('env-args-test') as { env: string; args: string };
     expect(JSON.parse(row.env)).toEqual({
@@ -76,7 +66,5 @@ describe('syncJobs', () => {
       MODE: 'live',
     });
     expect(JSON.parse(row.args)).toEqual(['--verbose', '--dry-run']);
-
-    db.close();
   });
 });

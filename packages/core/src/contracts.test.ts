@@ -3,9 +3,40 @@ import { describe, expect, it } from 'vitest';
 import type {
   CollectionResponse,
   NamespacesResponse,
+  QueuesResponse,
+  QueueStatusResponse,
   StateCollectionItem,
   StateResponse,
 } from './contracts.js';
+
+describe('Queue contracts', () => {
+  it('QueueStatusResponse accepts valid shape', () => {
+    const response: QueueStatusResponse = {
+      depth: 5,
+      claimedCount: 2,
+      failedCount: 1,
+      oldestAge: 30000,
+    };
+    expect(response.depth).toBe(5);
+  });
+
+  it('QueueStatusResponse accepts null oldestAge', () => {
+    const response: QueueStatusResponse = {
+      depth: 0,
+      claimedCount: 0,
+      failedCount: 0,
+      oldestAge: null,
+    };
+    expect(response.oldestAge).toBeNull();
+  });
+
+  it('QueuesResponse accepts valid shape', () => {
+    const response: QueuesResponse = {
+      queues: ['email-updates', 'notifications'],
+    };
+    expect(response.queues).toHaveLength(2);
+  });
+});
 
 describe('State contracts', () => {
   it('NamespacesResponse accepts valid shape', () => {
