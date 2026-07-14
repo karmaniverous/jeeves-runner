@@ -372,6 +372,9 @@ Create a new runner job. Requires `id`, `name`, `schedule`, and `script`.
 - `enabled` (boolean, optional) — Default: true
 - `description` (string, optional)
 - `on_failure`, `on_success` (string, optional) — Slack channel IDs
+- `output_channel` (string, optional) — Slack channel ID for stdout relay
+- `env` (object, optional) — `Record<string, string>` environment variables spread into the script's spawn env alongside `JR_*` vars. Script-type jobs only; ignored for session jobs.
+- `args` (array of strings, optional) — Arguments appended after the script path in the spawn call. Script-type jobs only; ignored for session jobs.
 
 #### `runner_update_job`
 Update an existing job. Only supplied fields are changed (PATCH with partial body).

@@ -52,7 +52,7 @@
     },
     "configRoot": {
       "label": "Config Root",
-      "placeholder": "j:/config"
+      "placeholder": "/path/to/config"
     }
   }
 }

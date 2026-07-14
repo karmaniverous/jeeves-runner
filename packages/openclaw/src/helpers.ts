@@ -6,6 +6,7 @@
 
 import {
   type PluginApi,
+  resolveOptionalPluginSetting,
   resolvePluginSetting,
   RUNNER_PORT,
 } from '@karmaniverous/jeeves';
@@ -25,11 +26,16 @@ export function getApiUrl(api: PluginApi): string {
 
 /** Resolve the platform config root. */
 export function getConfigRoot(api: PluginApi): string {
-  return resolvePluginSetting(
+  const resolved = resolveOptionalPluginSetting(
     api,
     PLUGIN_ID,
     'configRoot',
     'JEEVES_CONFIG_ROOT',
-    'j:/config',
   );
+  if (!resolved) {
+    throw new Error(
+      'configRoot not configured — set it in plugin config or via JEEVES_CONFIG_ROOT env var',
+    );
+  }
+  return resolved;
 }
