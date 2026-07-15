@@ -6,6 +6,16 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [94] feat: add state response types to contracts (#94) (#98)
+
+Co-authored-by: jgs-jeeves <jgs-jeeves@users.noreply.github.com> ([#98](https://github.com/karmaniverous/jeeves-runner/pull/98))
+- [91-96] fix: SOLID/DRY review -- contract types, error handling, test utils (#94, #92)
+- [91-96] test: replace trivial tests, add cron-registry + sync-jobs coverage
+- [91-96] docs: sync guides, README, and plugin manifest with 0.10.1 changes
+## [0.1.6] - 2026-06-13
+
+### 💼 Other
+
 - [77] feat: add endpoint catalog, canonical schemas, and shared contracts to core
 
 - RUNNER_ENDPOINTS catalog (19 entries) with EndpointDescriptor type and getEndpoint() helper
@@ -27,6 +37,10 @@ Removed:
 - endpoints: 'should have valid HTTP methods' (redundant with TypeScript satisfies constraint)
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner-core v0.1.6
 ## [0.1.5] - 2026-06-11
 
 ### 💼 Other
