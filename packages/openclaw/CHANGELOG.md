@@ -4,6 +4,26 @@ All notable changes to this project will be documented in this file.
 
 ## [unreleased]
 
+### 💼 Other
+
+- [93-95] fix: complete 0.10.1 spec gaps (#93, #95, #97)
+
+- Remove timeout from DispatchOptions, dispatchSession, runDispatcher (#93)
+- Add script-vs-session env/args scheduler test (#95)
+- Sync openclaw.plugin.json version to 0.8.0 (#97)
+- Add release-it after:bump hook to auto-sync manifest version
+- Fix stale JSDoc on ExecutionOptions.jobEnv
+- DRY: extract skip() helper in syncJobs
+- Add reconcile-loop prevention tests for never-firing schedules
+- Remove redundant weak migration version test
+- Sync docs: remove timeout from script-helpers.md, add runners/outputChannel
+- Sync docs: add Endpoint/HttpMethod to core README exports
+- Sync docs: fix runs/queues/queue_items table schemas in architecture.md
+- Sync docs: add queue/state endpoint sections to api-reference.md
+- Sync docs: update job response examples with env/args/output_channel fields
+- Updated core
+## [0.8.0] - 2026-07-15
+
 ### 🐛 Bug Fixes
 
 - Sync plugin manifest version to 0.7.13 (#97) ([#97](https://github.com/karmaniverous/jeeves-runner/pull/97))
@@ -13,6 +33,10 @@ All notable changes to this project will be documented in this file.
 - [91-96] fix: remove j:/config fallback, add env/args/output_channel to SKILL.md (#91, #96)
 - [91-96] docs: sync guides, README, and plugin manifest with 0.10.1 changes
 - Updated core
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner-openclaw v0.8.0
 ## [0.7.13] - 2026-06-13
 
 ### 🐛 Bug Fixes
