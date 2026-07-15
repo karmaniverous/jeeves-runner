@@ -15,8 +15,10 @@ Shared configuration schema and types for jeeves-runner packages.
 |--------|-------------|
 | `RUNNER_ENDPOINTS` | Declarative catalog of all 19 HTTP API endpoints (method, path, description) |
 | `getEndpoint` | Look up an endpoint by name |
+| `Endpoint` | Type alias for an endpoint catalog entry |
 | `EndpointName` | Union type of all endpoint names |
 | `EndpointDescriptor` | Type for a single endpoint entry |
+| `HttpMethod` | Union type of HTTP methods used in the catalog |
 
 #### Canonical Schemas
 | Export | Description |

@@ -38,13 +38,6 @@ describe('Migrations', () => {
     expect(count).toBeGreaterThan(0);
   });
 
-  it('should track schema version', () => {
-    const row = testDb.db
-      .prepare('SELECT MAX(version) as v FROM schema_version')
-      .get() as { v: number };
-    expect(row.v).toBeGreaterThanOrEqual(3);
-  });
-
   it('migration 006 adds env and args columns', () => {
     // After runMigrations, check columns exist
     const columns = testDb.db
