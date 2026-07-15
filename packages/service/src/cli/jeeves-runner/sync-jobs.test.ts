@@ -40,6 +40,36 @@ describe('syncJobs', () => {
     );
   });
 
+  it('syncs job with flat RRStack schedule format', () => {
+    const jobDef = [
+      {
+        id: 'flat-rrstack',
+        name: 'Flat RRStack',
+        script: 'test.ts',
+        schedule: { freq: 'minutely', interval: 11, timezone: 'UTC' },
+      },
+    ];
+    writeFileSync(join(jobsDir, 'test.json'), JSON.stringify(jobDef));
+
+    const result = syncJobs(testDb.db, jobsDir);
+
+    expect(result.added).toBe(1);
+    expect(result.errors).toHaveLength(0);
+
+    const row = testDb.db
+      .prepare('SELECT schedule FROM jobs WHERE id = ?')
+      .get('flat-rrstack') as { schedule: string };
+
+    // The schedule is stored as the JSON-stringified flat format;
+    // tryParseRRStack repacks it at parse time, not at storage time.
+    const stored = JSON.parse(row.schedule) as {
+      freq: string;
+      timezone: string;
+    };
+    expect(stored.freq).toBe('minutely');
+    expect(stored.timezone).toBe('UTC');
+  });
+
   it('syncs job with env and args fields', () => {
     const jobDef = [
       {

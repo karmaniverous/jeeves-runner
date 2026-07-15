@@ -78,10 +78,8 @@ describe('tryParseRRStack flat format repacking', () => {
 
   it('returns null for flat format without timezone', () => {
     const schedule = JSON.stringify({ freq: 'minutely', interval: 11 });
-    // Falls through to pass-through path; RRStack may produce no events
     const next = getNextFireTime(schedule);
-    // Result depends on RRStack behavior — may or may not fire
-    expect(next === null || next instanceof Date).toBe(true);
+    expect(next).toBeNull();
   });
 });
 
