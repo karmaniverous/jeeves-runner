@@ -50,7 +50,7 @@
   },
   "dependencies": {
     "@karmaniverous/jeeves": "^0.5.12",
-    "@karmaniverous/jeeves-runner-core": "^0.2.0"
+    "@karmaniverous/jeeves-runner-core": "^0.2.1"
   },
   "devDependencies": {
     "@dotenvx/dotenvx": "^1.65.0",
