@@ -113,13 +113,17 @@ Stores execution history. Automatically pruned based on `runRetentionDays`.
 |--------|------|-------------|
 | `id` | INTEGER PK | Auto-increment run ID |
 | `job_id` | TEXT FK | References `jobs.id` |
+| `status` | TEXT | `pending`, `running`, `ok`, `error`, `timeout`, or `skipped` |
 | `started_at` | TEXT | ISO 8601 timestamp |
 | `finished_at` | TEXT | ISO 8601 timestamp |
-| `status` | TEXT | `ok`, `error`, or `timeout` |
-| `exit_code` | INTEGER | Process exit code |
-| `stdout` | TEXT | Captured standard output |
-| `stderr` | TEXT | Captured standard error |
 | `duration_ms` | INTEGER | Execution duration |
+| `exit_code` | INTEGER | Process exit code |
+| `tokens` | INTEGER | LLM token count (session jobs only) |
+| `result_meta` | TEXT | JSON from `JR_RESULT` output line |
+| `error` | TEXT | Error message if execution failed |
+| `stdout_tail` | TEXT | Last N lines of stdout |
+| `stderr_tail` | TEXT | Last N lines of stderr |
+| `trigger` | TEXT | `schedule` or `manual` |
 
 ### `state` Table
 
@@ -134,15 +138,16 @@ Scalar key-value store for script operational state.
 
 ### `state_items` Table
 
-Collection state for tracking sets of items within a namespace.
+Collection state for tracking sets of items within a namespace. FK to `state(namespace, key)`.
 
 | Column | Type | Description |
 |--------|------|-------------|
-| `namespace` | TEXT | Logical grouping (typically job ID) |
-| `key` | TEXT | Collection key |
-| `item_key` | TEXT | Individual item identifier |
+| `namespace` | TEXT PK | Logical grouping (typically job ID) |
+| `key` | TEXT PK | Collection key |
+| `item_key` | TEXT PK | Individual item identifier |
 | `value` | TEXT | JSON-encoded value |
-| `expires_at` | TEXT | Optional TTL timestamp |
+| `created_at` | TEXT | Creation timestamp |
+| `updated_at` | TEXT | Last update timestamp |
 
 ### `queues` Table
 
@@ -151,8 +156,13 @@ Queue-level metadata including deduplication and retention configuration.
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | TEXT PK | Queue identifier |
-| `dedup_config` | TEXT | JSON deduplication configuration |
-| `retention` | TEXT | JSON retention policy |
+| `name` | TEXT | Human-readable queue name |
+| `description` | TEXT | Queue description |
+| `dedup_expr` | TEXT | JSONPath expression for dedup key extraction |
+| `dedup_scope` | TEXT | `pending` (pending/processing only) or `all` (includes done) |
+| `max_attempts` | INTEGER | Maximum retry attempts (default 1) |
+| `retention_days` | INTEGER | Days to retain completed items (default 7) |
+| `created_at` | TEXT | Creation timestamp |
 
 ### `queue_items` Table
 
@@ -163,10 +173,15 @@ Ordered message queue with claim semantics.
 | `id` | INTEGER PK | Auto-increment |
 | `queue_id` | TEXT FK | References `queues.id` |
 | `payload` | TEXT | JSON-encoded payload |
-| `status` | TEXT | `pending`, `claimed`, `completed`, `failed` |
+| `status` | TEXT | `pending`, `processing`, `done`, or `failed` |
+| `dedup_key` | TEXT | Computed at enqueue time via queue's `dedup_expr` |
+| `priority` | INTEGER | Priority (higher = first, default 0) |
+| `attempts` | INTEGER | Number of attempts so far |
+| `max_attempts` | INTEGER | Override for queue-level max (default 1) |
+| `error` | TEXT | Error message on failure |
 | `created_at` | TEXT | Enqueue timestamp |
 | `claimed_at` | TEXT | Claim timestamp |
-| `completed_at` | TEXT | Completion timestamp |
+| `finished_at` | TEXT | Completion/failure timestamp |
 
 ---
 

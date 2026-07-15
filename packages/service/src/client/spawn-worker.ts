@@ -17,8 +17,6 @@ export interface DispatchOptions {
   label?: string;
   /** Thinking level for the LLM session. */
   thinking?: 'low' | 'medium' | 'high';
-  /** Timeout in seconds (default 300). */
-  timeout?: number;
   /** Custom command runners keyed by file extension (e.g. `{ ts: "node /path/to/tsx/cli.mjs" }`). */
   runners?: Record<string, string>;
   /** Output channel identifier for routing session results. */
@@ -53,10 +51,7 @@ export function dispatchSession(
       options.runners,
     );
 
-    const flagArgs = [
-      `--job-id=${options.jobId}`,
-      `--timeout=${String(options.timeout ?? 300)}`,
-    ];
+    const flagArgs = [`--job-id=${options.jobId}`];
 
     if (options.label) {
       flagArgs.push(`--label=${options.label}`);
@@ -110,7 +105,6 @@ export function runDispatcher(
         task,
         label: options.label ?? options.jobId,
         thinking: options.thinking ?? 'low',
-        timeout: options.timeout ?? 300,
       }),
     );
     process.exit(0);

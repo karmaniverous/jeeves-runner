@@ -100,8 +100,13 @@ List all jobs with last run status.
       "enabled": 1,
       "timeout_ms": 120000,
       "overlap_policy": "skip",
+      "source_type": "path",
+      "description": "Sync email metadata from Gmail",
       "on_failure": "C0123456789",
       "on_success": null,
+      "output_channel": null,
+      "env": null,
+      "args": null,
       "last_status": "ok",
       "last_run": "2026-03-02T01:03:00.000Z"
     }
@@ -126,8 +131,13 @@ Get full details for a single job.
     "enabled": 1,
     "timeout_ms": 120000,
     "overlap_policy": "skip",
+    "source_type": "path",
+    "description": "Sync email metadata from Gmail",
     "on_failure": "C0123456789",
-    "on_success": null
+    "on_success": null,
+    "output_channel": null,
+    "env": null,
+    "args": null
   }
 }
 ```
@@ -160,13 +170,17 @@ Get run history for a job.
     {
       "id": 42,
       "job_id": "sync-email",
+      "status": "ok",
       "started_at": "2026-03-02T01:03:00.000Z",
       "finished_at": "2026-03-02T01:03:12.345Z",
-      "status": "ok",
+      "duration_ms": 12345,
       "exit_code": 0,
-      "stdout": "Synced 15 messages",
-      "stderr": "",
-      "duration_ms": 12345
+      "tokens": null,
+      "result_meta": null,
+      "error": null,
+      "stdout_tail": "Synced 15 messages",
+      "stderr_tail": "",
+      "trigger": "schedule"
     }
   ]
 }
@@ -268,5 +282,117 @@ Update a job's script content or path without changing other fields.
 ```json
 {
   "ok": true
+}
+```
+
+---
+
+## Queues
+
+### `GET /queues`
+
+List all queue names.
+
+**Response:**
+
+```json
+{
+  "queues": ["email-updates", "notifications"]
+}
+```
+
+### `GET /queues/:name/status`
+
+Queue depth, claimed count, failed count, and oldest pending age.
+
+**Response:**
+
+```json
+{
+  "depth": 5,
+  "claimedCount": 2,
+  "failedCount": 1,
+  "oldestAge": 30000
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `depth` | `number` | Total pending items |
+| `claimedCount` | `number` | Items currently being processed |
+| `failedCount` | `number` | Items in failed state |
+| `oldestAge` | `number \| null` | Age of oldest pending item in ms (null if empty) |
+
+### `GET /queues/:name/peek`
+
+Non-claiming read of pending items.
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `limit` | `number` | `10` | Maximum items to return |
+
+**Response:**
+
+```json
+{
+  "items": [
+    {
+      "id": 1,
+      "payload": { "threadId": "abc123" },
+      "priority": 0,
+      "createdAt": "2026-03-02T01:00:00.000Z"
+    }
+  ]
+}
+```
+
+---
+
+## State
+
+### `GET /state`
+
+List all state namespaces.
+
+**Response:**
+
+```json
+{
+  "namespaces": ["email", "github"]
+}
+```
+
+### `GET /state/:namespace`
+
+Read scalar state for a namespace as a key-value map. Supports optional `?path=` JSONPath filtering.
+
+**Response:**
+
+```json
+{
+  "lastRunAt": "2026-03-02T01:03:00.000Z",
+  "cursor": null
+}
+```
+
+### `GET /state/:namespace/:key`
+
+Read a scalar value and its collection items. Supports optional `?path=` JSONPath filtering.
+
+**Response:**
+
+```json
+{
+  "value": "parent-value",
+  "items": [
+    {
+      "itemKey": "thread-123",
+      "value": "seen",
+      "updatedAt": "2026-03-02T01:00:00.000Z"
+    }
+  ],
+  "count": 1
 }
 ```

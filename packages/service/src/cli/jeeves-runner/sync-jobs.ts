@@ -61,6 +61,12 @@ export function syncJobs(db: DatabaseSync, jobsDir: string): SyncResult {
   const scriptsRoot = resolve(resolvedDir, '..');
   const result: SyncResult = { added: 0, updated: 0, skipped: 0, errors: [] };
 
+  /** Record a skipped job with an error message. */
+  function skip(message: string): void {
+    result.errors.push(message);
+    result.skipped++;
+  }
+
   let files: string[];
   try {
     files = readdirSync(resolvedDir).filter((f) => f.endsWith('.json'));
@@ -111,23 +117,20 @@ export function syncJobs(db: DatabaseSync, jobsDir: string): SyncResult {
     try {
       jobs = JSON.parse(readFileSync(filePath, 'utf-8'));
     } catch (err) {
-      result.errors.push(
+      skip(
         `Failed to parse ${file}: ${err instanceof Error ? err.message : String(err)}`,
       );
-      result.skipped++;
       continue;
     }
 
     if (!Array.isArray(jobs)) {
-      result.errors.push(`${file}: expected an array of job definitions`);
-      result.skipped++;
+      skip(`${file}: expected an array of job definitions`);
       continue;
     }
 
     for (const raw of jobs as unknown[]) {
       if (typeof raw !== 'object' || raw === null) {
-        result.errors.push(`${file}: job entry is not an object`);
-        result.skipped++;
+        skip(`${file}: job entry is not an object`);
         continue;
       }
 
@@ -138,10 +141,9 @@ export function syncJobs(db: DatabaseSync, jobsDir: string): SyncResult {
         typeof obj.script !== 'string' ||
         obj.schedule == null
       ) {
-        result.errors.push(
+        skip(
           `${file}: job missing or has invalid required fields (id, name, script must be strings, schedule must be defined)`,
         );
-        result.skipped++;
         continue;
       }
 
@@ -151,18 +153,16 @@ export function syncJobs(db: DatabaseSync, jobsDir: string): SyncResult {
         job.timeout_seconds != null &&
         typeof job.timeout_seconds !== 'number'
       ) {
-        result.errors.push(
+        skip(
           `${file}: job '${job.id}' has invalid timeout_seconds (must be a number)`,
         );
-        result.skipped++;
         continue;
       }
 
       if (job.enabled != null && typeof job.enabled !== 'boolean') {
-        result.errors.push(
+        skip(
           `${file}: job '${job.id}' has invalid enabled field (must be a boolean)`,
         );
-        result.skipped++;
         continue;
       }
 
@@ -173,19 +173,17 @@ export function syncJobs(db: DatabaseSync, jobsDir: string): SyncResult {
 
       const validation = validateSchedule(scheduleStr);
       if (!validation.valid) {
-        result.errors.push(
+        skip(
           `${file}: job '${job.id}' has invalid schedule: ${validation.error}`,
         );
-        result.skipped++;
         continue;
       }
 
       const nextFire = getNextFireTime(scheduleStr);
       if (!nextFire) {
-        result.errors.push(
+        skip(
           `${file}: job '${job.id}' has a valid schedule that produces no upcoming fire time — job will never run`,
         );
-        result.skipped++;
         continue;
       }
 

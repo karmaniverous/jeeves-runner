@@ -55,7 +55,7 @@ export interface ExecutionOptions {
   sourceType?: 'path' | 'inline';
   /** Custom command runners keyed by file extension (e.g. `".ts": "node /path/to/tsx/cli.mjs"`). */
   runners?: Record<string, string>;
-  /** Optional per-job environment variables. Spread into spawn env after JR_* vars. */
+  /** Optional per-job environment variables. Spread into spawn env before JR_* vars (JR_* cannot be overridden). */
   jobEnv?: Record<string, string>;
   /** Optional per-job arguments. Appended after the script path in the spawn call. */
   jobArgs?: string[];

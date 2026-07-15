@@ -39,10 +39,7 @@ describe('dispatchSession', () => {
 
     const result = await dispatchSession(
       'test task',
-      {
-        jobId: 'test-job',
-        timeout: 10,
-      },
+      { jobId: 'test-job' },
       workerPath,
     );
 
@@ -62,7 +59,6 @@ describe('dispatchSession', () => {
       'test task',
       {
         jobId: 'test-job',
-        timeout: 10,
         runners: { ts: 'node' },
       },
       workerPath,
@@ -81,10 +77,7 @@ describe('dispatchSession', () => {
 
     const result = await dispatchSession(
       'test task',
-      {
-        jobId: 'test-job',
-        timeout: 10,
-      },
+      { jobId: 'test-job' },
       workerPath,
     );
 
@@ -106,7 +99,6 @@ describe('dispatchSession', () => {
         jobId: 'my-job',
         label: 'my-label',
         thinking: 'high',
-        timeout: 60,
       },
       workerPath,
     );
@@ -116,6 +108,6 @@ describe('dispatchSession', () => {
     expect(args).toContain('--job-id=my-job');
     expect(args).toContain('--label=my-label');
     expect(args).toContain('--thinking=high');
-    expect(args).toContain('--timeout=60');
+    expect(args).not.toContainEqual(expect.stringContaining('--timeout'));
   });
 });

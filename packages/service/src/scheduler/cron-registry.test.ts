@@ -45,6 +45,118 @@ describe('cron-registry failed registration', () => {
     registry.stopAll();
     testDb.cleanup();
   });
+
+  it('does not re-register never-firing job on subsequent reconcile', () => {
+    const testDb = createTestDb();
+    const { db } = testDb;
+
+    db.prepare(
+      `INSERT INTO jobs (id, name, schedule, script, enabled)
+       VALUES (?, ?, ?, ?, ?)`,
+    ).run(
+      'never-fire',
+      'Never Fire',
+      JSON.stringify({ timezone: 'UTC', rules: [] }),
+      '/path/to/script.js',
+      1,
+    );
+
+    const mocks = createSchedulerMocks();
+    const loggerWarnMock = mocks.logger.warn;
+    const registry = createCronRegistry({
+      db,
+      onScheduledRun: vi.fn(),
+      logger: mocks.logger as unknown as Logger,
+    });
+
+    // First reconcile: registers and fails
+    registry.reconcile();
+    const warnCountAfterFirst = loggerWarnMock.mock.calls.length;
+
+    // Second reconcile: should NOT re-register (no new warn log)
+    const { failedIds } = registry.reconcile();
+
+    expect(failedIds).toHaveLength(0);
+    expect(loggerWarnMock.mock.calls.length).toBe(warnCountAfterFirst);
+
+    registry.stopAll();
+    testDb.cleanup();
+  });
+
+  it('re-registers never-firing job when schedule changes', () => {
+    const testDb = createTestDb();
+    const { db } = testDb;
+
+    db.prepare(
+      `INSERT INTO jobs (id, name, schedule, script, enabled)
+       VALUES (?, ?, ?, ?, ?)`,
+    ).run(
+      'revived-job',
+      'Revived Job',
+      JSON.stringify({ timezone: 'UTC', rules: [] }),
+      '/path/to/script.js',
+      1,
+    );
+
+    const mocks = createSchedulerMocks();
+    const registry = createCronRegistry({
+      db,
+      onScheduledRun: vi.fn(),
+      logger: mocks.logger as unknown as Logger,
+    });
+
+    // First reconcile: never-firing
+    registry.reconcile();
+    expect(registry.getFailedRegistrations()).toContain('revived-job');
+
+    // Update schedule to something valid
+    db.prepare('UPDATE jobs SET schedule = ? WHERE id = ?').run(
+      '*/5 * * * *',
+      'revived-job',
+    );
+
+    // Reconcile: should re-register with the new schedule
+    registry.reconcile();
+    expect(registry.getFailedRegistrations()).not.toContain('revived-job');
+
+    registry.stopAll();
+    testDb.cleanup();
+  });
+
+  it('cleans up never-firing job state when job is disabled', () => {
+    const testDb = createTestDb();
+    const { db } = testDb;
+
+    db.prepare(
+      `INSERT INTO jobs (id, name, schedule, script, enabled)
+       VALUES (?, ?, ?, ?, ?)`,
+    ).run(
+      'disable-nf',
+      'Disable NF',
+      JSON.stringify({ timezone: 'UTC', rules: [] }),
+      '/path/to/script.js',
+      1,
+    );
+
+    const mocks = createSchedulerMocks();
+    const registry = createCronRegistry({
+      db,
+      onScheduledRun: vi.fn(),
+      logger: mocks.logger as unknown as Logger,
+    });
+
+    registry.reconcile();
+    expect(registry.getFailedRegistrations()).toContain('disable-nf');
+
+    // Disable the job
+    db.prepare('UPDATE jobs SET enabled = 0 WHERE id = ?').run('disable-nf');
+
+    registry.reconcile();
+    expect(registry.getFailedRegistrations()).not.toContain('disable-nf');
+
+    registry.stopAll();
+    testDb.cleanup();
+  });
 });
 
 describe('cron-registry reconciliation', () => {

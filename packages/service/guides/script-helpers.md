@@ -195,13 +195,12 @@ Dispatch an LLM task via the OpenClaw Gateway. Pipes the task prompt to a worker
 ```typescript
 import { dispatchSession } from '@karmaniverous/jeeves-runner';
 
-const exitCode = await dispatchSession(
+const { exitCode, stdout } = await dispatchSession(
   'Summarize the latest email threads and write a digest.',
   {
     jobId: 'daily-digest',
     label: 'digest-2026-03-30',
     thinking: 'medium',
-    timeout: 600,
   },
   '/config/scripts/spawn-worker.js',
 );
@@ -216,7 +215,7 @@ import { runDispatcher } from '@karmaniverous/jeeves-runner';
 
 runDispatcher(
   'Generate social media posts from recent content.',
-  { jobId: 'social-posts', thinking: 'high', timeout: 300 },
+  { jobId: 'social-posts', thinking: 'high' },
   '/config/scripts/spawn-worker.js',
 );
 ```
@@ -228,7 +227,8 @@ runDispatcher(
 | `jobId` | `string` | — | Job identifier |
 | `label` | `string?` | — | Session label |
 | `thinking` | `'low' \| 'medium' \| 'high'` | — | LLM thinking level |
-| `timeout` | `number` | `300` | Timeout in seconds |
+| `runners` | `Record<string, string>?` | — | Custom command runners keyed by file extension |
+| `outputChannel` | `string?` | — | Output channel identifier for routing session results |
 
 ---
 

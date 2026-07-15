@@ -161,6 +161,68 @@ describe('createScheduler', () => {
     testDb.cleanup();
   });
 
+  it('passes env/args to executor for script jobs but not session jobs', async () => {
+    const testDb = createTestDb();
+    const db = testDb.db;
+
+    // Script job with env and args
+    db.prepare(
+      `INSERT INTO jobs (id, name, schedule, script, type, enabled, env, args)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(
+      'script-job',
+      'Script Job',
+      '* * * * *',
+      '/path/to/script.js',
+      'script',
+      1,
+      JSON.stringify({ CUSTOM_VAR: 'value' }),
+      JSON.stringify(['--live', '--verbose']),
+    );
+
+    // Session job with env and args (should be ignored)
+    db.prepare(
+      `INSERT INTO jobs (id, name, schedule, script, type, enabled, env, args)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(
+      'session-job',
+      'Session Job',
+      '* * * * *',
+      'Do the thing',
+      'session',
+      1,
+      JSON.stringify({ IGNORED_VAR: 'ignored' }),
+      JSON.stringify(['--ignored']),
+    );
+
+    const mocks = createSchedulerMocks();
+    const scheduler = createTestScheduler(db, mocks);
+    const { executorMock } = mocks;
+
+    scheduler.start();
+
+    // Advance time to trigger both jobs
+    await vi.advanceTimersByTimeAsync(60_000);
+
+    // Script job should have been called with env/args
+    const scriptCall = executorMock.mock.calls.find(
+      (call) => call[0].jobId === 'script-job',
+    );
+    expect(scriptCall).toBeDefined();
+    expect(scriptCall![0].jobEnv).toEqual({ CUSTOM_VAR: 'value' });
+    expect(scriptCall![0].jobArgs).toEqual(['--live', '--verbose']);
+
+    // Session job should NOT have gone through the executor (it needs a gateway client)
+    // Without a gateway client, session jobs throw an error and don't call the executor
+    const sessionCall = executorMock.mock.calls.find(
+      (call) => call[0].jobId === 'session-job',
+    );
+    expect(sessionCall).toBeUndefined();
+
+    void scheduler.stop();
+    testDb.cleanup();
+  });
+
   it('removes disabled jobs on reconciliation', async () => {
     const testDb = createTestDb();
     const db = testDb.db;
