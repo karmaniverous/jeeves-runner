@@ -11,7 +11,41 @@ import {
   createSchedulerMocks,
   createTestConfig,
 } from '../test-utils/scheduler.js';
+import { createCronRegistry } from './cron-registry.js';
 import { createScheduler } from './scheduler.js';
+
+describe('cron-registry failed registration', () => {
+  it('marks job as failed when schedule produces no fire time', () => {
+    const testDb = createTestDb();
+    const { db } = testDb;
+
+    db.prepare(
+      `INSERT INTO jobs (id, name, schedule, script, enabled)
+       VALUES (?, ?, ?, ?, ?)`,
+    ).run(
+      'no-fire-job',
+      'No Fire Job',
+      JSON.stringify({ timezone: 'UTC', rules: [] }),
+      '/path/to/script.js',
+      1,
+    );
+
+    const mocks = createSchedulerMocks();
+    const registry = createCronRegistry({
+      db,
+      onScheduledRun: vi.fn(),
+      logger: mocks.logger as unknown as Logger,
+    });
+
+    const { failedIds } = registry.reconcile();
+
+    expect(failedIds).toContain('no-fire-job');
+    expect(registry.getFailedRegistrations()).toContain('no-fire-job');
+
+    registry.stopAll();
+    testDb.cleanup();
+  });
+});
 
 describe('cron-registry reconciliation', () => {
   beforeEach(() => {

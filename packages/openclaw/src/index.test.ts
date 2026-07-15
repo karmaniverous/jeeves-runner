@@ -39,15 +39,20 @@ vi.mock('@karmaniverous/jeeves', () => {
             ];
           return typeof val === 'string' ? val : fallback;
         }
+        return fallback;
+      },
+    ),
+    resolveOptionalPluginSetting: vi.fn(
+      (_api: unknown, _pluginId: string, key: string, _envVar: string) => {
         if (key === 'configRoot') {
           const api = _api as PluginApi;
           const val =
             api.config?.plugins?.entries?.['jeeves-runner-openclaw']?.config?.[
               key
             ];
-          return typeof val === 'string' ? val : fallback;
+          return typeof val === 'string' ? val : undefined;
         }
-        return fallback;
+        return undefined;
       },
     ),
     createAsyncContentCache: vi.fn(() => vi.fn(() => 'cached content')),
@@ -91,6 +96,15 @@ describe('plugin register', () => {
 
     const tools = new Map<string, unknown>();
     const api: PluginApi = {
+      config: {
+        plugins: {
+          entries: {
+            'jeeves-runner-openclaw': {
+              config: { configRoot: 'j:/config' },
+            },
+          },
+        },
+      },
       registerTool(tool) {
         tools.set(tool.name, tool);
       },
@@ -148,19 +162,13 @@ describe('plugin register', () => {
     );
   });
 
-  it('falls back to default configRoot when not configured', async () => {
+  it('throws when configRoot is not configured', async () => {
     const { default: register } = await import('./index.js');
-    const core = (await import('@karmaniverous/jeeves')) as unknown as {
-      init: MockFn;
-    };
-    core.init.mockClear();
 
     const api: PluginApi = { registerTool() {} };
 
-    register(api);
-
-    expect(core.init).toHaveBeenCalledWith(
-      expect.objectContaining({ configRoot: 'j:/config' }),
-    );
+    expect(() => {
+      register(api);
+    }).toThrow('configRoot not configured');
   });
 });

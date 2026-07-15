@@ -17,7 +17,7 @@
       },
       "configRoot": {
         "type": "string",
-        "description": "Jeeves platform config root directory (e.g., j:/config)"
+        "description": "Jeeves platform config root directory"
       }
     }
   },
@@ -52,7 +52,7 @@
     },
     "configRoot": {
       "label": "Config Root",
-      "placeholder": "j:/config"
+      "placeholder": "/path/to/config"
     }
   }
 }

@@ -99,6 +99,11 @@ Stores job configuration. Registered via CLI or seed script, mutable via API.
 | `overlap_policy` | TEXT | `skip` or `allow` |
 | `on_failure` | TEXT | Slack channel for failure alerts |
 | `on_success` | TEXT | Slack channel for success alerts |
+| `source_type` | TEXT | `path` (file reference) or `inline` (script content) |
+| `description` | TEXT | Human-readable description |
+| `output_channel` | TEXT | Slack channel ID for stdout relay |
+| `env` | TEXT | JSON `Record<string, string>` — per-job env vars (script-type only) |
+| `args` | TEXT | JSON `string[]` — per-job CLI arguments (script-type only) |
 
 ### `runs` Table
 

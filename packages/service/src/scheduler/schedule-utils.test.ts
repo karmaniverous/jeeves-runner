@@ -34,20 +34,20 @@ describe('getNextFireTime', () => {
     expect(result).toBeInstanceOf(Date);
   });
 
-  it('should treat bare JSON string as cron (not rrstack)', () => {
-    expect(() => getNextFireTime('"hello"')).toThrow();
+  it('should return null for bare JSON string (not valid cron)', () => {
+    expect(getNextFireTime('"hello"')).toBeNull();
   });
 
-  it('should treat JSON number as cron (not rrstack)', () => {
-    expect(() => getNextFireTime('42')).toThrow();
+  it('should return null for JSON number (not valid cron)', () => {
+    expect(getNextFireTime('42')).toBeNull();
   });
 
-  it('should treat JSON null as cron (not rrstack)', () => {
-    expect(() => getNextFireTime('null')).toThrow();
+  it('should return null for JSON null (not valid cron)', () => {
+    expect(getNextFireTime('null')).toBeNull();
   });
 
-  it('should treat JSON array as cron (not rrstack)', () => {
-    expect(() => getNextFireTime('[1,2,3]')).toThrow();
+  it('should return null for JSON array (not valid cron)', () => {
+    expect(getNextFireTime('[1,2,3]')).toBeNull();
   });
 });
 
@@ -78,10 +78,8 @@ describe('tryParseRRStack flat format repacking', () => {
 
   it('returns null for flat format without timezone', () => {
     const schedule = JSON.stringify({ freq: 'minutely', interval: 11 });
-    // Falls through to pass-through path; RRStack may produce no events
     const next = getNextFireTime(schedule);
-    // Result depends on RRStack behavior — may or may not fire
-    expect(next === null || next instanceof Date).toBe(true);
+    expect(next).toBeNull();
   });
 });
 

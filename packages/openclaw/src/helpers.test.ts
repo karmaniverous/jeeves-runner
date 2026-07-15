@@ -32,9 +32,9 @@ describe('getApiUrl', () => {
 });
 
 describe('getConfigRoot', () => {
-  it('returns default config root when no config', () => {
+  it('throws when configRoot is not configured', () => {
     const api: PluginApi = { registerTool: () => {} };
-    expect(getConfigRoot(api)).toBe('j:/config');
+    expect(() => getConfigRoot(api)).toThrow('configRoot not configured');
   });
 
   it('returns configured config root', () => {

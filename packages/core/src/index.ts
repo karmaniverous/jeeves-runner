@@ -17,6 +17,7 @@ export type {
   NamespacesResponse,
   QueuePeekItem,
   QueuePeekResponse,
+  QueuesResponse,
   QueueStatusResponse,
   RunRecord,
   RunsResponse,

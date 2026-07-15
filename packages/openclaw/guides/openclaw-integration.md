@@ -184,6 +184,9 @@ Create a new runner job.
 | `description` | `string` | No | Job description |
 | `on_failure` | `string` | No | Slack channel ID for failure alerts |
 | `on_success` | `string` | No | Slack channel ID for success alerts |
+| `output_channel` | `string` | No | Slack channel ID for stdout relay |
+| `env` | `object` | No | `Record<string, string>` env vars spread into spawn env alongside `JR_*` vars. Script-type only. |
+| `args` | `string[]` | No | Arguments appended after the script path in spawn. Script-type only. |
 
 **Example:**
 ```json

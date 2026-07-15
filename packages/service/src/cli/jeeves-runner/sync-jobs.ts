@@ -28,7 +28,15 @@ interface JobDefinition {
   on_success?: string | null;
   output_channel?: string | null;
   source_type?: 'path' | 'inline';
+  /**
+   * Forward-compatibility stub for future graph metadata (DD#43).
+   * Parsed from JSON but not persisted to the DB.
+   */
   domain?: string;
+  /**
+   * Forward-compatibility stub for future graph metadata (DD#43).
+   * Parsed from JSON but not persisted to the DB.
+   */
   prerequisite?: string | null;
   env?: Record<string, string>;
   args?: string[];
