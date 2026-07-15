@@ -6,6 +6,17 @@ All notable changes to this project will be documented in this file.
 
 ### 🐛 Bug Fixes
 
+- Sync plugin manifest version to 0.7.13 (#97) ([#97](https://github.com/karmaniverous/jeeves-runner/pull/97))
+
+### 💼 Other
+
+- [91-96] fix: remove j:/config fallback, add env/args/output_channel to SKILL.md (#91, #96)
+- [91-96] docs: sync guides, README, and plugin manifest with 0.10.1 changes
+- Updated core
+## [0.7.13] - 2026-06-13
+
+### 🐛 Bug Fixes
+
 - Sync plugin manifest version to 0.7.12
 
 ### 💼 Other
@@ -43,6 +54,10 @@ SKILL.md:
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 - Updated core
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner-openclaw v0.7.13
 ## [0.7.12] - 2026-06-11
 
 ### ⚙️ Miscellaneous Tasks
