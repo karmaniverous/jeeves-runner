@@ -43,12 +43,7 @@ vi.mock('@karmaniverous/jeeves', () => {
       },
     ),
     resolveOptionalPluginSetting: vi.fn(
-      (
-        _api: unknown,
-        _pluginId: string,
-        key: string,
-        _envVar: string,
-      ) => {
+      (_api: unknown, _pluginId: string, key: string, _envVar: string) => {
         if (key === 'configRoot') {
           const api = _api as PluginApi;
           const val =
@@ -172,6 +167,8 @@ describe('plugin register', () => {
 
     const api: PluginApi = { registerTool() {} };
 
-    expect(() => register(api)).toThrow('configRoot not configured');
+    expect(() => {
+      register(api);
+    }).toThrow('configRoot not configured');
   });
 });
