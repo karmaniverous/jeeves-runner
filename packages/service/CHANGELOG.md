@@ -6,6 +6,24 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [92-95] feat: flat RRStack defense, env precedence fix, 0.10.0 tests (#92, #95) (#99)
+
+Co-authored-by: jgs-jeeves <jgs-jeeves@users.noreply.github.com> ([#99](https://github.com/karmaniverous/jeeves-runner/pull/99))
+- [91-96] fix: SOLID/DRY review -- contract types, error handling, test utils (#94, #92)
+- [91-96] test: replace trivial tests, add cron-registry + sync-jobs coverage
+- [91-96] docs: sync guides, README, and plugin manifest with 0.10.1 changes
+- [91-96] fix: prevent reconcile retry loop for never-firing schedules
+
+Store schedule string for failed registrations so reconcile only
+retries when the schedule actually changes. Clean up schedule strings
+for disabled/deleted never-firing jobs.
+
+Resolves copilot review comment on PR #100.
+- Updated core
+## [0.9.17] - 2026-06-13
+
+### 💼 Other
+
 - [77][89] feat: adopt core schemas, add per-job env/args, migration 006, resolve DD#44/DD#45
 
 Service adoption of core endpoint catalog and canonical schemas:
@@ -54,6 +72,10 @@ Removed:
 
 Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 - Updated core
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner v0.9.17
 ## [0.9.16] - 2026-06-11
 
 ### 💼 Other
