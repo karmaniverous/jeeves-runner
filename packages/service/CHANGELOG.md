@@ -6,6 +6,26 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [93-95] fix: complete 0.10.1 spec gaps (#93, #95, #97)
+
+- Remove timeout from DispatchOptions, dispatchSession, runDispatcher (#93)
+- Add script-vs-session env/args scheduler test (#95)
+- Sync openclaw.plugin.json version to 0.8.0 (#97)
+- Add release-it after:bump hook to auto-sync manifest version
+- Fix stale JSDoc on ExecutionOptions.jobEnv
+- DRY: extract skip() helper in syncJobs
+- Add reconcile-loop prevention tests for never-firing schedules
+- Remove redundant weak migration version test
+- Sync docs: remove timeout from script-helpers.md, add runners/outputChannel
+- Sync docs: add Endpoint/HttpMethod to core README exports
+- Sync docs: fix runs/queues/queue_items table schemas in architecture.md
+- Sync docs: add queue/state endpoint sections to api-reference.md
+- Sync docs: update job response examples with env/args/output_channel fields
+- Updated core
+## [0.10.0] - 2026-07-15
+
+### 💼 Other
+
 - [92-95] feat: flat RRStack defense, env precedence fix, 0.10.0 tests (#92, #95) (#99)
 
 Co-authored-by: jgs-jeeves <jgs-jeeves@users.noreply.github.com> ([#99](https://github.com/karmaniverous/jeeves-runner/pull/99))
@@ -20,6 +40,10 @@ for disabled/deleted never-firing jobs.
 
 Resolves copilot review comment on PR #100.
 - Updated core
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner v0.10.0
 ## [0.9.17] - 2026-06-13
 
 ### 💼 Other
