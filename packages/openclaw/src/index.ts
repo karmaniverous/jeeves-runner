@@ -2,87 +2,64 @@
  * OpenClaw plugin for jeeves-runner.
  *
  * Thin HTTP client — all operations delegate to the jeeves-runner service.
- * Uses `@karmaniverous/jeeves` core for TOOLS.md and platform content.
+ * A standard OpenClaw plugin: it registers tools and ships its skill via the
+ * manifest; it writes no workspace files. Installed by `jeeves install`.
  *
  * @packageDocumentation
  */
 
 import {
-  createAsyncContentCache,
-  createComponentWriter,
   createPluginToolset,
   getPackageVersion,
-  init,
   type JeevesComponentDescriptor,
-  loadWorkspaceConfig,
   type PluginApi,
-  resolveWorkspacePath,
   RUNNER_PORT,
-  SECTION_IDS,
-  WORKSPACE_CONFIG_DEFAULTS,
 } from '@karmaniverous/jeeves';
 
-import { generateRunnerContent } from './generateContent.js';
-import { getApiUrl, getConfigRoot } from './helpers.js';
+import { createConfigRootGate } from './configRootGate.js';
+import { getApiUrl } from './helpers.js';
 import { registerRunnerCustomTools } from './runnerTools.js';
 
 /** Plugin version derived from the nearest package.json. */
 const PLUGIN_VERSION = getPackageVersion(import.meta.url);
 
-const REFRESH_INTERVAL_SECONDS = 67;
+const descriptor: JeevesComponentDescriptor = {
+  name: 'runner',
+  version: PLUGIN_VERSION,
+  servicePackage: '@karmaniverous/jeeves-runner',
+  pluginPackage: '@karmaniverous/jeeves-runner-openclaw',
+  defaultPort: RUNNER_PORT,
+  // Plugin has no service-side config to validate. This pass-through schema
+  // satisfies the descriptor contract; the plugin's own config is validated
+  // separately via openclaw.plugin.json's configSchema.
+  configSchema: {
+    parse: (v: unknown) => v,
+    safeParse: (v: unknown) => ({ success: true as const, data: v }),
+  } as JeevesComponentDescriptor['configSchema'],
+  configFileName: 'config.json',
+  initTemplate: () => ({}),
+  startCommand: () => ['node', 'index.js'],
+  // Plugin-side descriptor; run is a no-op (service handles startup).
+  async run() {},
+};
 
-/** Register all runner tools with the OpenClaw plugin API and start TOOLS.md writer. */
+/**
+ * Register all runner tools with the OpenClaw plugin API.
+ *
+ * @remarks
+ * Always succeeds, even with no plugin config: `configRoot` is resolved
+ * lazily (see {@link createConfigRootGate}). The standard core toolset is
+ * guarded until it resolves; the HTTP-only runner tools need just `apiUrl`.
+ */
 export default function register(api: PluginApi): void {
   const baseUrl = getApiUrl(api);
+  const gate = createConfigRootGate(api);
 
-  init({
-    workspacePath: resolveWorkspacePath(api),
-    configRoot: getConfigRoot(api),
-  });
-
-  const getContent = createAsyncContentCache({
-    fetch: async () => generateRunnerContent(baseUrl),
-    placeholder: '> Initializing runner status...',
-  });
-
-  const descriptor: JeevesComponentDescriptor = {
-    name: 'runner',
-    version: PLUGIN_VERSION,
-    servicePackage: '@karmaniverous/jeeves-runner',
-    pluginPackage: '@karmaniverous/jeeves-runner-openclaw',
-    defaultPort: RUNNER_PORT,
-    // Plugin has no service-side config to validate. This pass-through schema
-    // satisfies the descriptor contract; the plugin's own config is validated
-    // separately via openclaw.plugin.json's configSchema.
-    configSchema: {
-      parse: (v: unknown) => v,
-      safeParse: (v: unknown) => ({ success: true as const, data: v }),
-    } as JeevesComponentDescriptor['configSchema'],
-    configFileName: 'config.json',
-    initTemplate: () => ({}),
-    startCommand: () => ['node', 'index.js'],
-    // Plugin-side descriptor; run is a no-op (service handles startup).
-    async run() {},
-    sectionId: SECTION_IDS.Runner,
-    refreshIntervalSeconds: REFRESH_INTERVAL_SECONDS,
-    generateToolsContent: getContent,
-  };
-
-  // Register 4 standard tools from the factory
-  const standardTools = createPluginToolset(descriptor);
-  for (const tool of standardTools) {
-    api.registerTool(tool, { optional: true });
+  // 4 standard tools from the core factory (need core init / configRoot)
+  for (const tool of createPluginToolset(descriptor)) {
+    api.registerTool(gate.guard(tool), { optional: true });
   }
 
-  // Register 16 custom runner tools (excludes runner_status, now standard)
+  // 16 custom runner tools (HTTP only; excludes runner_status, now standard)
   registerRunnerCustomTools(api, baseUrl);
-
-  // Start TOOLS.md writer with gateway URL for cleanup escalation
-  const workspacePath = resolveWorkspacePath(api);
-  const gatewayUrl =
-    loadWorkspaceConfig(workspacePath)?.core?.gatewayUrl ??
-    WORKSPACE_CONFIG_DEFAULTS.core.gatewayUrl;
-
-  const writer = createComponentWriter(descriptor, { gatewayUrl });
-  writer.start();
 }

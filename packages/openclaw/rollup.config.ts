@@ -1,7 +1,7 @@
 /**
  * @module rollup.config
  * Rollup configuration for the OpenClaw plugin package.
- * Two entry points: plugin (ESM + declarations) and CLI (ESM executable).
+ * Single entry point: the plugin (ESM + declarations).
  * Skills are copied from skills/ → dist/skills/ via rollup-plugin-copy.
  */
 
@@ -69,31 +69,4 @@ const pluginConfig: RollupOptions = {
   ],
 };
 
-const cliConfig: RollupOptions = {
-  input: 'src/cli.ts',
-  external: [
-    ...dependencyExternals,
-    ...dependencyExternals.map((dep) => new RegExp('^' + dep + '/')),
-    /^node:/,
-  ],
-  onwarn,
-  output: {
-    file: 'dist/cli.js',
-    format: 'esm',
-    banner: '#!/usr/bin/env node',
-  },
-  plugins: [
-    resolve({ preferBuiltins: true }),
-    commonjs(),
-    typescriptPlugin({
-      tsconfig: './tsconfig.json',
-      outputToFilesystem: false,
-      outDir: 'dist',
-      noEmit: false,
-      declaration: false,
-      incremental: false,
-    }),
-  ],
-};
-
-export default [pluginConfig, cliConfig];
+export default [pluginConfig];

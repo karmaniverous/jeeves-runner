@@ -8,57 +8,26 @@ The `@karmaniverous/jeeves-runner-openclaw` plugin gives your OpenClaw agent acc
 
 ## Installation
 
-### Standard (OpenClaw CLI)
+The plugin is a standard OpenClaw plugin. `jeeves install` / `jeeves update` (from `@karmaniverous/jeeves` 0.6+) install it and write its config. To install it by hand:
 
 ```bash
-openclaw plugins install @karmaniverous/jeeves-runner-openclaw
+openclaw plugins install npm:@karmaniverous/jeeves-runner-openclaw@<version> --pin --accept-capabilities
 ```
 
-### Self-Installer
-
-OpenClaw's `plugins install` command has a known bug on Windows where it fails with `spawn EINVAL` or `spawn npm ENOENT` ([#9224](https://github.com/openclaw/openclaw/issues/9224), [#4557](https://github.com/openclaw/openclaw/issues/4557), [#6086](https://github.com/openclaw/openclaw/issues/6086)). This package includes a self-installer that works around the issue:
-
-```bash
-npx @karmaniverous/jeeves-runner-openclaw install
-```
-
-The installer:
-
-1. Copies the plugin into OpenClaw's extensions directory (`~/.openclaw/extensions/jeeves-runner-openclaw/`)
-2. Adds the plugin to `plugins.entries` in `openclaw.json`
-3. If `plugins.allow` or `tools.allow` are already populated (explicit allowlists), adds the plugin to those lists
-
-To remove:
-
-```bash
-npx @karmaniverous/jeeves-runner-openclaw uninstall
-```
-
-#### Non-default installations
-
-If OpenClaw is installed at a non-default location, set one of these environment variables:
-
-| Variable | Description |
-|----------|-------------|
-| `OPENCLAW_CONFIG` | Full path to `openclaw.json` (overrides all other detection) |
-| `OPENCLAW_HOME` | Path to the `.openclaw` directory |
-
-Default location: `~/.openclaw/openclaw.json`
-
-After install or uninstall, restart the OpenClaw gateway to apply changes.
+There is no plugin-specific installer: the `npx @karmaniverous/jeeves-runner-openclaw install|uninstall` CLI was removed in favor of the OpenClaw CLI. Uninstall with `openclaw plugins uninstall jeeves-runner-openclaw`.
 
 ## Configuration
 
-The plugin is configured via `plugins.entries` in `openclaw.json`:
+The plugin is configured via `plugins.entries` in `openclaw.json` (written by `jeeves install`):
 
 ```json
 {
   "plugins": {
     "entries": {
-      "@karmaniverous/jeeves-runner-openclaw": {
+      "jeeves-runner-openclaw": {
         "config": {
           "apiUrl": "http://127.0.0.1:1937",
-          "configRoot": "J:/jeeves"
+          "configRoot": "J:/config"
         }
       }
     }
@@ -68,17 +37,20 @@ The plugin is configured via `plugins.entries` in `openclaw.json`:
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `apiUrl` | `http://127.0.0.1:1937` | Base URL of the jeeves-runner HTTP API |
-| `configRoot` | — | Root directory for platform content (TOOLS.md, skills) |
+| `apiUrl` | `http://127.0.0.1:1937` | Base URL of the jeeves-runner HTTP API (env fallback: `JEEVES_RUNNER_URL`) |
+| `configRoot` | — | Jeeves platform config root (env fallback: `JEEVES_CONFIG_ROOT`) |
+
+### configRoot is resolved lazily
+
+`openclaw plugins install` activates the plugin before `jeeves install` writes its config, so registration never requires `configRoot`:
+
+- Registration always succeeds. When `configRoot` is unset (neither plugin config nor `JEEVES_CONFIG_ROOT`), the plugin logs one warning.
+- `configRoot` is resolved on first use; core is initialized then.
+- The standard tools (`runner_status`, `runner_config`, `runner_config_apply`, `runner_service`) return a clear error naming both ways to set it until it resolves. The HTTP-only runner tools need just `apiUrl`.
 
 ## Platform Integration
 
-The plugin uses `@karmaniverous/jeeves` core's `ComponentWriter` to manage platform content:
-
-- **TOOLS.md section** — Writes a `## Runner` section into TOOLS.md with service health, connected status, and tool descriptions. Updated on gateway startup.
-- **Platform content** — Can contribute to SOUL.md, AGENTS.md, and other platform files via the `configRoot` directory.
-
-This replaces the previous `JEEVES_RUNNER_URL` environment variable approach.
+The plugin writes no workspace files. Static platform content (the SOUL/AGENTS managed blocks) is rendered by `jeeves install`; live runner state is served by the tools (`runner_status`, `runner_jobs`, …). The consumer skill ships via the manifest's `skills` field.
 
 ## Available Tools
 

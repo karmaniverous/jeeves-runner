@@ -24,20 +24,17 @@ jeeves-runner is a Node.js job execution engine that schedules and runs process 
 
 ## Plugin Installation
 
+`jeeves install` / `jeeves update` install the plugin and write its config. By hand:
+
 ```
-npx @karmaniverous/jeeves-runner-openclaw install
+openclaw plugins install npm:@karmaniverous/jeeves-runner-openclaw@<version> --pin --accept-capabilities
 ```
 
-This copies the plugin to OpenClaw's extensions directory and patches `openclaw.json` to register it. 
+**Important:** If `tools.allow` is an explicit allowlist, add `"jeeves-runner-openclaw"` to it so the agent can use the plugin's tools.
 
-**Important:** Add `"jeeves-runner-openclaw"` to the `tools.allow` array in `openclaw.json` so the agent can use the plugin's tools.
+`configRoot` comes from plugin config or `JEEVES_CONFIG_ROOT`. Until it is set, `runner_status`, `runner_config`, `runner_config_apply`, and `runner_service` return a "configRoot not configured" error; the other runner tools work with just `apiUrl`.
 
-Restart the gateway to load the plugin.
-
-To remove:
-```
-npx @karmaniverous/jeeves-runner-openclaw uninstall
-```
+To remove: `openclaw plugins uninstall jeeves-runner-openclaw`.
 
 ## Quick Start (Existing Deployment)
 
@@ -430,7 +427,7 @@ Jobs support two schedule formats:
 {"freq":"weekly","interval":2,"byDay":["TU"]}
 ```
 
-The runner auto-detects the format. RRStack schedules display as `*(rrstack)*` in the TOOLS.md job table; cron schedules display in backtick-wrapped format.
+The runner auto-detects the format. RRStack schedules display as `*(rrstack)*` in job listings; cron schedules display in backtick-wrapped format.
 
 See [`@karmaniverous/rrstack`](https://www.npmjs.com/package/@karmaniverous/rrstack) for the full RRStack specification.
 

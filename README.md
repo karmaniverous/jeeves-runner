@@ -404,7 +404,7 @@ Config file: `jeeves-runner/config.json` (legacy `jeeves-runner.config.json` is 
 
 ## OpenClaw Plugin
 
-The `@karmaniverous/jeeves-runner-openclaw` package provides an OpenClaw plugin that exposes runner management tools to your agent. See the [OpenClaw Integration Guide](packages/openclaw/guides/openclaw-integration.md) for setup and usage.
+The `@karmaniverous/jeeves-runner-openclaw` package provides an OpenClaw plugin that exposes runner management tools to your agent. It is a standard OpenClaw plugin installed by `jeeves install` (or `openclaw plugins install`); it writes no workspace files, and its `configRoot` (plugin config or `JEEVES_CONFIG_ROOT`) is resolved lazily, so it installs cleanly before its config exists. See the [OpenClaw Integration Guide](packages/openclaw/guides/openclaw-integration.md) for setup and usage.
 
 ## The Jeeves Platform
 

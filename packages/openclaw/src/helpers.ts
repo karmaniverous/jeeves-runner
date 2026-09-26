@@ -11,7 +11,7 @@ import {
   RUNNER_PORT,
 } from '@karmaniverous/jeeves';
 
-import { PLUGIN_ID } from './constants.js';
+import { CONFIG_ROOT_ENV_VAR, PLUGIN_ID } from './constants.js';
 
 /** Resolve the runner API base URL. */
 export function getApiUrl(api: PluginApi): string {
@@ -24,18 +24,17 @@ export function getApiUrl(api: PluginApi): string {
   );
 }
 
-/** Resolve the platform config root. */
-export function getConfigRoot(api: PluginApi): string {
-  const resolved = resolveOptionalPluginSetting(
+/**
+ * Resolve the platform config root (plugin config, then
+ * `JEEVES_CONFIG_ROOT`).
+ *
+ * @returns The config root, or `undefined` when it is not configured yet.
+ */
+export function resolveConfigRoot(api: PluginApi): string | undefined {
+  return resolveOptionalPluginSetting(
     api,
     PLUGIN_ID,
     'configRoot',
-    'JEEVES_CONFIG_ROOT',
+    CONFIG_ROOT_ENV_VAR,
   );
-  if (!resolved) {
-    throw new Error(
-      'configRoot not configured — set it in plugin config or via JEEVES_CONFIG_ROOT env var',
-    );
-  }
-  return resolved;
 }

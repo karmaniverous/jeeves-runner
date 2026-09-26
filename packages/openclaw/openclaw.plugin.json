@@ -17,7 +17,7 @@
       },
       "configRoot": {
         "type": "string",
-        "description": "Jeeves platform config root directory"
+        "description": "Jeeves platform config root directory. Optional at install time: falls back to the JEEVES_CONFIG_ROOT env var; tools that need it return an error until it is set. Written by `jeeves install --config-root`."
       }
     }
   },
