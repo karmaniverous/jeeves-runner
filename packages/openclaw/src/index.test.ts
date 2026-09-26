@@ -12,6 +12,7 @@ import {
   getConfigRoot,
   type PluginApi,
   resetInit,
+  RUNNER_PORT,
   type ToolDescriptor,
 } from '@karmaniverous/jeeves';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -88,6 +89,49 @@ describe('plugin register', () => {
     expect(result.isError).toBeFalsy();
     expect(text(result)).not.toContain(CONFIG_ROOT_MISSING_MESSAGE);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  describe('standard tools honor apiUrl', () => {
+    function stubFetch() {
+      const fetchMock = vi.fn((_url: string | URL | Request) =>
+        Promise.resolve(Response.json({ ok: true }, { status: 200 })),
+      );
+      vi.stubGlobal('fetch', fetchMock);
+      return fetchMock;
+    }
+
+    function calledUrl(fetchMock: ReturnType<typeof stubFetch>): string {
+      const input = fetchMock.mock.calls[0]?.[0];
+      return input instanceof Request ? input.url : String(input);
+    }
+
+    beforeEach(() => {
+      vi.stubEnv('JEEVES_RUNNER_URL', '');
+    });
+
+    it('calls the configured apiUrl, resolved per call', async () => {
+      const fetchMock = stubFetch();
+      const config: Record<string, unknown> = {};
+      const { api, tools } = harness(config);
+      register(api);
+      config.apiUrl = 'http://runner.example:4321';
+
+      await tools.get('runner_status')!.execute('t1', {});
+
+      expect(calledUrl(fetchMock)).toMatch(/^http:\/\/runner\.example:4321\//);
+    });
+
+    it('falls back to the default runner port when apiUrl is unset', async () => {
+      const fetchMock = stubFetch();
+      const { api, tools } = harness();
+      register(api);
+
+      await tools.get('runner_status')!.execute('t1', {});
+
+      expect(calledUrl(fetchMock)).toMatch(
+        new RegExp(`^http://127\\.0\\.0\\.1:${String(RUNNER_PORT)}/`),
+      );
+    });
   });
 
   it('returns a clear tool error when configRoot is unset', async () => {

@@ -6,7 +6,7 @@
  * error only when its implementation actually reads `configRoot`. Tools
  * that only call the service HTTP API keep working without it.
  *
- * Audit of the core standard toolset (`createPluginToolset`, core 0.6.0-3):
+ * Audit of the core standard toolset (`createPluginToolset`, core 0.6.0-4):
  * - `runner_status`, `runner_config`, `runner_config_apply`: HTTP only.
  * - `runner_service`: only `install` reads `configRoot`
  *   (`createServiceManager` → `resolveConfigFilePath` →

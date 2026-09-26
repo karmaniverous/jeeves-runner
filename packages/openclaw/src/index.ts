@@ -57,8 +57,12 @@ export default function register(api: PluginApi): void {
   const baseUrl = getApiUrl(api);
   const gate = createConfigRootGate(api);
 
-  // 4 standard tools from the core factory; gate only configRoot readers
-  for (const tool of createPluginToolset(descriptor)) {
+  // 4 standard tools from the core factory; gate only configRoot readers.
+  // apiUrl is resolved lazily per call (same resolution as the custom tools).
+  const standardTools = createPluginToolset(descriptor, {
+    apiUrl: () => getApiUrl(api),
+  });
+  for (const tool of standardTools) {
     const readsConfigRoot = CONFIG_ROOT_READERS[tool.name];
     api.registerTool(
       readsConfigRoot ? gate.guard(tool, readsConfigRoot) : tool,
