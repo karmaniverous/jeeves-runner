@@ -34,5 +34,9 @@
   },
   "engines": {
     "node": ">=22"
+  },
+  "allowScripts": {
+    "esbuild": true,
+    "lefthook": true
   }
 }
