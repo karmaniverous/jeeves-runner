@@ -18,7 +18,6 @@ import {
   getPackageVersion,
   type JeevesComponentDescriptor,
   RUNNER_PORT,
-  SECTION_IDS,
 } from '@karmaniverous/jeeves';
 
 import { runnerConfigSchema } from './schemas/config.js';
@@ -48,17 +47,14 @@ export type OnConfigApplyCallback = (
  * Create the runner's component descriptor.
  *
  * @param options - Optional overrides for config-apply callback,
- *   TOOLS.md content generator, CLI commands, and plugin tools.
+ *   CLI commands, and plugin tools.
  * @returns A validated `JeevesComponentDescriptor`.
  */
 export function createRunnerDescriptor(
   options?: Partial<
     Pick<
       JeevesComponentDescriptor,
-      | 'onConfigApply'
-      | 'generateToolsContent'
-      | 'customCliCommands'
-      | 'customPluginTools'
+      'onConfigApply' | 'customCliCommands' | 'customPluginTools'
     >
   >,
 ): JeevesComponentDescriptor {
@@ -100,10 +96,6 @@ export function createRunnerDescriptor(
         process.on('SIGINT', shutdown);
       });
     },
-    sectionId: SECTION_IDS.Runner,
-    refreshIntervalSeconds: 67,
-    generateToolsContent:
-      options?.generateToolsContent ?? (() => '> Runner tools content pending'),
     customCliCommands: options?.customCliCommands,
     customPluginTools: options?.customPluginTools,
   };
