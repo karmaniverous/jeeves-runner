@@ -43,7 +43,7 @@ runScript('email/poll-inbox', async () => {
 ```
 
 | Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
+| --- | --- | --- | --- |
 | `name` | `string` | — | Script identifier for crash logs |
 | `fn` | `() => void \| Promise<void>` | — | Main function (sync or async) |
 | `crashDir` | `string` | `process.cwd()` | Directory for `_crash.log` |
@@ -71,15 +71,15 @@ All from `fs-utils`:
 
 ### Time & UUID
 
-| Function | Returns | Description |
-|----------|---------|-------------|
+| Function   | Returns  | Description              |
+| ---------- | -------- | ------------------------ |
 | `nowIso()` | `string` | Current time as ISO 8601 |
-| `uuid()` | `string` | Random UUID v4 |
+| `uuid()`   | `string` | Random UUID v4           |
 
 ### File I/O
 
 | Function | Signature | Description |
-|----------|-----------|-------------|
+| --- | --- | --- |
 | `ensureDir(path)` | `void` | Create directory and parents |
 | `readJson(path, fallback)` | `T` | Parse JSON file, return `fallback` on error |
 | `writeJsonAtomic(path, obj)` | `void` | Write JSON via temp file + rename (atomic) |
@@ -88,7 +88,11 @@ All from `fs-utils`:
 | `writeJsonl(path, entries)` | `void` | Overwrite file with array as JSONL |
 
 ```typescript
-import { readJson, writeJsonAtomic, appendJsonl } from '@karmaniverous/jeeves-runner';
+import {
+  readJson,
+  writeJsonAtomic,
+  appendJsonl,
+} from '@karmaniverous/jeeves-runner';
 
 const cache = readJson('/path/to/cache.json', { items: [] });
 cache.items.push({ id: 'new', ts: Date.now() });
@@ -99,15 +103,15 @@ appendJsonl('/path/to/audit.jsonl', { action: 'poll', ts: Date.now() });
 
 ### Process Control
 
-| Function | Signature | Description |
-|----------|-----------|-------------|
-| `sleepMs(ms)` | `void` | Synchronous sleep via `Atomics.wait` |
-| `sleepAsync(ms)` | `Promise<void>` | Async sleep via `setTimeout` |
+| Function         | Signature       | Description                          |
+| ---------------- | --------------- | ------------------------------------ |
+| `sleepMs(ms)`    | `void`          | Synchronous sleep via `Atomics.wait` |
+| `sleepAsync(ms)` | `Promise<void>` | Async sleep via `setTimeout`         |
 
 ### Environment & CLI
 
 | Function | Signature | Description |
-|----------|-----------|-------------|
+| --- | --- | --- |
 | `loadEnvFile(path)` | `void` | Load `.env`-style key=value into `process.env` |
 | `parseArgs(argv?)` | `Record<string, string>` | Parse `--key=value` args |
 | `getArg(argv, name, default)` | `string` | Get value following a named flag |
@@ -166,20 +170,24 @@ const account: AccountConfig = {
   email: 'user@example.com',
   tokenFile: 'user-token.json',
 };
-const token = await auth.getAccessToken(account, ['https://www.googleapis.com/auth/gmail.readonly']);
+const token = await auth.getAccessToken(account, [
+  'https://www.googleapis.com/auth/gmail.readonly',
+]);
 
 // Service account impersonation
 const saAccount: AccountConfig = {
   email: 'user@example.com',
   serviceAccount: { file: 'sa-key.json' },
 };
-const saToken = await auth.getAccessToken(saAccount, ['https://www.googleapis.com/auth/calendar']);
+const saToken = await auth.getAccessToken(saAccount, [
+  'https://www.googleapis.com/auth/calendar',
+]);
 ```
 
 **`AccountConfig` fields:**
 
 | Field | Type | Description |
-|-------|------|-------------|
+| --- | --- | --- |
 | `email` | `string` | Google account email |
 | `tokenFile` | `string?` | Path to refresh token JSON (relative to `credentialsDir`) |
 | `serviceAccount` | `string \| { file: string }?` | Service account key path |
@@ -223,7 +231,7 @@ runDispatcher(
 **`DispatchOptions` fields:**
 
 | Field | Type | Default | Description |
-|-------|------|---------|-------------|
+| --- | --- | --- | --- |
 | `jobId` | `string` | — | Job identifier |
 | `label` | `string?` | — | Session label |
 | `thinking` | `'low' \| 'medium' \| 'high'` | — | LLM thinking level |
@@ -239,7 +247,10 @@ runDispatcher(
 Resolve which Slack workspace owns a channel. Queries `conversations.info` and caches results to disk.
 
 ```typescript
-import { getChannelWorkspace, saveSlackWorkspaceCache } from '@karmaniverous/jeeves-runner';
+import {
+  getChannelWorkspace,
+  saveSlackWorkspaceCache,
+} from '@karmaniverous/jeeves-runner';
 
 const teamId = await getChannelWorkspace('C0AGP3C8L2H', slackToken, {
   cachePath: '/state/runner/slack-workspace-cache.json',
@@ -252,10 +263,10 @@ saveSlackWorkspaceCache();
 
 **`SlackWorkspaceOptions` fields:**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `cachePath` | `string` | Path to the cache JSON file |
-| `defaultWorkspace` | `string` | Fallback team ID |
+| Field              | Type     | Description                 |
+| ------------------ | -------- | --------------------------- |
+| `cachePath`        | `string` | Path to the cache JSON file |
+| `defaultWorkspace` | `string` | Fallback team ID            |
 
 ---
 

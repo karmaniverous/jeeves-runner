@@ -3,9 +3,7 @@
   "name": "Jeeves Runner",
   "description": "Job execution engine management - status, troubleshooting, and operational tools for jeeves-runner.",
   "version": "0.8.1",
-  "skills": [
-    "dist/skills/jeeves-runner"
-  ],
+  "skills": ["dist/skills/jeeves-runner"],
   "configSchema": {
     "type": "object",
     "additionalProperties": false,

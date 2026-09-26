@@ -5,14 +5,14 @@ description: Operate and troubleshoot the jeeves-runner job execution engine. Us
 
 # Jeeves Runner — Operational Guide
 
-*Operational knowledge for any installation running jeeves-runner.*
+_Operational knowledge for any installation running jeeves-runner._
 
 ## Architecture
 
 jeeves-runner is a Node.js job execution engine that schedules and runs process scripts via cron or RRStack expressions, tracks state in SQLite, and exposes an HTTP API. It typically runs as a system service.
 
 | Component | Detail |
-|-----------|--------|
+| --- | --- |
 | Package | `@karmaniverous/jeeves-runner` (globally installed) |
 | Core dependency | `@karmaniverous/jeeves` v0.5.1+ |
 | Default Port | `RUNNER_PORT` (1937) via core constant |
@@ -53,6 +53,7 @@ When the plugin loads and the runner service is NOT yet set up, drive the entire
 ### Step 1: Check Node.js
 
 Verify Node.js is installed and version ≥ 20 (required for `node:sqlite`):
+
 ```bash
 node --version
 ```
@@ -64,11 +65,13 @@ If missing or too old, guide the user to install Node.js 20+ from https://nodejs
 ### Step 2: Install jeeves-runner
 
 Install the runner package globally:
+
 ```bash
 npm install -g @karmaniverous/jeeves-runner
 ```
 
 Verify:
+
 ```bash
 jeeves-runner --version
 ```
@@ -128,6 +131,7 @@ Full config with notifications and gateway:
 ```
 
 Write the config to the standard location (`jeeves-runner/config.json` inside the platform config dir):
+
 - **Linux:** `~/.config/jeeves-runner/config.json` or `/etc/jeeves-runner/config.json`
 - **Windows:** alongside the data directory, e.g. `C:\ProgramData\jeeves-runner\config.json`
 - **macOS:** `~/.config/jeeves-runner/config.json`
@@ -135,6 +139,7 @@ Write the config to the standard location (`jeeves-runner/config.json` inside th
 Use `jeeves-runner init` to generate a starter config at the default location.
 
 Create the database directory and log directory:
+
 ```bash
 # Linux
 sudo mkdir -p /var/lib/jeeves-runner /var/log/jeeves-runner
@@ -147,11 +152,13 @@ New-Item -ItemType Directory -Force -Path C:\ProgramData\jeeves-runner
 ### Step 5: Test Start (Foreground)
 
 Start the runner in the foreground first to verify everything works:
+
 ```bash
 jeeves-runner start -c /path/to/config.json
 ```
 
 In another terminal, verify:
+
 ```bash
 curl http://127.0.0.1:1937/status
 # Expected: { "name": "runner", "version": "...", "uptime": <seconds>, "status": "ok", "health": { "totalJobs": ..., ... } }
@@ -164,6 +171,7 @@ Stop it with Ctrl+C after confirming it starts cleanly.
 **The runner should run as a persistent service, not a foreground process.**
 
 **Linux (systemd):**
+
 ```bash
 sudo tee /etc/systemd/system/jeeves-runner.service > /dev/null <<EOF
 [Unit]
@@ -185,6 +193,7 @@ sudo systemctl enable --now jeeves-runner
 ```
 
 **Windows (NSSM):**
+
 ```powershell
 # Install NSSM if not present: https://nssm.cc/download
 nssm install jeeves-runner "C:\Program Files\nodejs\node.exe" "C:\Users\<user>\AppData\Roaming\npm\node_modules\@karmaniverous\jeeves-runner\dist\cli\jeeves-runner\index.js" start -c "C:\path\to\config.json"
@@ -199,6 +208,7 @@ nssm start jeeves-runner
 ```
 
 **macOS (launchd):**
+
 ```bash
 cat > ~/Library/LaunchAgents/com.jeeves.runner.plist <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -222,6 +232,7 @@ launchctl load ~/Library/LaunchAgents/com.jeeves.runner.plist
 ```
 
 Verify the service started:
+
 ```bash
 curl http://127.0.0.1:1937/status
 ```
@@ -242,8 +253,9 @@ jeeves-runner add-job \
 ```
 
 **Job parameters:**
+
 | Parameter | Required | Default | Description |
-|-----------|----------|---------|-------------|
+| --- | --- | --- | --- |
 | `id` | Yes | — | Unique job identifier (kebab-case recommended) |
 | `name` | Yes | — | Human-readable name |
 | `schedule` | Yes | — | Cron expression or RRStack JSON |
@@ -260,6 +272,7 @@ jeeves-runner add-job \
 | `args` | No | — | `string[]` — arguments appended after the script path in the spawn call (script-type jobs only) |
 
 After adding the job, trigger it manually to verify:
+
 ```bash
 jeeves-runner trigger -i my-first-job -c /path/to/config.json
 ```
@@ -271,6 +284,7 @@ Or use `runner_trigger` with `jobId: "my-first-job"`.
 If jeeves-watcher is also deployed, the runner's process scripts and their outputs can be indexed for semantic search.
 
 **Add runner data directories to the watcher config's watch paths:**
+
 - Script output directories (wherever your scripts write domain data)
 - Log files (if you want runner logs searchable)
 
@@ -289,7 +303,7 @@ On sessions after bootstrap is complete:
 ## HTTP API
 
 | Method | Path | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | `GET` | `/status` | Service status (`{ name, version, uptime, status, health: { totalJobs, running, failedRegistrations, okLastHour, errorsLastHour } }`) |
 | `GET` | `/config` | Query resolved config (optional `?path=` JSONPath) |
 | `POST` | `/config/apply` | Apply a config patch (`{ patch, replace? }`) |
@@ -317,47 +331,64 @@ The plugin registers 20 tools: 4 standard platform tools plus 16 custom runner t
 ### Standard Platform Tools
 
 #### `runner_status`
+
 Service status check. Returns `{ name, version, uptime, status, health }` where health includes total jobs, running count, failed registrations, ok/error counts for last hour.
 
 #### `runner_config`
+
 Query resolved service configuration. Supports optional JSONPath filtering.
 
 #### `runner_config_apply`
+
 Apply a configuration patch to the running service. Supports merge or full replace.
 
 #### `runner_service`
+
 System service management (install, uninstall, start, stop, restart, status).
 
 ### Custom Monitoring Tools
 
 #### `runner_jobs`
+
 List all jobs with enabled state, schedule, last run status, and last run time.
 
 #### `runner_trigger`
+
 Manually trigger a job by ID. Blocks until the job completes and returns the run result (status, duration, exit code).
+
 - `jobId` (string, required)
 
 #### `runner_runs`
+
 Get recent run history for a job.
+
 - `jobId` (string, required)
 - `limit` (number, optional) — Max results, default 50
 
 #### `runner_job_detail`
+
 Get full configuration for a single job.
+
 - `jobId` (string, required)
 
 #### `runner_enable`
+
 Enable a disabled job. Takes effect immediately (PATCH method).
+
 - `jobId` (string, required)
 
 #### `runner_disable`
+
 Disable a job. Takes effect immediately (PATCH method).
+
 - `jobId` (string, required)
 
 ### Management Tools
 
 #### `runner_create_job`
+
 Create a new runner job. Requires `id`, `name`, `schedule`, and `script`.
+
 - `id` (string, required) — Unique job identifier
 - `name` (string, required) — Human-readable name
 - `schedule` (string, required) — Cron expression or RRStack JSON
@@ -374,16 +405,22 @@ Create a new runner job. Requires `id`, `name`, `schedule`, and `script`.
 - `args` (array of strings, optional) — Arguments appended after the script path in the spawn call. Script-type jobs only; ignored for session jobs.
 
 #### `runner_update_job`
+
 Update an existing job. Only supplied fields are changed (PATCH with partial body).
+
 - `jobId` (string, required) — The job to update
 - All fields from `runner_create_job` except `id` are accepted as optional updates
 
 #### `runner_delete_job`
+
 Delete a job and all its run history. **Irreversible.**
+
 - `jobId` (string, required)
 
 #### `runner_update_script`
+
 Update a job's script content or path without changing other job fields.
+
 - `jobId` (string, required)
 - `script` (string, required) — New script path or inline content
 - `source_type` (string, optional) — `"path"` or `"inline"`
@@ -391,27 +428,37 @@ Update a job's script content or path without changing other job fields.
 ### Queue & State Inspection
 
 #### `runner_list_queues`
+
 List all queues that have items. No parameters.
 
 #### `runner_queue_status`
+
 Get queue depth, claimed count, failed count, and oldest item age.
+
 - `queueName` (string, required)
 
 #### `runner_queue_peek`
+
 Non-claiming read of pending queue items (does not consume them).
+
 - `queueName` (string, required)
 - `limit` (number, optional) — Max items, default 10
 
 #### `runner_list_namespaces`
+
 List all state namespaces. No parameters.
 
 #### `runner_query_state`
+
 Read all scalar state for a namespace. Supports optional JSONPath filtering.
+
 - `namespace` (string, required)
 - `path` (string, optional) — JSONPath expression to filter results
 
 #### `runner_query_collection`
+
 Read collection items for a state key within a namespace.
+
 - `namespace` (string, required)
 - `key` (string, required)
 
@@ -424,7 +471,7 @@ Jobs support two schedule formats:
 **RRStack JSON** (recurring rule stacks): For complex schedules that cron cannot express, such as "every 2nd Tuesday" or "last Friday of the month". Pass a JSON object string as the schedule:
 
 ```json
-{"freq":"weekly","interval":2,"byDay":["TU"]}
+{ "freq": "weekly", "interval": 2, "byDay": ["TU"] }
 ```
 
 The runner auto-detects the format. RRStack schedules display as `*(rrstack)*` in job listings; cron schedules display in backtick-wrapped format.
@@ -443,11 +490,16 @@ const db = new DatabaseSync('/path/to/runner.sqlite');
 db.prepare('SELECT id, name, enabled, script FROM jobs ORDER BY name').all();
 
 // Find recent failures
-db.prepare(`SELECT job_id, error, started_at FROM runs 
-  WHERE status = 'error' ORDER BY started_at DESC LIMIT 10`).all();
+db.prepare(
+  `SELECT job_id, error, started_at FROM runs 
+  WHERE status = 'error' ORDER BY started_at DESC LIMIT 10`,
+).all();
 
 // Update a job's script path
-db.prepare('UPDATE jobs SET script = ? WHERE id = ?').run('/path/to/new-script.js', 'job-id');
+db.prepare('UPDATE jobs SET script = ? WHERE id = ?').run(
+  '/path/to/new-script.js',
+  'job-id',
+);
 ```
 
 **Important:** The scheduler re-reads job rows from the DB on each cron fire. DB changes to script paths, enabled state, timeout, etc. take effect without restarting the service.
@@ -469,22 +521,29 @@ db.prepare('UPDATE jobs SET script = ? WHERE id = ?').run('/path/to/new-script.j
 ## Troubleshooting
 
 ### Job failing with module not found
+
 Check the `script` column in the `jobs` table. If pointing to a stale path, update it with `runner_update_script` or directly in SQLite.
 
 ### All jobs failing after service restart
+
 Check that job script paths in the database are still valid. Use `runner_jobs` to list all jobs and `runner_job_detail` to inspect individual script paths. Update stale paths with `runner_update_script`.
 
 ### Notifications not sending
+
 Check the runner config's `notifications.slackTokenPath`. Verify the token file exists and is valid.
 
 ### Service won't start (NSSM on Windows)
+
 Common causes:
+
 - `AppDirectory` points to a deleted path — update via `nssm set jeeves-runner AppDirectory <valid-path>`
 - `NODE_PATH` not set — global modules won't resolve. Set via `AppEnvironmentExtra`
 - Config file path wrong — verify the `-c` argument in the NSSM Application arguments
 
 ### High error rate
+
 Use `runner_runs` on failing jobs to see error messages. Common patterns:
+
 - Script path changed → use `runner_update_script` to fix
 - External API rate limited → add backoff/retry in the script
 - File permissions → check the service user has access to script paths and output directories
@@ -633,16 +692,19 @@ runner_create_job id="weekly-review" name="Weekly Review" schedule="0 9 * * MON"
 ## Error Handling
 
 If the runner is unreachable:
+
 - Inform the user that job management is temporarily unavailable
 - Fall back to SQLite direct access if the database path is known
 - Do not retry silently in a loop
 
 If tools are unavailable (plugin not loaded in this session):
+
 - The runner API is still accessible via direct HTTP calls
 - Use `exec` to call the endpoints listed in the HTTP API section
 - Default: `http://127.0.0.1:1937`
 
 **CLI Fallbacks:**
+
 - `jeeves-runner status` — check if the service is running (probes GET /status)
 - `jeeves-runner list-jobs -c <config>` — list registered jobs
 - `jeeves-runner trigger -i <job-id>` — trigger a job (uses `getServiceUrl('runner')` for dynamic URL resolution; supports `--config-root` and `--workspace`)

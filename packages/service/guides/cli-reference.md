@@ -18,8 +18,8 @@ Start the runner daemon (foreground).
 jeeves-runner start -c <path>
 ```
 
-| Flag | Description |
-|------|-------------|
+| Flag                  | Description         |
+| --------------------- | ------------------- |
 | `-c, --config <path>` | Path to config file |
 
 Starts the scheduler, API server, and begins executing jobs on their cron schedules.
@@ -34,9 +34,9 @@ Probe service health and version by querying `GET /status`.
 jeeves-runner status [-p <port>]
 ```
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `-p, --port <port>` | `1937` | Service port |
+| Flag                | Default | Description  |
+| ------------------- | ------- | ------------ |
+| `-p, --port <port>` | `1937`  | Service port |
 
 ---
 
@@ -66,11 +66,11 @@ Apply a config patch to the running service.
 jeeves-runner config apply [-p <port>] [-f <path>] [--replace]
 ```
 
-| Flag | Description |
-|------|-------------|
-| `-p, --port <port>` | Service port (default: 1937) |
+| Flag                | Description                                      |
+| ------------------- | ------------------------------------------------ |
+| `-p, --port <port>` | Service port (default: 1937)                     |
 | `-f, --file <path>` | Config patch file (JSON); reads stdin if omitted |
-| `--replace` | Replace entire config instead of merging |
+| `--replace`         | Replace entire config instead of merging         |
 
 ---
 
@@ -83,7 +83,7 @@ jeeves-runner init [-o <dir>]
 ```
 
 | Flag | Default | Description |
-|------|---------|-------------|
+| --- | --- | --- |
 | `-o, --output <dir>` | Platform config dir | Output directory for `config.json` |
 
 ---
@@ -164,7 +164,7 @@ jeeves-runner add-job \
 ```
 
 | Flag | Required | Default | Description |
-|------|----------|---------|-------------|
+| --- | --- | --- | --- |
 | `-i, --id <id>` | Yes | — | Unique job identifier |
 | `-n, --name <name>` | Yes | — | Human-readable name |
 | `-s, --schedule <schedule>` | Yes | — | Cron expression or RRStack JSON (validated on input) |
@@ -199,10 +199,10 @@ Manually trigger a job via the API.
 jeeves-runner trigger -i <id> -c <path>
 ```
 
-| Flag | Required | Description |
-|------|----------|-------------|
-| `-i, --id <id>` | Yes | Job ID to trigger |
-| `-c, --config <path>` | No | Config file (for port) |
+| Flag                  | Required | Description            |
+| --------------------- | -------- | ---------------------- |
+| `-i, --id <id>`       | Yes      | Job ID to trigger      |
+| `-c, --config <path>` | No       | Config file (for port) |
 
 Calls `POST /jobs/:id/run` and prints the result.
 
@@ -216,8 +216,8 @@ Scaffold a new scripts project from the `jeeves-scripts-template`.
 jeeves-runner init-scripts [-c <path>]
 ```
 
-| Flag | Description |
-|------|-------------|
+| Flag                  | Description                                    |
+| --------------------- | ---------------------------------------------- |
 | `-c, --config <path>` | Config file path (determines scripts location) |
 
 Clones the template into a `scripts/` directory next to the config, installs dependencies, and configures the `runners.ts` entry in the config file for TypeScript execution via tsx.

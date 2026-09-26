@@ -5,14 +5,16 @@ Shared configuration schema and types for jeeves-runner packages.
 ## Exports
 
 #### Configuration
-| Export | Description |
-|--------|-------------|
+
+| Export               | Description                                  |
+| -------------------- | -------------------------------------------- |
 | `runnerConfigSchema` | Zod schema for the full runner configuration |
-| `RunnerConfig` | Inferred TypeScript type from the schema |
+| `RunnerConfig`       | Inferred TypeScript type from the schema     |
 
 #### Endpoint Catalog
+
 | Export | Description |
-|--------|-------------|
+| --- | --- |
 | `RUNNER_ENDPOINTS` | Declarative catalog of all 19 HTTP API endpoints (method, path, description) |
 | `getEndpoint` | Look up an endpoint by name |
 | `Endpoint` | Type alias for an endpoint catalog entry |
@@ -21,8 +23,9 @@ Shared configuration schema and types for jeeves-runner packages.
 | `HttpMethod` | Union type of HTTP methods used in the catalog |
 
 #### Canonical Schemas
+
 | Export | Description |
-|--------|-------------|
+| --- | --- |
 | `jobSchema` | Zod schema for job records |
 | `createJobSchema` | Zod schema for job creation (required: id, name, schedule, script) |
 | `updateJobSchema` | Zod schema for job updates (all fields optional) |
@@ -33,8 +36,9 @@ Shared configuration schema and types for jeeves-runner packages.
 | `CreateJob`, `UpdateJob`, `UpdateScript` | Inferred TypeScript types for mutations |
 
 #### HTTP Response Contracts
+
 | Export | Description |
-|--------|-------------|
+| --- | --- |
 | `JobListItem`, `JobsResponse` | `GET /jobs` response types |
 | `JobDetailResponse` | `GET /jobs/:id` response type |
 | `RunRecord`, `RunsResponse` | `GET /jobs/:id/runs` response types |

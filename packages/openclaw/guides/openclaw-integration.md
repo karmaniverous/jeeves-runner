@@ -36,7 +36,7 @@ The plugin is configured via `plugins.entries` in `openclaw.json` (written by `j
 ```
 
 | Key | Default | Description |
-|-----|---------|-------------|
+| --- | --- | --- |
 | `apiUrl` | `http://127.0.0.1:1937` | Base URL of the jeeves-runner HTTP API (env fallback: `JEEVES_RUNNER_URL`) |
 | `configRoot` | — | Jeeves platform config root (env fallback: `JEEVES_CONFIG_ROOT`) |
 
@@ -74,18 +74,18 @@ Query resolved service configuration. Supports optional JSONPath filtering.
 
 Apply a configuration patch to the running service.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `patch` | `object` | Yes | Configuration fields to update |
-| `replace` | `boolean` | No | Replace entire config instead of merging |
+| Parameter | Type      | Required | Description                              |
+| --------- | --------- | -------- | ---------------------------------------- |
+| `patch`   | `object`  | Yes      | Configuration fields to update           |
+| `replace` | `boolean` | No       | Replace entire config instead of merging |
 
 #### `runner_service`
 
 System service management (install, uninstall, start, stop, restart, status).
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `action` | `string` | Yes | Service action to perform |
+| Parameter | Type     | Required | Description               |
+| --------- | -------- | -------- | ------------------------- |
+| `action`  | `string` | Yes      | Service action to perform |
 
 ### Custom Monitoring Tools
 
@@ -99,42 +99,42 @@ List all jobs with enabled state, schedule, last run status, and last run time.
 
 Manually trigger a job. Blocks until the job completes.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `jobId` | `string` | Yes | The job ID to trigger |
+| Parameter | Type     | Required | Description           |
+| --------- | -------- | -------- | --------------------- |
+| `jobId`   | `string` | Yes      | The job ID to trigger |
 
 #### `runner_runs`
 
 Get recent run history for a job.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `jobId` | `string` | Yes | The job ID |
-| `limit` | `number` | No | Maximum runs to return (default 50) |
+| Parameter | Type     | Required | Description                         |
+| --------- | -------- | -------- | ----------------------------------- |
+| `jobId`   | `string` | Yes      | The job ID                          |
+| `limit`   | `number` | No       | Maximum runs to return (default 50) |
 
 #### `runner_job_detail`
 
 Get full configuration for a single job.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `jobId` | `string` | Yes | The job ID |
+| Parameter | Type     | Required | Description |
+| --------- | -------- | -------- | ----------- |
+| `jobId`   | `string` | Yes      | The job ID  |
 
 #### `runner_enable`
 
 Enable a disabled job. Takes effect immediately.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `jobId` | `string` | Yes | The job ID to enable |
+| Parameter | Type     | Required | Description          |
+| --------- | -------- | -------- | -------------------- |
+| `jobId`   | `string` | Yes      | The job ID to enable |
 
 #### `runner_disable`
 
 Disable a job. It will not run until re-enabled.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `jobId` | `string` | Yes | The job ID to disable |
+| Parameter | Type     | Required | Description           |
+| --------- | -------- | -------- | --------------------- |
+| `jobId`   | `string` | Yes      | The job ID to disable |
 
 ### Management Tools
 
@@ -143,7 +143,7 @@ Disable a job. It will not run until re-enabled.
 Create a new runner job.
 
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
+| --- | --- | --- | --- |
 | `id` | `string` | Yes | Unique job identifier |
 | `name` | `string` | Yes | Human-readable name |
 | `schedule` | `string` | Yes | Cron expression or RRStack JSON |
@@ -161,6 +161,7 @@ Create a new runner job.
 | `args` | `string[]` | No | Arguments appended after the script path in spawn. Script-type only. |
 
 **Example:**
+
 ```json
 {
   "id": "poll-email",
@@ -176,11 +177,12 @@ Create a new runner job.
 Update an existing job. Only supplied fields are changed.
 
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
+| --- | --- | --- | --- |
 | `jobId` | `string` | Yes | The job to update |
-| *(others)* | | No | Any field from `runner_create_job` except `id` |
+| _(others)_ |  | No | Any field from `runner_create_job` except `id` |
 
 **Example:** Change schedule and timeout:
+
 ```json
 {
   "jobId": "poll-email",
@@ -193,19 +195,19 @@ Update an existing job. Only supplied fields are changed.
 
 Delete a job and all its run history. **Irreversible.**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `jobId` | `string` | Yes | The job to delete |
+| Parameter | Type     | Required | Description       |
+| --------- | -------- | -------- | ----------------- |
+| `jobId`   | `string` | Yes      | The job to delete |
 
 #### `runner_update_script`
 
 Update a job's script content or path without changing other fields.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `jobId` | `string` | Yes | The job to update |
-| `script` | `string` | Yes | New script path or inline content |
-| `source_type` | `string` | No | `"path"` or `"inline"` |
+| Parameter     | Type     | Required | Description                       |
+| ------------- | -------- | -------- | --------------------------------- |
+| `jobId`       | `string` | Yes      | The job to update                 |
+| `script`      | `string` | Yes      | New script path or inline content |
+| `source_type` | `string` | No       | `"path"` or `"inline"`            |
 
 ### Inspection Tools
 
@@ -219,18 +221,18 @@ List all queues that have items.
 
 Get queue depth, claimed count, failed count, and oldest item age.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `queueName` | `string` | Yes | Queue name |
+| Parameter   | Type     | Required | Description |
+| ----------- | -------- | -------- | ----------- |
+| `queueName` | `string` | Yes      | Queue name  |
 
 #### `runner_queue_peek`
 
 Non-claiming read of pending queue items.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `queueName` | `string` | Yes | Queue name |
-| `limit` | `number` | No | Max items (default 10) |
+| Parameter   | Type     | Required | Description            |
+| ----------- | -------- | -------- | ---------------------- |
+| `queueName` | `string` | Yes      | Queue name             |
+| `limit`     | `number` | No       | Max items (default 10) |
 
 #### `runner_list_namespaces`
 
@@ -242,19 +244,19 @@ List all state namespaces.
 
 Read all scalar state for a namespace with optional JSONPath filtering.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `namespace` | `string` | Yes | State namespace |
-| `path` | `string` | No | JSONPath expression |
+| Parameter   | Type     | Required | Description         |
+| ----------- | -------- | -------- | ------------------- |
+| `namespace` | `string` | Yes      | State namespace     |
+| `path`      | `string` | No       | JSONPath expression |
 
 #### `runner_query_collection`
 
 Read collection items for a state key within a namespace.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `namespace` | `string` | Yes | State namespace |
-| `key` | `string` | Yes | Collection key |
+| Parameter   | Type     | Required | Description     |
+| ----------- | -------- | -------- | --------------- |
+| `namespace` | `string` | Yes      | State namespace |
+| `key`       | `string` | Yes      | Collection key  |
 
 ## Skill
 
