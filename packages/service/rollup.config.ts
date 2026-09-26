@@ -101,20 +101,18 @@ const buildTypes = (dest: string): RollupOptions => ({
 const config: RollupOptions[] = [
   buildLibrary(outputPath),
   buildTypes(outputPath),
-  ...cliCommands.map(
-    (c): RollupOptions => ({
-      ...commonInputOptions,
-      input: `src/cli/${c}/index.ts`,
-      output: [
-        {
-          dir: `${outputPath}/cli/${c}`,
-          extend: true,
-          format: 'esm',
-          banner: '#!/usr/bin/env node',
-        },
-      ],
-    }),
-  ),
+  ...cliCommands.map((c): RollupOptions => ({
+    ...commonInputOptions,
+    input: `src/cli/${c}/index.ts`,
+    output: [
+      {
+        dir: `${outputPath}/cli/${c}`,
+        extend: true,
+        format: 'esm',
+        banner: '#!/usr/bin/env node',
+      },
+    ],
+  })),
 ];
 
 export default config;
