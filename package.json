@@ -37,6 +37,7 @@
   },
   "allowScripts": {
     "esbuild": true,
+    "fsevents": true,
     "lefthook": true
   }
 }
