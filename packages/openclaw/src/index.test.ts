@@ -1,6 +1,7 @@
 /**
  * Registration tests against the real core: registration never requires
- * `configRoot`; guarded tools report a clear error until it resolves.
+ * `configRoot`; only tools that read it report a clear error until it
+ * resolves, and HTTP-only tools keep working without it.
  *
  * @module index.test
  */
@@ -51,6 +52,7 @@ describe('plugin register', () => {
 
   afterEach(() => {
     vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
     resetInit();
   });
 
@@ -68,11 +70,33 @@ describe('plugin register', () => {
     expect(() => getConfigRoot()).toThrow();
   });
 
+  it.each([
+    ['runner_status', {}],
+    ['runner_config', {}],
+    ['runner_config_apply', { config: { a: 1 } }],
+    ['runner_jobs', {}],
+  ])('runs HTTP-only %s without configRoot', async (name, params) => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(Response.json({ ok: true }, { status: 200 })),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const { api, tools } = harness();
+    register(api);
+
+    const result = await tools.get(name)!.execute('t1', params);
+
+    expect(result.isError).toBeFalsy();
+    expect(text(result)).not.toContain(CONFIG_ROOT_MISSING_MESSAGE);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
   it('returns a clear tool error when configRoot is unset', async () => {
     const { api, tools, warn } = harness();
     register(api);
 
-    const result = await tools.get('runner_config')!.execute('t1', {});
+    const result = await tools
+      .get('runner_service')!
+      .execute('t1', { action: 'install' });
 
     expect(result.isError).toBe(true);
     expect(text(result)).toContain(CONFIG_ROOT_MISSING_MESSAGE);

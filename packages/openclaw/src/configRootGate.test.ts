@@ -37,6 +37,23 @@ describe('createConfigRootGate', () => {
     resetInit();
   });
 
+  it('runs calls the predicate marks as not reading configRoot', async () => {
+    const gate = createConfigRootGate({
+      logger: { warn() {} },
+      registerTool() {},
+    });
+    const tool = makeTool();
+    const guarded = gate.guard(tool, (params) => params.action === 'install');
+
+    const ran = await guarded.execute('a', { action: 'status' });
+    expect(ran.content[0]?.text).toBe('ran');
+
+    const blocked = await guarded.execute('b', { action: 'install' });
+    expect(blocked.isError).toBe(true);
+    expect(blocked.content[0]?.text).toContain(CONFIG_ROOT_MISSING_MESSAGE);
+    expect(tool.execute).toHaveBeenCalledTimes(1);
+  });
+
   it('blocks guarded tools until configRoot resolves, then runs them', async () => {
     const warn = vi.fn();
     const gate = createConfigRootGate({ logger: { warn }, registerTool() {} });

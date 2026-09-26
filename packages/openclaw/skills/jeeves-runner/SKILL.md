@@ -32,7 +32,7 @@ openclaw plugins install npm:@karmaniverous/jeeves-runner-openclaw@<version> --p
 
 **Important:** If `tools.allow` is an explicit allowlist, add `"jeeves-runner-openclaw"` to it so the agent can use the plugin's tools.
 
-`configRoot` comes from plugin config or `JEEVES_CONFIG_ROOT`. Until it is set, `runner_status`, `runner_config`, `runner_config_apply`, and `runner_service` return a "configRoot not configured" error; the other runner tools work with just `apiUrl`.
+`configRoot` comes from plugin config or `JEEVES_CONFIG_ROOT`. Until it is set, only `runner_service` with `action: "install"` (which writes the service's config path) returns a "configRoot not configured" error; every other tool, including `runner_status`, `runner_config`, and `runner_config_apply`, calls the service HTTP API and works without it.
 
 To remove: `openclaw plugins uninstall jeeves-runner-openclaw`.
 

@@ -19,6 +19,7 @@ import {
 import { createConfigRootGate } from './configRootGate.js';
 import { getApiUrl } from './helpers.js';
 import { registerRunnerCustomTools } from './runnerTools.js';
+import { CONFIG_ROOT_READERS } from './toolGating.js';
 
 /** Plugin version derived from the nearest package.json. */
 const PLUGIN_VERSION = getPackageVersion(import.meta.url);
@@ -48,16 +49,23 @@ const descriptor: JeevesComponentDescriptor = {
  *
  * @remarks
  * Always succeeds, even with no plugin config: `configRoot` is resolved
- * lazily (see {@link createConfigRootGate}). The standard core toolset is
- * guarded until it resolves; the HTTP-only runner tools need just `apiUrl`.
+ * lazily (see {@link createConfigRootGate}). Only tools that read
+ * `configRoot` are gated (see {@link CONFIG_ROOT_READERS}); HTTP-only tools
+ * work without it.
  */
 export default function register(api: PluginApi): void {
   const baseUrl = getApiUrl(api);
   const gate = createConfigRootGate(api);
 
-  // 4 standard tools from the core factory (need core init / configRoot)
+  // 4 standard tools from the core factory; gate only configRoot readers
   for (const tool of createPluginToolset(descriptor)) {
-    api.registerTool(gate.guard(tool), { optional: true });
+    const readsConfigRoot = CONFIG_ROOT_READERS[tool.name];
+    api.registerTool(
+      readsConfigRoot ? gate.guard(tool, readsConfigRoot) : tool,
+      {
+        optional: true,
+      },
+    );
   }
 
   // 16 custom runner tools (HTTP only; excludes runner_status, now standard)

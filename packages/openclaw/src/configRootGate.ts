@@ -5,8 +5,8 @@
  * `openclaw plugins install` activates the plugin before `jeeves install`
  * writes its config, so registration must not require `configRoot`. The gate
  * resolves it on demand (plugin config, then `JEEVES_CONFIG_ROOT`), calls
- * core `init()` exactly once when it first resolves, and makes guarded tools
- * return a clear error until then.
+ * core `init()` exactly once when it first resolves, and makes guarded tool
+ * calls that read `configRoot` return a clear error until then.
  *
  * @module configRootGate
  */
@@ -24,6 +24,7 @@ import {
   CONFIG_ROOT_UNSET_WARNING,
 } from './constants.js';
 import { resolveConfigRoot } from './helpers.js';
+import type { ConfigRootPredicate } from './toolGating.js';
 
 /** Lazy `configRoot` gate for one plugin registration. */
 export interface ConfigRootGate {
@@ -33,8 +34,17 @@ export interface ConfigRootGate {
    * @returns The config root, or `undefined` when it is still unset.
    */
   ensure: () => string | undefined;
-  /** Wrap a tool so it returns a clear error while `configRoot` is unset. */
-  guard: (tool: ToolDescriptor) => ToolDescriptor;
+  /**
+   * Wrap a tool so calls that read `configRoot` return a clear error while
+   * it is unset.
+   *
+   * @param tool - The tool to wrap.
+   * @param readsConfigRoot - Per-call predicate; defaults to every call.
+   */
+  guard: (
+    tool: ToolDescriptor,
+    readsConfigRoot?: ConfigRootPredicate,
+  ) => ToolDescriptor;
 }
 
 /**
@@ -62,10 +72,10 @@ export function createConfigRootGate(api: PluginApi): ConfigRootGate {
 
   return {
     ensure,
-    guard: (tool) => ({
+    guard: (tool, readsConfigRoot = () => true) => ({
       ...tool,
       execute: (id, params) =>
-        ensure() === undefined
+        readsConfigRoot(params) && ensure() === undefined
           ? Promise.resolve(fail(new Error(CONFIG_ROOT_MISSING_MESSAGE)))
           : tool.execute(id, params),
     }),
