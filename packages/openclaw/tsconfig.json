@@ -1,6 +1,9 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "paths": {
+      "@karmaniverous/jeeves-runner-core": ["../core/src/index.ts"]
+    },
     "types": ["node"]
   },
   "include": ["src/**/*", "rollup.config.ts", "vitest.config.ts"],
