@@ -4,7 +4,7 @@
  * @module
  */
 
-import type { DatabaseSync } from 'node:sqlite';
+import type { DatabaseSync, SQLInputValue } from 'node:sqlite';
 
 import {
   createJobSchema,
@@ -13,6 +13,7 @@ import {
 } from '@karmaniverous/jeeves-runner-core';
 import type { FastifyInstance } from 'fastify';
 
+import { toSqlInput } from '../lib/sql-input.js';
 import { validateSchedule } from '../scheduler/schedule-utils.js';
 import type { Scheduler } from '../scheduler/scheduler.js';
 
@@ -108,7 +109,7 @@ export function registerJobRoutes(
     const fieldMap: Array<{
       input: keyof typeof data;
       column: string;
-      transform?: (v: unknown) => unknown;
+      transform?: (v: unknown) => SQLInputValue;
     }> = [
       { input: 'name', column: 'name' },
       { input: 'schedule', column: 'schedule' },
@@ -143,12 +144,14 @@ export function registerJobRoutes(
     ];
 
     const sets: string[] = [];
-    const values: unknown[] = [];
+    const values: SQLInputValue[] = [];
 
     for (const { input, column, transform } of fieldMap) {
       if (data[input] !== undefined) {
         sets.push(`${column} = ?`);
-        values.push(transform ? transform(data[input]) : data[input]);
+        values.push(
+          transform ? transform(data[input]) : toSqlInput(data[input]),
+        );
       }
     }
 
