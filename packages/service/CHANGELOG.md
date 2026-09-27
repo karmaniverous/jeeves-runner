@@ -6,6 +6,23 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [104] fix: tests and typecheck read source, not dist
+
+Service and openclaw vitest configs alias, and tsconfigs path-map,
+@karmaniverous/jeeves-runner-core to packages/core/src, so typecheck and
+tests pass on a clean checkout with no dist/. The rollup TS and dts
+plugins override paths so the build still types against built core and
+keeps it external. CLI tests run the CLI from source via tsx, and the
+service test script no longer builds first.
+
+Closes #112
+- [104] fix(release): update root package-lock in after:bump hook
+- [104] chore(deps): pin @karmaniverous/jeeves 0.6.0-8
+- [104] updated core
+## [0.11.0-0] - 2026-09-27
+
+### 💼 Other
+
 - [104] chore(deps): ncu -u --peer across all packages (reject @karmaniverous/jeeves)
 - [104] style: apply prettier 3.9 formatting to service sources
 - [104] chore(knip): remove unused zod dependency from packages/service
@@ -17,6 +34,7 @@ All notable changes to this project will be documented in this file.
 - [104] refactor(service): drop node:sqlite shim in favour of @types/node (#111)
 - [104] fix(deps): runner-core ^0.2.2-0 for single core copy; engines node >=22.13 (#108, #110)
 - [104] chore(deps): pin @karmaniverous/jeeves 0.6.0-7
+- [104] chore: release @karmaniverous/jeeves-runner v0.11.0-0
 ## [0.10.1] - 2026-07-15
 
 ### 💼 Other
