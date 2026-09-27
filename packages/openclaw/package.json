@@ -92,7 +92,8 @@
       ],
       "after:bump": [
         "node -e \"const f='openclaw.plugin.json';const p=JSON.parse(require('fs').readFileSync(f,'utf8'));p.version='${version}';require('fs').writeFileSync(f,JSON.stringify(p,null,2)+'\\n')\"",
-        "npx prettier --write openclaw.plugin.json"
+        "npx prettier --write openclaw.plugin.json",
+        "npm install --package-lock-only --ignore-scripts"
       ],
       "before:npm:release": [
         "npx git-cliff -o CHANGELOG.md",
