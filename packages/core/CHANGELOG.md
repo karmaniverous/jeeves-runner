@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [104] fix(release): update root package-lock in after:bump hook
+- [104] chore(deps): pin @karmaniverous/jeeves 0.6.0-8
+## [0.2.2-0] - 2026-09-27
+
+### 💼 Other
+
 - [104] chore(deps): ncu -u --peer across all packages (reject @karmaniverous/jeeves)
 - [104] chore(prettier): format docs/config files; ignore generated CHANGELOG.md
 - [104] feat: move core and service to @karmaniverous/jeeves 0.6.0-4; drop v0.x TOOLS.md descriptor fields
@@ -13,6 +19,7 @@ All notable changes to this project will be documented in this file.
 - [104] fix(release): use --github.preRelease for release-it 21
 - [104] fix(deps): runner-core ^0.2.2-0 for single core copy; engines node >=22.13 (#108, #110)
 - [104] chore(deps): pin @karmaniverous/jeeves 0.6.0-7
+- [104] chore: release @karmaniverous/jeeves-runner-core v0.2.2-0
 ## [0.2.1] - 2026-07-15
 
 ### 💼 Other
