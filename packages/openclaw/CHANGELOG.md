@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [104] chore(deps): pin @karmaniverous/jeeves 0.6.0-8
+- [104] updated core
+## [0.9.0-1] - 2026-09-27
+
+### 💼 Other
+
 - [104] fix(deps): runner-core ^0.2.2-0 for single core copy; engines node >=22.13 (#108, #110)
 - [104] style(openclaw): prettier-format openclaw.plugin.json
 - [104] chore(release): prettier-format openclaw.plugin.json after bump
@@ -21,6 +27,7 @@ service test script no longer builds first.
 
 Closes #112
 - [104] fix(release): update root package-lock in after:bump hook
+- [104] chore: release @karmaniverous/jeeves-runner-openclaw v0.9.0-1
 ## [0.9.0-0] - 2026-09-27
 
 ### 💼 Other
