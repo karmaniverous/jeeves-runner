@@ -6,6 +6,25 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [104] fix(deps): runner-core ^0.2.2-0 for single core copy; engines node >=22.13 (#108, #110)
+- [104] style(openclaw): prettier-format openclaw.plugin.json
+- [104] chore(release): prettier-format openclaw.plugin.json after bump
+- [104] chore(deps): pin @karmaniverous/jeeves 0.6.0-7
+- [104] fix: tests and typecheck read source, not dist
+
+Service and openclaw vitest configs alias, and tsconfigs path-map,
+@karmaniverous/jeeves-runner-core to packages/core/src, so typecheck and
+tests pass on a clean checkout with no dist/. The rollup TS and dts
+plugins override paths so the build still types against built core and
+keeps it external. CLI tests run the CLI from source via tsx, and the
+service test script no longer builds first.
+
+Closes #112
+- [104] fix(release): update root package-lock in after:bump hook
+## [0.9.0-0] - 2026-09-27
+
+### 💼 Other
+
 - [104] feat(openclaw)!: standard plugin on jeeves core 0.6.0 with lazy configRoot
 
 - Move @karmaniverous/jeeves to 0.6.0-3 (exact; prerelease of jeeves#109).
@@ -32,6 +51,7 @@ Closes #106
 - [104] feat(openclaw): pass lazy apiUrl to createPluginToolset; pin core 0.6.0-4
 - [104] chore(deps): pin @karmaniverous/jeeves 0.6.0-6
 - [104] fix(release): use --github.preRelease for release-it 21
+- [104] chore: release @karmaniverous/jeeves-runner-openclaw v0.9.0-0
 ## [0.8.1] - 2026-07-15
 
 ### 💼 Other
