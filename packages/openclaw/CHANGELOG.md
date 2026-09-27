@@ -6,6 +6,36 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [104] feat(openclaw)!: standard plugin on jeeves core 0.6.0 with lazy configRoot
+
+- Move @karmaniverous/jeeves to 0.6.0-3 (exact; prerelease of jeeves#109).
+- Remove the TOOLS.md ComponentWriter + async content cache, the
+  createPluginCli install/uninstall bin (src/cli.ts), generateContent, and the
+  unused serviceCommands module. The plugin writes no workspace files and is
+  installed by `jeeves install` / `openclaw plugins install`.
+- Resolve configRoot lazily (plugin config, then JEEVES_CONFIG_ROOT):
+  register() always succeeds, logs one warning when unset, and defers core
+  init() until it resolves. Standard toolset tools return a clear error naming
+  both ways to set it until then.
+- Tests: no-config registration, tool error, plugin config, env var, manifest
+  has no configRoot default, skill frontmatter.
+- npm audit fix (lockfile only) for fastify/fast-uri/find-my-way advisories.
+
+BREAKING CHANGE: the `jeeves-runner-openclaw install|uninstall` CLI is
+removed; install with `jeeves install` or `openclaw plugins install`.
+
+Closes #104
+Closes #106
+- [104] chore(deps): ncu -u --peer across all packages (reject @karmaniverous/jeeves)
+- [104] chore(prettier): format docs/config files; ignore generated CHANGELOG.md
+- [104] fix(openclaw): gate only tools that read configRoot
+- [104] feat(openclaw): pass lazy apiUrl to createPluginToolset; pin core 0.6.0-4
+- [104] chore(deps): pin @karmaniverous/jeeves 0.6.0-6
+- [104] fix(release): use --github.preRelease for release-it 21
+## [0.8.1] - 2026-07-15
+
+### 💼 Other
+
 - [93-95] fix: complete 0.10.1 spec gaps (#93, #95, #97)
 
 - Remove timeout from DispatchOptions, dispatchSession, runDispatcher (#93)
@@ -22,6 +52,10 @@ All notable changes to this project will be documented in this file.
 - Sync docs: add queue/state endpoint sections to api-reference.md
 - Sync docs: update job response examples with env/args/output_channel fields
 - Updated core
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner-openclaw v0.8.1
 ## [0.8.0] - 2026-07-15
 
 ### 🐛 Bug Fixes
