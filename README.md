@@ -46,7 +46,7 @@ jeeves-runner schedules and executes jobs, tracks their state in SQLite, and exp
 npm install @karmaniverous/jeeves-runner
 ```
 
-Requires Node.js 24+ for `node:sqlite` support.
+Requires Node.js 22.13+ (`node:sqlite` needs no flag from that version).
 
 ## Quick Start
 

@@ -43,11 +43,11 @@
     "typescript"
   ],
   "engines": {
-    "node": ">=22"
+    "node": ">=22.13"
   },
   "dependencies": {
     "@karmaniverous/jeeves": "0.6.0-6",
-    "@karmaniverous/jeeves-runner-core": "^0.2.1",
+    "@karmaniverous/jeeves-runner-core": "^0.2.2-0",
     "@karmaniverous/rrstack": "^0.17.1",
     "croner": "^10.0.1",
     "fastify": "^5.12.5",

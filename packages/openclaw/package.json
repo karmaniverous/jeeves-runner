@@ -38,7 +38,7 @@
     "job-scheduler"
   ],
   "engines": {
-    "node": ">=22"
+    "node": ">=22.13"
   },
   "openclaw": {
     "extensions": [
@@ -47,7 +47,7 @@
   },
   "dependencies": {
     "@karmaniverous/jeeves": "0.6.0-6",
-    "@karmaniverous/jeeves-runner-core": "^0.2.1"
+    "@karmaniverous/jeeves-runner-core": "^0.2.2-0"
   },
   "devDependencies": {
     "@dotenvx/dotenvx": "^2.30.0",
