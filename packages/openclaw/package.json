@@ -46,7 +46,7 @@
     ]
   },
   "dependencies": {
-    "@karmaniverous/jeeves": "0.6.0-7",
+    "@karmaniverous/jeeves": "0.6.0-8",
     "@karmaniverous/jeeves-runner-core": "^0.2.2-0"
   },
   "devDependencies": {
