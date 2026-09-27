@@ -80,9 +80,13 @@ export function createRunnerDescriptor(
     async run(configPath: string): Promise<void> {
       // Dynamic import breaks the descriptor ↔ runner circular dependency.
       const { createRunner } = await import('./runner.js');
-      const raw = readFileSync(resolve(configPath), 'utf-8');
+      const absoluteConfigPath = resolve(configPath);
+      const raw = readFileSync(absoluteConfigPath, 'utf-8');
       const config = runnerConfigSchema.parse(JSON.parse(raw));
-      const runner = createRunner(config);
+      // Pass the absolute path so config apply writes to this file (and
+      // its temp file lands in the same directory), not a path derived
+      // from a possibly relative config root.
+      const runner = createRunner(config, { configPath: absoluteConfigPath });
       await runner.start();
 
       // Block until terminated

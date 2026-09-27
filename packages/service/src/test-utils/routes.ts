@@ -52,8 +52,16 @@ export interface RouteTestHarness {
   scheduler: ReturnType<typeof createMockScheduler>;
 }
 
+/** Options for {@link createRouteTestHarness}. */
+export interface RouteTestHarnessOptions {
+  /** Explicit config file path passed through to the config apply route. */
+  configPath?: string;
+}
+
 /** Create a route test harness with DB, scheduler, and Fastify wired up. */
-export async function createRouteTestHarness(): Promise<RouteTestHarness> {
+export async function createRouteTestHarness(
+  options: RouteTestHarnessOptions = {},
+): Promise<RouteTestHarness> {
   const testDb = createTestDb();
   const scheduler = createMockScheduler();
   const app = Fastify({ logger: false });
@@ -66,6 +74,7 @@ export async function createRouteTestHarness(): Promise<RouteTestHarness> {
     scheduler,
     getConfig: () => defaultConfig,
     descriptor,
+    configPath: options.configPath,
   });
 
   await app.ready();
