@@ -6,6 +6,12 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [104] chore(deps): pin @karmaniverous/jeeves 0.6.0-9
+- [104] updated core
+## [0.11.0-1] - 2026-09-27
+
+### 💼 Other
+
 - [104] fix: tests and typecheck read source, not dist
 
 Service and openclaw vitest configs alias, and tsconfigs path-map,
@@ -19,6 +25,7 @@ Closes #112
 - [104] fix(release): update root package-lock in after:bump hook
 - [104] chore(deps): pin @karmaniverous/jeeves 0.6.0-8
 - [104] updated core
+- [104] chore: release @karmaniverous/jeeves-runner v0.11.0-1
 ## [0.11.0-0] - 2026-09-27
 
 ### 💼 Other
