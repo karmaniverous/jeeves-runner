@@ -6,8 +6,14 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [104] chore(deps): pin @karmaniverous/jeeves 0.6.0-9
+## [0.2.2-1] - 2026-09-27
+
+### 💼 Other
+
 - [104] fix(release): update root package-lock in after:bump hook
 - [104] chore(deps): pin @karmaniverous/jeeves 0.6.0-8
+- [104] chore: release @karmaniverous/jeeves-runner-core v0.2.2-1
 ## [0.2.2-0] - 2026-09-27
 
 ### 💼 Other
