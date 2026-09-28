@@ -6,8 +6,15 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [104] chore(deps): pin @karmaniverous/jeeves 0.6.0-9
+- [104] updated core
+## [0.9.0-2] - 2026-09-27
+
+### 💼 Other
+
 - [104] chore(deps): pin @karmaniverous/jeeves 0.6.0-8
 - [104] updated core
+- [104] chore: release @karmaniverous/jeeves-runner-openclaw v0.9.0-2
 ## [0.9.0-1] - 2026-09-27
 
 ### 💼 Other
