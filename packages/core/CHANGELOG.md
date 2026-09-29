@@ -6,7 +6,13 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [104] updated jeeves
+## [0.2.2-2] - 2026-09-28
+
+### 💼 Other
+
 - [104] chore(deps): pin @karmaniverous/jeeves 0.6.0-9
+- [104] chore: release @karmaniverous/jeeves-runner-core v0.2.2-2
 ## [0.2.2-1] - 2026-09-27
 
 ### 💼 Other
