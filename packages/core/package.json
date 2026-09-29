@@ -33,7 +33,7 @@
     "node": ">=22.13"
   },
   "dependencies": {
-    "@karmaniverous/jeeves": "0.6.0-9",
+    "@karmaniverous/jeeves": "0.6.0",
     "zod": "^4.6.5"
   },
   "devDependencies": {
