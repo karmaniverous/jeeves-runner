@@ -6,8 +6,16 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [104] chore: remove stan support
+- [104] updated jeeves
+- Updated core
+## [0.9.0-3] - 2026-09-28
+
+### 💼 Other
+
 - [104] chore(deps): pin @karmaniverous/jeeves 0.6.0-9
 - [104] updated core
+- [104] chore: release @karmaniverous/jeeves-runner-openclaw v0.9.0-3
 ## [0.9.0-2] - 2026-09-27
 
 ### 💼 Other
