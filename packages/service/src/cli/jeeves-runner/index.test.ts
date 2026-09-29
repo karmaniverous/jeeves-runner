@@ -15,6 +15,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { TestDb } from '../../test-utils/db.js';
 import { createTestDb } from '../../test-utils/db.js';
 
+/**
+ * Run the CLI from source via tsx, never from build output (dist/). tsx
+ * honours the tsconfig `paths` mapping, so workspace packages resolve to
+ * source as well.
+ */
+const CLI = `"${process.execPath}" --import tsx src/cli/jeeves-runner/index.ts`;
+
 describe('CLI', () => {
   vi.setConfig({ testTimeout: 15000 });
   let testDb: TestDb;
@@ -42,16 +49,15 @@ describe('CLI', () => {
   });
 
   it('should list jobs when database is empty', () => {
-    const result = execSync(
-      `node dist/cli/jeeves-runner/index.js list-jobs --config "${configPath}"`,
-      { encoding: 'utf-8' },
-    );
+    const result = execSync(`${CLI} list-jobs --config "${configPath}"`, {
+      encoding: 'utf-8',
+    });
     expect(result).toContain('No jobs configured');
   });
 
   it('should add a valid job', () => {
     const result = execSync(
-      `node dist/cli/jeeves-runner/index.js add-job --config "${configPath}" --id test-job --name "Test Job" --schedule "0 0 * * *" --script "echo test"`,
+      `${CLI} add-job --config "${configPath}" --id test-job --name "Test Job" --schedule "0 0 * * *" --script "echo test"`,
       { encoding: 'utf-8' },
     );
     expect(result).toContain("Job 'test-job' added");
@@ -68,7 +74,7 @@ describe('CLI', () => {
   it('should reject invalid schedule in add-job', () => {
     expect(() => {
       execSync(
-        `node dist/cli/jeeves-runner/index.js add-job --config "${configPath}" --id test-job --name "Test" --schedule "invalid" --script "echo test"`,
+        `${CLI} add-job --config "${configPath}" --id test-job --name "Test" --schedule "invalid" --script "echo test"`,
         { encoding: 'utf-8', stdio: 'pipe' },
       );
     }).toThrow();
@@ -77,7 +83,7 @@ describe('CLI', () => {
   it('should reject invalid overlap policy', () => {
     expect(() => {
       execSync(
-        `node dist/cli/jeeves-runner/index.js add-job --config "${configPath}" --id test-job --name "Test" --schedule "0 0 * * *" --script "echo test" --overlap queue`,
+        `${CLI} add-job --config "${configPath}" --id test-job --name "Test" --schedule "0 0 * * *" --script "echo test" --overlap queue`,
         { encoding: 'utf-8', stdio: 'pipe' },
       );
     }).toThrow();
@@ -86,7 +92,7 @@ describe('CLI', () => {
   it('should reject invalid job type', () => {
     expect(() => {
       execSync(
-        `node dist/cli/jeeves-runner/index.js add-job --config "${configPath}" --id test-job --name "Test" --schedule "0 0 * * *" --script "echo test" --type invalid`,
+        `${CLI} add-job --config "${configPath}" --id test-job --name "Test" --schedule "0 0 * * *" --script "echo test" --type invalid`,
         { encoding: 'utf-8', stdio: 'pipe' },
       );
     }).toThrow();
@@ -94,13 +100,12 @@ describe('CLI', () => {
 
   it('should list jobs after adding one', { timeout: 15000 }, () => {
     execSync(
-      `node dist/cli/jeeves-runner/index.js add-job --config "${configPath}" --id test-job --name "Test Job" --schedule "0 0 * * *" --script "echo test"`,
+      `${CLI} add-job --config "${configPath}" --id test-job --name "Test Job" --schedule "0 0 * * *" --script "echo test"`,
     );
 
-    const result = execSync(
-      `node dist/cli/jeeves-runner/index.js list-jobs --config "${configPath}"`,
-      { encoding: 'utf-8' },
-    );
+    const result = execSync(`${CLI} list-jobs --config "${configPath}"`, {
+      encoding: 'utf-8',
+    });
     expect(result).toContain('test-job');
     expect(result).toContain('Test Job');
     expect(result).toContain('0 0 * * *');
@@ -144,7 +149,7 @@ describe('trigger command', () => {
       );
 
       const { stdout } = await execAsync(
-        `node dist/cli/jeeves-runner/index.js trigger --id my-job --config-root "${configRoot}"`,
+        `${CLI} trigger --id my-job --config-root "${configRoot}"`,
         { encoding: 'utf-8', timeout: 10000 },
       );
 
@@ -163,10 +168,9 @@ describe('trigger command', () => {
 
 describe('init-scripts command', () => {
   it('should reference jeeves-scripts-template in help text', () => {
-    const result = execSync(
-      'node dist/cli/jeeves-runner/index.js init-scripts --help',
-      { encoding: 'utf-8' },
-    );
+    const result = execSync(`${CLI} init-scripts --help`, {
+      encoding: 'utf-8',
+    });
     expect(result).toContain('jeeves-scripts-template');
   });
 });
@@ -217,7 +221,7 @@ describe('sync-jobs command', () => {
     );
 
     const result = execSync(
-      `node dist/cli/jeeves-runner/index.js sync-jobs --config "${configPath}" --jobs-dir "${jobsDir}"`,
+      `${CLI} sync-jobs --config "${configPath}" --jobs-dir "${jobsDir}"`,
       { encoding: 'utf-8' },
     );
 
@@ -256,17 +260,14 @@ describe('sync-jobs command', () => {
 
     expect(() => {
       execSync(
-        `node dist/cli/jeeves-runner/index.js sync-jobs --config "${configPath}" --jobs-dir "${jobsDir}"`,
+        `${CLI} sync-jobs --config "${configPath}" --jobs-dir "${jobsDir}"`,
         { encoding: 'utf-8', stdio: 'pipe' },
       );
     }).toThrow();
   });
 
   it('should show expected options in --help', () => {
-    const result = execSync(
-      'node dist/cli/jeeves-runner/index.js sync-jobs --help',
-      { encoding: 'utf-8' },
-    );
+    const result = execSync(`${CLI} sync-jobs --help`, { encoding: 'utf-8' });
     expect(result).toContain('--config');
     expect(result).toContain('--jobs-dir');
     expect(result).toContain('--workspace');
@@ -277,19 +278,15 @@ describe('sync-jobs command', () => {
 describe('shared CLI config flags', () => {
   it('trigger accepts --workspace and --config-root without error', () => {
     // Using --help to avoid actual execution; flags must be recognized.
-    const result = execSync(
-      'node dist/cli/jeeves-runner/index.js trigger --help',
-      { encoding: 'utf-8' },
-    );
+    const result = execSync(`${CLI} trigger --help`, { encoding: 'utf-8' });
     expect(result).toContain('--workspace');
     expect(result).toContain('--config-root');
   });
 
   it('init-scripts accepts --workspace and --config-root without error', () => {
-    const result = execSync(
-      'node dist/cli/jeeves-runner/index.js init-scripts --help',
-      { encoding: 'utf-8' },
-    );
+    const result = execSync(`${CLI} init-scripts --help`, {
+      encoding: 'utf-8',
+    });
     expect(result).toContain('--workspace');
     expect(result).toContain('--config-root');
   });

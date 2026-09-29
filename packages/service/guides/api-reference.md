@@ -33,7 +33,7 @@ Returns service status with version and health metrics.
 ```
 
 | Field | Type | Description |
-|-------|------|-------------|
+| --- | --- | --- |
 | `name` | `string` | Service name (`"runner"`) |
 | `version` | `string` | Service version (injected at build time) |
 | `uptime` | `number` | Process uptime in seconds |
@@ -54,9 +54,9 @@ Query the resolved service configuration. Supports optional JSONPath filtering.
 
 **Query Parameters:**
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `path` | `string` | — | JSONPath expression to filter config |
+| Parameter | Type     | Default | Description                          |
+| --------- | -------- | ------- | ------------------------------------ |
+| `path`    | `string` | —       | JSONPath expression to filter config |
 
 **Example:** `GET /config?path=$.port`
 
@@ -74,7 +74,7 @@ Apply a configuration patch to the running service.
 ```
 
 | Field | Type | Required | Description |
-|-------|------|----------|-------------|
+| --- | --- | --- | --- |
 | `patch` | `object` | Yes | Configuration fields to update |
 | `replace` | `boolean` | No | Replace entire config instead of merging (default: false) |
 
@@ -156,9 +156,9 @@ Get run history for a job.
 
 **Query Parameters:**
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `limit` | `number` | `50` | Maximum number of runs to return |
+| Parameter | Type     | Default | Description                      |
+| --------- | -------- | ------- | -------------------------------- |
+| `limit`   | `number` | `50`    | Maximum number of runs to return |
 
 **Example:** `GET /jobs/sync-email/runs?limit=10`
 
@@ -317,7 +317,7 @@ Queue depth, claimed count, failed count, and oldest pending age.
 ```
 
 | Field | Type | Description |
-|-------|------|-------------|
+| --- | --- | --- |
 | `depth` | `number` | Total pending items |
 | `claimedCount` | `number` | Items currently being processed |
 | `failedCount` | `number` | Items in failed state |
@@ -329,9 +329,9 @@ Non-claiming read of pending items.
 
 **Query Parameters:**
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `limit` | `number` | `10` | Maximum items to return |
+| Parameter | Type     | Default | Description             |
+| --------- | -------- | ------- | ----------------------- |
+| `limit`   | `number` | `10`    | Maximum items to return |
 
 **Response:**
 

@@ -45,6 +45,9 @@ const typescript = typescriptPlugin({
   incremental: false,
   allowJs: false,
   checkJs: false,
+  // Type against the built core package, not the source path mapping
+  // used by typecheck/tests (see tsconfig.json).
+  paths: {},
 });
 
 const commonPlugins = [
@@ -94,27 +97,25 @@ const buildTypes = (dest: string): RollupOptions => ({
   input: 'src/index.ts',
   external: [...dependencyExternals, /^node:/],
   output: [{ file: `${dest}/index.d.ts`, format: 'esm' }],
-  plugins: [dtsPlugin()],
+  plugins: [dtsPlugin({ compilerOptions: { paths: {} } })],
 });
 
 /** Assemble complete config (ESM library, types, and CLI outputs). */
 const config: RollupOptions[] = [
   buildLibrary(outputPath),
   buildTypes(outputPath),
-  ...cliCommands.map(
-    (c): RollupOptions => ({
-      ...commonInputOptions,
-      input: `src/cli/${c}/index.ts`,
-      output: [
-        {
-          dir: `${outputPath}/cli/${c}`,
-          extend: true,
-          format: 'esm',
-          banner: '#!/usr/bin/env node',
-        },
-      ],
-    }),
-  ),
+  ...cliCommands.map((c): RollupOptions => ({
+    ...commonInputOptions,
+    input: `src/cli/${c}/index.ts`,
+    output: [
+      {
+        dir: `${outputPath}/cli/${c}`,
+        extend: true,
+        format: 'esm',
+        banner: '#!/usr/bin/env node',
+      },
+    ],
+  })),
 ];
 
 export default config;

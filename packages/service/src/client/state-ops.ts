@@ -171,7 +171,7 @@ export function createCollectionOps(db: DatabaseSync): CollectionOps {
           `DELETE FROM state_items WHERE namespace = ? AND key = ? AND rowid NOT IN (SELECT rowid FROM state_items WHERE namespace = ? AND key = ? ORDER BY updated_at DESC LIMIT ?)`,
         )
         .run(namespace, key, namespace, key, keepCount);
-      return result.changes;
+      return Number(result.changes);
     },
 
     listItemKeys(

@@ -1,174 +1,197 @@
 /**
+ * Registration tests against the real core: registration never requires
+ * `configRoot`; only tools that read it report a clear error until it
+ * resolves, and HTTP-only tools keep working without it.
+ *
  * @module index.test
  */
 
-import { type PluginApi } from '@karmaniverous/jeeves';
-import { describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
 
-type MockFn = ReturnType<typeof vi.fn>;
+import {
+  getConfigRoot,
+  type PluginApi,
+  resetInit,
+  RUNNER_PORT,
+  type ToolDescriptor,
+} from '@karmaniverous/jeeves';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@karmaniverous/jeeves', () => {
-  return {
-    DEFAULT_BIND_ADDRESS: '0.0.0.0',
-    init: vi.fn(),
-    getPackageVersion: vi.fn(() => '0.0.0-test'),
-    loadWorkspaceConfig: vi.fn(() => null),
-    WORKSPACE_CONFIG_DEFAULTS: {
-      core: {
-        workspace: '.',
-        configRoot: './config',
-        gatewayUrl: 'http://127.0.0.1:3000',
-      },
+import { CONFIG_ROOT_MISSING_MESSAGE, PLUGIN_ID } from './constants.js';
+import register from './index.js';
+
+interface Harness {
+  api: PluginApi;
+  tools: Map<string, ToolDescriptor>;
+  warn: ReturnType<typeof vi.fn>;
+}
+
+function harness(config?: Record<string, unknown>): Harness {
+  const tools = new Map<string, ToolDescriptor>();
+  const warn = vi.fn();
+  const api: PluginApi = {
+    ...(config
+      ? { config: { plugins: { entries: { [PLUGIN_ID]: { config } } } } }
+      : {}),
+    logger: { warn },
+    registerTool(tool) {
+      tools.set(tool.name, tool);
     },
-    RUNNER_PORT: 1937,
-    SECTION_IDS: { Runner: 'Runner' },
-    resolveWorkspacePath: vi.fn(() => '/mock/workspace'),
-    resolvePluginSetting: vi.fn(
-      (
-        _api: unknown,
-        _pluginId: string,
-        key: string,
-        _envVar: string,
-        fallback: string,
-      ) => {
-        if (key === 'apiUrl') {
-          const api = _api as PluginApi;
-          const val =
-            api.config?.plugins?.entries?.['jeeves-runner-openclaw']?.config?.[
-              key
-            ];
-          return typeof val === 'string' ? val : fallback;
-        }
-        return fallback;
-      },
-    ),
-    resolveOptionalPluginSetting: vi.fn(
-      (_api: unknown, _pluginId: string, key: string, _envVar: string) => {
-        if (key === 'configRoot') {
-          const api = _api as PluginApi;
-          const val =
-            api.config?.plugins?.entries?.['jeeves-runner-openclaw']?.config?.[
-              key
-            ];
-          return typeof val === 'string' ? val : undefined;
-        }
-        return undefined;
-      },
-    ),
-    createAsyncContentCache: vi.fn(() => vi.fn(() => 'cached content')),
-    createComponentWriter: vi.fn(() => ({ start: vi.fn() })),
-    createPluginToolset: vi.fn(() => [
-      {
-        name: 'runner_status',
-        description: 'mock',
-        parameters: {},
-        execute: vi.fn(),
-      },
-      {
-        name: 'runner_config',
-        description: 'mock',
-        parameters: {},
-        execute: vi.fn(),
-      },
-      {
-        name: 'runner_config_apply',
-        description: 'mock',
-        parameters: {},
-        execute: vi.fn(),
-      },
-      {
-        name: 'runner_service',
-        description: 'mock',
-        parameters: {},
-        execute: vi.fn(),
-      },
-    ]),
   };
-});
+  return { api, tools, warn };
+}
+
+function text(result: Awaited<ReturnType<ToolDescriptor['execute']>>): string {
+  return result.content.map((c) => c.text).join('\n');
+}
 
 describe('plugin register', () => {
-  it('registers tools and starts ComponentWriter', async () => {
-    const { default: register } = await import('./index.js');
-    const core = (await import('@karmaniverous/jeeves')) as unknown as {
-      init: MockFn;
-      createComponentWriter: MockFn;
-    };
-
-    const tools = new Map<string, unknown>();
-    const api: PluginApi = {
-      config: {
-        plugins: {
-          entries: {
-            'jeeves-runner-openclaw': {
-              config: { configRoot: 'j:/config' },
-            },
-          },
-        },
-      },
-      registerTool(tool) {
-        tools.set(tool.name, tool);
-      },
-    };
-
-    register(api);
-
-    // 4 standard factory tools + 16 custom runner tools = 20
-    expect(tools.size).toBe(20);
-    expect(core.init).toHaveBeenCalled();
-    expect(core.createComponentWriter).toHaveBeenCalled();
-
-    const writerArg = core.createComponentWriter.mock.calls[0]?.[0] as Record<
-      string,
-      unknown
-    >;
-    expect(writerArg.name).toBe('runner');
-    expect(writerArg.sectionId).toBe('Runner');
-
-    const writerOptions = core.createComponentWriter.mock.calls[0]?.[1] as {
-      gatewayUrl: string;
-    };
-    expect(writerOptions.gatewayUrl).toBe('http://127.0.0.1:3000');
-
-    const writer = core.createComponentWriter.mock.results[0]?.value as {
-      start: MockFn;
-    };
-    expect(writer.start).toHaveBeenCalled();
+  beforeEach(() => {
+    vi.stubEnv('JEEVES_CONFIG_ROOT', '');
+    resetInit();
   });
 
-  it('uses configRoot from plugin config', async () => {
-    const { default: register } = await import('./index.js');
-    const core = (await import('@karmaniverous/jeeves')) as unknown as {
-      init: MockFn;
-    };
-    core.init.mockClear();
-
-    const api: PluginApi = {
-      config: {
-        plugins: {
-          entries: {
-            'jeeves-runner-openclaw': {
-              config: { configRoot: '/custom/config' },
-            },
-          },
-        },
-      },
-      registerTool() {},
-    };
-
-    register(api);
-
-    expect(core.init).toHaveBeenCalledWith(
-      expect.objectContaining({ configRoot: '/custom/config' }),
-    );
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    resetInit();
   });
 
-  it('throws when configRoot is not configured', async () => {
-    const { default: register } = await import('./index.js');
-
-    const api: PluginApi = { registerTool() {} };
+  it('succeeds with no config, registers all tools, and warns once', () => {
+    const { api, tools, warn } = harness();
 
     expect(() => {
       register(api);
-    }).toThrow('configRoot not configured');
+    }).not.toThrow();
+
+    // 4 standard factory tools + 16 custom runner tools = 20
+    expect(tools.size).toBe(20);
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0]?.[0]).toContain('configRoot not configured yet');
+    expect(() => getConfigRoot()).toThrow();
+  });
+
+  it.each([
+    ['runner_status', {}],
+    ['runner_config', {}],
+    ['runner_config_apply', { config: { a: 1 } }],
+    ['runner_jobs', {}],
+  ])('runs HTTP-only %s without configRoot', async (name, params) => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(Response.json({ ok: true }, { status: 200 })),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const { api, tools } = harness();
+    register(api);
+
+    const result = await tools.get(name)!.execute('t1', params);
+
+    expect(result.isError).toBeFalsy();
+    expect(text(result)).not.toContain(CONFIG_ROOT_MISSING_MESSAGE);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  describe('standard tools honor apiUrl', () => {
+    function stubFetch() {
+      const fetchMock = vi.fn((_url: string | URL | Request) =>
+        Promise.resolve(Response.json({ ok: true }, { status: 200 })),
+      );
+      vi.stubGlobal('fetch', fetchMock);
+      return fetchMock;
+    }
+
+    function calledUrl(fetchMock: ReturnType<typeof stubFetch>): string {
+      const input = fetchMock.mock.calls[0]?.[0];
+      return input instanceof Request ? input.url : String(input);
+    }
+
+    beforeEach(() => {
+      vi.stubEnv('JEEVES_RUNNER_URL', '');
+    });
+
+    it('calls the configured apiUrl, resolved per call', async () => {
+      const fetchMock = stubFetch();
+      const config: Record<string, unknown> = {};
+      const { api, tools } = harness(config);
+      register(api);
+      config.apiUrl = 'http://runner.example:4321';
+
+      await tools.get('runner_status')!.execute('t1', {});
+
+      expect(calledUrl(fetchMock)).toMatch(/^http:\/\/runner\.example:4321\//);
+    });
+
+    it('falls back to the default runner port when apiUrl is unset', async () => {
+      const fetchMock = stubFetch();
+      const { api, tools } = harness();
+      register(api);
+
+      await tools.get('runner_status')!.execute('t1', {});
+
+      expect(calledUrl(fetchMock)).toMatch(
+        new RegExp(`^http://127\\.0\\.0\\.1:${String(RUNNER_PORT)}/`),
+      );
+    });
+  });
+
+  it('returns a clear tool error when configRoot is unset', async () => {
+    const { api, tools, warn } = harness();
+    register(api);
+
+    const result = await tools
+      .get('runner_service')!
+      .execute('t1', { action: 'install' });
+
+    expect(result.isError).toBe(true);
+    expect(text(result)).toContain(CONFIG_ROOT_MISSING_MESSAGE);
+    expect(text(result)).toContain('JEEVES_CONFIG_ROOT');
+    expect(text(result)).toContain('plugin config');
+    expect(warn).toHaveBeenCalledTimes(1);
+  });
+
+  it('initializes core from plugin config', () => {
+    const { api, warn } = harness({ configRoot: '/custom/config' });
+    register(api);
+
+    expect(warn).not.toHaveBeenCalled();
+    expect(getConfigRoot()).toBe('/custom/config');
+  });
+
+  it('initializes core from JEEVES_CONFIG_ROOT', () => {
+    vi.stubEnv('JEEVES_CONFIG_ROOT', '/env/config');
+    const { api, warn } = harness();
+    register(api);
+
+    expect(warn).not.toHaveBeenCalled();
+    expect(getConfigRoot()).toBe('/env/config');
+  });
+
+  it('falls back to console.warn when the host has no logger', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    register({ registerTool() {} });
+
+    expect(spy).toHaveBeenCalledTimes(1);
+    spy.mockRestore();
+  });
+});
+
+describe('openclaw.plugin.json', () => {
+  const manifest = JSON.parse(
+    readFileSync(new URL('../openclaw.plugin.json', import.meta.url), 'utf-8'),
+  ) as {
+    configSchema: { properties: Record<string, Record<string, unknown>> };
+  };
+
+  it('declares configRoot and apiUrl', () => {
+    expect(Object.keys(manifest.configSchema.properties).sort()).toEqual([
+      'apiUrl',
+      'configRoot',
+    ]);
+  });
+
+  it('has no configRoot default', () => {
+    expect(manifest.configSchema.properties.configRoot).not.toHaveProperty(
+      'default',
+    );
   });
 });

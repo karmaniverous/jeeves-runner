@@ -26,7 +26,7 @@ export function createRunRepository(db: DatabaseSync): RunRepository {
            VALUES (?, 'running', datetime('now'), ?)`,
         )
         .run(jobId, trigger);
-      return result.lastInsertRowid;
+      return Number(result.lastInsertRowid);
     },
 
     finishRun(runId: number, execResult: ExecutionResult): void {

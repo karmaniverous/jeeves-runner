@@ -8,57 +8,26 @@ The `@karmaniverous/jeeves-runner-openclaw` plugin gives your OpenClaw agent acc
 
 ## Installation
 
-### Standard (OpenClaw CLI)
+The plugin is a standard OpenClaw plugin. `jeeves install` / `jeeves update` (from `@karmaniverous/jeeves` 0.6+) install it and write its config. To install it by hand:
 
 ```bash
-openclaw plugins install @karmaniverous/jeeves-runner-openclaw
+openclaw plugins install npm:@karmaniverous/jeeves-runner-openclaw@<version> --pin --accept-capabilities
 ```
 
-### Self-Installer
-
-OpenClaw's `plugins install` command has a known bug on Windows where it fails with `spawn EINVAL` or `spawn npm ENOENT` ([#9224](https://github.com/openclaw/openclaw/issues/9224), [#4557](https://github.com/openclaw/openclaw/issues/4557), [#6086](https://github.com/openclaw/openclaw/issues/6086)). This package includes a self-installer that works around the issue:
-
-```bash
-npx @karmaniverous/jeeves-runner-openclaw install
-```
-
-The installer:
-
-1. Copies the plugin into OpenClaw's extensions directory (`~/.openclaw/extensions/jeeves-runner-openclaw/`)
-2. Adds the plugin to `plugins.entries` in `openclaw.json`
-3. If `plugins.allow` or `tools.allow` are already populated (explicit allowlists), adds the plugin to those lists
-
-To remove:
-
-```bash
-npx @karmaniverous/jeeves-runner-openclaw uninstall
-```
-
-#### Non-default installations
-
-If OpenClaw is installed at a non-default location, set one of these environment variables:
-
-| Variable | Description |
-|----------|-------------|
-| `OPENCLAW_CONFIG` | Full path to `openclaw.json` (overrides all other detection) |
-| `OPENCLAW_HOME` | Path to the `.openclaw` directory |
-
-Default location: `~/.openclaw/openclaw.json`
-
-After install or uninstall, restart the OpenClaw gateway to apply changes.
+There is no plugin-specific installer: the `npx @karmaniverous/jeeves-runner-openclaw install|uninstall` CLI was removed in favor of the OpenClaw CLI. Uninstall with `openclaw plugins uninstall jeeves-runner-openclaw`.
 
 ## Configuration
 
-The plugin is configured via `plugins.entries` in `openclaw.json`:
+The plugin is configured via `plugins.entries` in `openclaw.json` (written by `jeeves install`):
 
 ```json
 {
   "plugins": {
     "entries": {
-      "@karmaniverous/jeeves-runner-openclaw": {
+      "jeeves-runner-openclaw": {
         "config": {
           "apiUrl": "http://127.0.0.1:1937",
-          "configRoot": "J:/jeeves"
+          "configRoot": "J:/config"
         }
       }
     }
@@ -67,18 +36,21 @@ The plugin is configured via `plugins.entries` in `openclaw.json`:
 ```
 
 | Key | Default | Description |
-|-----|---------|-------------|
-| `apiUrl` | `http://127.0.0.1:1937` | Base URL of the jeeves-runner HTTP API |
-| `configRoot` | — | Root directory for platform content (TOOLS.md, skills) |
+| --- | --- | --- |
+| `apiUrl` | `http://127.0.0.1:1937` | Base URL of the jeeves-runner HTTP API (env fallback: `JEEVES_RUNNER_URL`) |
+| `configRoot` | — | Jeeves platform config root (env fallback: `JEEVES_CONFIG_ROOT`) |
+
+### configRoot is resolved lazily
+
+`openclaw plugins install` activates the plugin before `jeeves install` writes its config, so registration never requires `configRoot`:
+
+- Registration always succeeds. When `configRoot` is unset (neither plugin config nor `JEEVES_CONFIG_ROOT`), the plugin logs one warning.
+- `configRoot` is resolved on first use; core is initialized then.
+- The standard tools (`runner_status`, `runner_config`, `runner_config_apply`, `runner_service`) return a clear error naming both ways to set it until it resolves. The HTTP-only runner tools need just `apiUrl`.
 
 ## Platform Integration
 
-The plugin uses `@karmaniverous/jeeves` core's `ComponentWriter` to manage platform content:
-
-- **TOOLS.md section** — Writes a `## Runner` section into TOOLS.md with service health, connected status, and tool descriptions. Updated on gateway startup.
-- **Platform content** — Can contribute to SOUL.md, AGENTS.md, and other platform files via the `configRoot` directory.
-
-This replaces the previous `JEEVES_RUNNER_URL` environment variable approach.
+The plugin writes no workspace files. Static platform content (the SOUL/AGENTS managed blocks) is rendered by `jeeves install`; live runner state is served by the tools (`runner_status`, `runner_jobs`, …). The consumer skill ships via the manifest's `skills` field.
 
 ## Available Tools
 
@@ -102,18 +74,18 @@ Query resolved service configuration. Supports optional JSONPath filtering.
 
 Apply a configuration patch to the running service.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `patch` | `object` | Yes | Configuration fields to update |
-| `replace` | `boolean` | No | Replace entire config instead of merging |
+| Parameter | Type      | Required | Description                              |
+| --------- | --------- | -------- | ---------------------------------------- |
+| `patch`   | `object`  | Yes      | Configuration fields to update           |
+| `replace` | `boolean` | No       | Replace entire config instead of merging |
 
 #### `runner_service`
 
 System service management (install, uninstall, start, stop, restart, status).
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `action` | `string` | Yes | Service action to perform |
+| Parameter | Type     | Required | Description               |
+| --------- | -------- | -------- | ------------------------- |
+| `action`  | `string` | Yes      | Service action to perform |
 
 ### Custom Monitoring Tools
 
@@ -127,42 +99,42 @@ List all jobs with enabled state, schedule, last run status, and last run time.
 
 Manually trigger a job. Blocks until the job completes.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `jobId` | `string` | Yes | The job ID to trigger |
+| Parameter | Type     | Required | Description           |
+| --------- | -------- | -------- | --------------------- |
+| `jobId`   | `string` | Yes      | The job ID to trigger |
 
 #### `runner_runs`
 
 Get recent run history for a job.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `jobId` | `string` | Yes | The job ID |
-| `limit` | `number` | No | Maximum runs to return (default 50) |
+| Parameter | Type     | Required | Description                         |
+| --------- | -------- | -------- | ----------------------------------- |
+| `jobId`   | `string` | Yes      | The job ID                          |
+| `limit`   | `number` | No       | Maximum runs to return (default 50) |
 
 #### `runner_job_detail`
 
 Get full configuration for a single job.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `jobId` | `string` | Yes | The job ID |
+| Parameter | Type     | Required | Description |
+| --------- | -------- | -------- | ----------- |
+| `jobId`   | `string` | Yes      | The job ID  |
 
 #### `runner_enable`
 
 Enable a disabled job. Takes effect immediately.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `jobId` | `string` | Yes | The job ID to enable |
+| Parameter | Type     | Required | Description          |
+| --------- | -------- | -------- | -------------------- |
+| `jobId`   | `string` | Yes      | The job ID to enable |
 
 #### `runner_disable`
 
 Disable a job. It will not run until re-enabled.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `jobId` | `string` | Yes | The job ID to disable |
+| Parameter | Type     | Required | Description           |
+| --------- | -------- | -------- | --------------------- |
+| `jobId`   | `string` | Yes      | The job ID to disable |
 
 ### Management Tools
 
@@ -171,7 +143,7 @@ Disable a job. It will not run until re-enabled.
 Create a new runner job.
 
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
+| --- | --- | --- | --- |
 | `id` | `string` | Yes | Unique job identifier |
 | `name` | `string` | Yes | Human-readable name |
 | `schedule` | `string` | Yes | Cron expression or RRStack JSON |
@@ -189,6 +161,7 @@ Create a new runner job.
 | `args` | `string[]` | No | Arguments appended after the script path in spawn. Script-type only. |
 
 **Example:**
+
 ```json
 {
   "id": "poll-email",
@@ -204,11 +177,12 @@ Create a new runner job.
 Update an existing job. Only supplied fields are changed.
 
 | Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
+| --- | --- | --- | --- |
 | `jobId` | `string` | Yes | The job to update |
-| *(others)* | | No | Any field from `runner_create_job` except `id` |
+| _(others)_ |  | No | Any field from `runner_create_job` except `id` |
 
 **Example:** Change schedule and timeout:
+
 ```json
 {
   "jobId": "poll-email",
@@ -221,19 +195,19 @@ Update an existing job. Only supplied fields are changed.
 
 Delete a job and all its run history. **Irreversible.**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `jobId` | `string` | Yes | The job to delete |
+| Parameter | Type     | Required | Description       |
+| --------- | -------- | -------- | ----------------- |
+| `jobId`   | `string` | Yes      | The job to delete |
 
 #### `runner_update_script`
 
 Update a job's script content or path without changing other fields.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `jobId` | `string` | Yes | The job to update |
-| `script` | `string` | Yes | New script path or inline content |
-| `source_type` | `string` | No | `"path"` or `"inline"` |
+| Parameter     | Type     | Required | Description                       |
+| ------------- | -------- | -------- | --------------------------------- |
+| `jobId`       | `string` | Yes      | The job to update                 |
+| `script`      | `string` | Yes      | New script path or inline content |
+| `source_type` | `string` | No       | `"path"` or `"inline"`            |
 
 ### Inspection Tools
 
@@ -247,18 +221,18 @@ List all queues that have items.
 
 Get queue depth, claimed count, failed count, and oldest item age.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `queueName` | `string` | Yes | Queue name |
+| Parameter   | Type     | Required | Description |
+| ----------- | -------- | -------- | ----------- |
+| `queueName` | `string` | Yes      | Queue name  |
 
 #### `runner_queue_peek`
 
 Non-claiming read of pending queue items.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `queueName` | `string` | Yes | Queue name |
-| `limit` | `number` | No | Max items (default 10) |
+| Parameter   | Type     | Required | Description            |
+| ----------- | -------- | -------- | ---------------------- |
+| `queueName` | `string` | Yes      | Queue name             |
+| `limit`     | `number` | No       | Max items (default 10) |
 
 #### `runner_list_namespaces`
 
@@ -270,19 +244,19 @@ List all state namespaces.
 
 Read all scalar state for a namespace with optional JSONPath filtering.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `namespace` | `string` | Yes | State namespace |
-| `path` | `string` | No | JSONPath expression |
+| Parameter   | Type     | Required | Description         |
+| ----------- | -------- | -------- | ------------------- |
+| `namespace` | `string` | Yes      | State namespace     |
+| `path`      | `string` | No       | JSONPath expression |
 
 #### `runner_query_collection`
 
 Read collection items for a state key within a namespace.
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `namespace` | `string` | Yes | State namespace |
-| `key` | `string` | Yes | Collection key |
+| Parameter   | Type     | Required | Description     |
+| ----------- | -------- | -------- | --------------- |
+| `namespace` | `string` | Yes      | State namespace |
+| `key`       | `string` | Yes      | Collection key  |
 
 ## Skill
 

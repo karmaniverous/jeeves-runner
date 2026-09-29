@@ -1,12 +1,12 @@
 /**
- * Tests for plugin helpers. Validates getApiUrl and getConfigRoot resolve
+ * Tests for plugin helpers. Validates getApiUrl and resolveConfigRoot resolve
  * via plugin config, environment, and defaults.
  */
 
 import { type PluginApi } from '@karmaniverous/jeeves';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { getApiUrl, getConfigRoot } from './helpers.js';
+import { getApiUrl, resolveConfigRoot } from './helpers.js';
 
 describe('getApiUrl', () => {
   it('returns default URL when no config', () => {
@@ -31,10 +31,21 @@ describe('getApiUrl', () => {
   });
 });
 
-describe('getConfigRoot', () => {
-  it('throws when configRoot is not configured', () => {
+describe('resolveConfigRoot', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('returns undefined when configRoot is not configured', () => {
+    vi.stubEnv('JEEVES_CONFIG_ROOT', '');
     const api: PluginApi = { registerTool: () => {} };
-    expect(() => getConfigRoot(api)).toThrow('configRoot not configured');
+    expect(resolveConfigRoot(api)).toBeUndefined();
+  });
+
+  it('falls back to JEEVES_CONFIG_ROOT', () => {
+    vi.stubEnv('JEEVES_CONFIG_ROOT', '/env/config');
+    const api: PluginApi = { registerTool: () => {} };
+    expect(resolveConfigRoot(api)).toBe('/env/config');
   });
 
   it('returns configured config root', () => {
@@ -50,6 +61,6 @@ describe('getConfigRoot', () => {
       },
       registerTool: () => {},
     };
-    expect(getConfigRoot(api)).toBe('/custom/config');
+    expect(resolveConfigRoot(api)).toBe('/custom/config');
   });
 });

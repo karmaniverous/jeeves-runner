@@ -18,7 +18,6 @@ import {
   getPackageVersion,
   type JeevesComponentDescriptor,
   RUNNER_PORT,
-  SECTION_IDS,
 } from '@karmaniverous/jeeves';
 
 import { runnerConfigSchema } from './schemas/config.js';
@@ -48,17 +47,14 @@ export type OnConfigApplyCallback = (
  * Create the runner's component descriptor.
  *
  * @param options - Optional overrides for config-apply callback,
- *   TOOLS.md content generator, CLI commands, and plugin tools.
+ *   CLI commands, and plugin tools.
  * @returns A validated `JeevesComponentDescriptor`.
  */
 export function createRunnerDescriptor(
   options?: Partial<
     Pick<
       JeevesComponentDescriptor,
-      | 'onConfigApply'
-      | 'generateToolsContent'
-      | 'customCliCommands'
-      | 'customPluginTools'
+      'onConfigApply' | 'customCliCommands' | 'customPluginTools'
     >
   >,
 ): JeevesComponentDescriptor {
@@ -84,9 +80,13 @@ export function createRunnerDescriptor(
     async run(configPath: string): Promise<void> {
       // Dynamic import breaks the descriptor ↔ runner circular dependency.
       const { createRunner } = await import('./runner.js');
-      const raw = readFileSync(resolve(configPath), 'utf-8');
+      const absoluteConfigPath = resolve(configPath);
+      const raw = readFileSync(absoluteConfigPath, 'utf-8');
       const config = runnerConfigSchema.parse(JSON.parse(raw));
-      const runner = createRunner(config);
+      // Pass the absolute path so config apply writes to this file (and
+      // its temp file lands in the same directory), not a path derived
+      // from a possibly relative config root.
+      const runner = createRunner(config, { configPath: absoluteConfigPath });
       await runner.start();
 
       // Block until terminated
@@ -100,10 +100,6 @@ export function createRunnerDescriptor(
         process.on('SIGINT', shutdown);
       });
     },
-    sectionId: SECTION_IDS.Runner,
-    refreshIntervalSeconds: 67,
-    generateToolsContent:
-      options?.generateToolsContent ?? (() => '> Runner tools content pending'),
     customCliCommands: options?.customCliCommands,
     customPluginTools: options?.customPluginTools,
   };

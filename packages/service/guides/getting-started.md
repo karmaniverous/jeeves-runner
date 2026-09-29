@@ -8,7 +8,7 @@ This guide walks you through installing and configuring `jeeves-runner` from scr
 
 ## Prerequisites
 
-- **Node.js 20+** (Node.js 24+ recommended)
+- **Node.js 22.13+** (the first release where `node:sqlite` works without a flag)
 - SQLite support is built-in via Node.js `node:sqlite`
 
 ## Installation
@@ -50,9 +50,9 @@ This registers a job that runs every 5 minutes. The script must be an absolute p
 
 ### Job Types
 
-| Type | Description |
-|------|-------------|
-| `script` | Spawns a child process to run the script (default) |
+| Type      | Description                                                  |
+| --------- | ------------------------------------------------------------ |
+| `script`  | Spawns a child process to run the script (default)           |
 | `session` | Dispatches the script content to an OpenClaw Gateway session |
 
 ## Start the Runner
@@ -62,6 +62,7 @@ jeeves-runner start -c ./jeeves-runner/config.json
 ```
 
 The runner starts:
+
 1. SQLite database initialization and migrations
 2. Job schedule registration via cron
 3. HTTP API server on the configured port (default: 1937)

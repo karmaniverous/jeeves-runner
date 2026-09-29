@@ -19,7 +19,6 @@ import {
   init,
   WORKSPACE_CONFIG_DEFAULTS,
 } from '@karmaniverous/jeeves';
-import type { Command as BaseCommand } from 'commander';
 
 import { createRunnerDescriptor } from '../../descriptor.js';
 import { validateSchedule } from '../../scheduler/schedule-utils.js';
@@ -27,7 +26,7 @@ import { loadConfig, withDb } from './config-helpers.js';
 import { syncJobs } from './sync-jobs.js';
 
 const descriptor = createRunnerDescriptor({
-  customCliCommands: (program: BaseCommand) => {
+  customCliCommands: (program) => {
     program
       .command('add-job')
       .description('Add a new job')
@@ -291,10 +290,4 @@ const descriptor = createRunnerDescriptor({
   },
 });
 
-// Type assertion bridges @commander-js/extra-typings Command (core dep)
-// with the base commander types in this package.
-const program = createServiceCli(descriptor) as {
-  parse: (argv?: string[]) => void;
-};
-
-program.parse();
+createServiceCli(descriptor).parse();

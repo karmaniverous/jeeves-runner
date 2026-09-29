@@ -2,10 +2,8 @@
   "id": "jeeves-runner-openclaw",
   "name": "Jeeves Runner",
   "description": "Job execution engine management - status, troubleshooting, and operational tools for jeeves-runner.",
-  "version": "0.8.1",
-  "skills": [
-    "dist/skills/jeeves-runner"
-  ],
+  "version": "0.9.0-3",
+  "skills": ["dist/skills/jeeves-runner"],
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
@@ -17,7 +15,7 @@
       },
       "configRoot": {
         "type": "string",
-        "description": "Jeeves platform config root directory"
+        "description": "Jeeves platform config root directory. Optional at install time: falls back to the JEEVES_CONFIG_ROOT env var; tools that need it return an error until it is set. Written by `jeeves install --config-root`."
       }
     }
   },

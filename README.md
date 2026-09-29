@@ -1,8 +1,6 @@
 # Jeeves Runner 🎩
 
-[![npm version](https://img.shields.io/npm/v/@karmaniverous/jeeves-runner.svg)](https://www.npmjs.com/package/@karmaniverous/jeeves-runner)
-![Node Current](https://img.shields.io/node/v/@karmaniverous/jeeves-runner)
-[![license](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](https://github.com/karmaniverous/jeeves-runner/tree/main/LICENSE.md)
+[![npm version](https://img.shields.io/npm/v/@karmaniverous/jeeves-runner.svg)](https://www.npmjs.com/package/@karmaniverous/jeeves-runner) ![Node Current](https://img.shields.io/node/v/@karmaniverous/jeeves-runner) [![license](https://img.shields.io/badge/license-BSD--3--Clause-blue.svg)](https://github.com/karmaniverous/jeeves-runner/tree/main/LICENSE.md)
 
 Graph-aware job execution engine with SQLite state. Part of the [Jeeves platform](#the-jeeves-platform).
 
@@ -11,7 +9,7 @@ Graph-aware job execution engine with SQLite state. Part of the [Jeeves platform
 This repository is a monorepo containing two packages:
 
 | Package | npm | Description |
-|---------|-----|-------------|
+| --- | --- | --- |
 | [`packages/service`](packages/service) | [`@karmaniverous/jeeves-runner`](https://www.npmjs.com/package/@karmaniverous/jeeves-runner) v0.7.4 | Job execution engine |
 | [`packages/openclaw`](packages/openclaw) | [`@karmaniverous/jeeves-runner-openclaw`](https://www.npmjs.com/package/@karmaniverous/jeeves-runner-openclaw) v0.5.1 | OpenClaw plugin |
 
@@ -32,15 +30,15 @@ jeeves-runner schedules and executes jobs, tracks their state in SQLite, and exp
 
 ### Stack
 
-| Component | Technology |
-|-----------|-----------|
-| Runtime | Node.js v24+ (uses built-in `node:sqlite`) |
-| Scheduler | [croner](https://www.npmjs.com/package/croner) |
-| Database | SQLite via `node:sqlite` |
-| Process isolation | `child_process.spawn` |
-| HTTP API | [Fastify](https://fastify.dev/) |
-| Logging | [pino](https://getpino.io/) |
-| Config validation | [Zod](https://zod.dev/) |
+| Component         | Technology                                     |
+| ----------------- | ---------------------------------------------- |
+| Runtime           | Node.js v24+ (uses built-in `node:sqlite`)     |
+| Scheduler         | [croner](https://www.npmjs.com/package/croner) |
+| Database          | SQLite via `node:sqlite`                       |
+| Process isolation | `child_process.spawn`                          |
+| HTTP API          | [Fastify](https://fastify.dev/)                |
+| Logging           | [pino](https://getpino.io/)                    |
+| Config validation | [Zod](https://zod.dev/)                        |
 
 ## Installation
 
@@ -48,7 +46,7 @@ jeeves-runner schedules and executes jobs, tracks their state in SQLite, and exp
 npm install @karmaniverous/jeeves-runner
 ```
 
-Requires Node.js 24+ for `node:sqlite` support.
+Requires Node.js 22.13+ (`node:sqlite` needs no flag from that version).
 
 ## Quick Start
 
@@ -122,7 +120,7 @@ npx jeeves-runner list-jobs --config ./config.json
 Built with `createServiceCli(descriptor)` from core. Standard commands plus custom job management commands.
 
 | Command | Description |
-|---------|-------------|
+| --- | --- |
 | `start` | Start the runner daemon (foreground) |
 | `status` | Probe service health and version (queries `GET /status`) |
 | `config [jsonpath]` | Query resolved config from running service |
@@ -144,7 +142,7 @@ Built with `createServiceCli(descriptor)` from core. Standard commands plus cust
 The runner exposes a REST API. Default bind address: `0.0.0.0` (all interfaces), default port: `1937`.
 
 | Method | Path | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | `GET` | `/status` | Service status (`{ name, version, uptime, status, health }`) |
 | `GET` | `/config` | Query resolved config (optional `?path=` JSONPath) |
 | `POST` | `/config/apply` | Apply a config patch (`{ patch, replace? }`) |
@@ -192,7 +190,7 @@ Six tables manage all runner state:
 Each job has an ID, name, cron schedule, script path, and behavioral configuration.
 
 | Column | Type | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | `id` | TEXT PK | Job identifier (e.g. `email-poll`) |
 | `name` | TEXT | Human-readable name |
 | `schedule` | TEXT | Cron expression |
@@ -214,7 +212,7 @@ Each job has an ID, name, cron schedule, script path, and behavioral configurati
 Every execution is recorded with status, timing, output capture, and optional token tracking.
 
 | Column | Type | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | `id` | INTEGER PK | Auto-incrementing run ID |
 | `job_id` | TEXT FK | References `jobs.id` |
 | `status` | TEXT | `pending`, `running`, `ok`, `error`, `timeout`, `skipped` |
@@ -232,58 +230,58 @@ Runs older than `runRetentionDays` are automatically pruned.
 
 General-purpose key-value store with optional TTL. Scripts use `getState`/`setState`/`deleteState` to track cursors, checkpoints, or any operational state.
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `namespace` | TEXT | Logical grouping (typically job ID) |
-| `key` | TEXT | State key |
-| `value` | TEXT | State value (string or JSON) |
+| Column       | Type | Description                                |
+| ------------ | ---- | ------------------------------------------ |
+| `namespace`  | TEXT | Logical grouping (typically job ID)        |
+| `key`        | TEXT | State key                                  |
+| `value`      | TEXT | State value (string or JSON)               |
 | `expires_at` | TEXT | Optional TTL (ISO timestamp, auto-cleaned) |
 
 ### `state_items` — Collection State
 
 Collection-oriented state store for tracking sets of items (e.g., seen thread IDs, processed message IDs).
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `namespace` | TEXT | Logical grouping (typically job ID) |
-| `key` | TEXT | Collection key |
-| `item_key` | TEXT | Individual item identifier |
-| `value` | TEXT | Item value (string or JSON) |
+| Column       | Type | Description                                |
+| ------------ | ---- | ------------------------------------------ |
+| `namespace`  | TEXT | Logical grouping (typically job ID)        |
+| `key`        | TEXT | Collection key                             |
+| `item_key`   | TEXT | Individual item identifier                 |
+| `value`      | TEXT | Item value (string or JSON)                |
 | `expires_at` | TEXT | Optional TTL (ISO timestamp, auto-cleaned) |
 
 ### `queues` — Queue Metadata
 
 Queue-level configuration including deduplication and retention policies.
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | TEXT PK | Queue identifier |
-| `dedup_config` | TEXT | JSON deduplication configuration |
-| `retention` | TEXT | JSON retention policy |
+| Column         | Type    | Description                      |
+| -------------- | ------- | -------------------------------- |
+| `id`           | TEXT PK | Queue identifier                 |
+| `dedup_config` | TEXT    | JSON deduplication configuration |
+| `retention`    | TEXT    | JSON retention policy            |
 
 ### `queue_items` — Work Queue Items
 
 Priority-ordered work queues with claim semantics. SQLite's serialized writes prevent double-claims.
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | INTEGER PK | Auto-incrementing item ID |
-| `queue_id` | TEXT FK | References `queues.id` |
-| `payload` | TEXT | JSON blob |
-| `status` | TEXT | `pending`, `claimed`, `done`, `error` |
-| `priority` | INTEGER | Higher = more urgent |
-| `attempts` | INTEGER | Delivery attempt count |
-| `max_attempts` | INTEGER | Maximum retries |
+| Column         | Type       | Description                           |
+| -------------- | ---------- | ------------------------------------- |
+| `id`           | INTEGER PK | Auto-incrementing item ID             |
+| `queue_id`     | TEXT FK    | References `queues.id`                |
+| `payload`      | TEXT       | JSON blob                             |
+| `status`       | TEXT       | `pending`, `claimed`, `done`, `error` |
+| `priority`     | INTEGER    | Higher = more urgent                  |
+| `attempts`     | INTEGER    | Delivery attempt count                |
+| `max_attempts` | INTEGER    | Maximum retries                       |
 
 ## Job Scripts
 
 Jobs are plain Node.js scripts executed as child processes. The runner passes context via environment variables:
 
-| Variable | Description |
-|----------|-------------|
+| Variable     | Description                        |
+| ------------ | ---------------------------------- |
 | `JR_DB_PATH` | Path to the runner SQLite database |
-| `JR_JOB_ID` | ID of the current job |
-| `JR_RUN_ID` | ID of the current run |
+| `JR_JOB_ID`  | ID of the current job              |
+| `JR_RUN_ID`  | ID of the current run              |
 
 ### Structured output
 
@@ -318,7 +316,7 @@ The package exports a full suite of script helper utilities. See the [Script Hel
 **Highlights:**
 
 | Module | Exports | Purpose |
-|--------|---------|---------|
+| --- | --- | --- |
 | `run-script` | `runScript` | Crash-handling entry point wrapper |
 | `runner-client` | `getRunnerClient` | SQLite client factory (state + queue API) |
 | `fs-utils` | `readJson`, `writeJsonAtomic`, `appendJsonl`, `sleepMs`, `uuid`, ... | Filesystem, time, process, CLI utilities |
@@ -333,10 +331,10 @@ The package exports a full suite of script helper utilities. See the [Script Hel
 
 ### Overlap policies
 
-| Policy | Behavior |
-|--------|----------|
-| `skip` | Don't start if already running (default) |
-| `allow` | Run concurrently |
+| Policy  | Behavior                                 |
+| ------- | ---------------------------------------- |
+| `skip`  | Don't start if already running (default) |
+| `allow` | Run concurrently                         |
 
 ### Concurrency
 
@@ -383,7 +381,7 @@ process.on('SIGTERM', () => runner.stop());
 Config file: `jeeves-runner/config.json` (legacy `jeeves-runner.config.json` is auto-migrated).
 
 | Key | Type | Default | Description |
-|-----|------|---------|-------------|
+| --- | --- | --- | --- |
 | `port` | number | `1937` | HTTP API port |
 | `host` | string | `0.0.0.0` | Bind address for the HTTP server |
 | `dbPath` | string | `./data/runner.sqlite` | SQLite database path |
@@ -404,14 +402,14 @@ Config file: `jeeves-runner/config.json` (legacy `jeeves-runner.config.json` is 
 
 ## OpenClaw Plugin
 
-The `@karmaniverous/jeeves-runner-openclaw` package provides an OpenClaw plugin that exposes runner management tools to your agent. See the [OpenClaw Integration Guide](packages/openclaw/guides/openclaw-integration.md) for setup and usage.
+The `@karmaniverous/jeeves-runner-openclaw` package provides an OpenClaw plugin that exposes runner management tools to your agent. It is a standard OpenClaw plugin installed by `jeeves install` (or `openclaw plugins install`); it writes no workspace files, and its `configRoot` (plugin config or `JEEVES_CONFIG_ROOT`) is resolved lazily, so it installs cleanly before its config exists. See the [OpenClaw Integration Guide](packages/openclaw/guides/openclaw-integration.md) for setup and usage.
 
 ## The Jeeves Platform
 
 jeeves-runner is one component of a four-part platform:
 
 | Component | Role | Status |
-|-----------|------|--------|
+| --- | --- | --- |
 | **jeeves-runner** | Execute: run processes, move data through the graph | This package |
 | **[jeeves-watcher](https://github.com/karmaniverous/jeeves-watcher)** | Index: observe file-backed datastores, embed in Qdrant | Shipped |
 | **jeeves-server** | Present: UI, API, file serving, search, dashboards | Shipped |
@@ -454,12 +452,12 @@ jeeves-runner is one component of a four-part platform:
 
 ### Future phases
 
-| Feature | Phase |
-|---------|-------|
-| Graph topology (nodes/edges schema) | 2 |
-| Credential/auth management | 2 |
-| REST API for graph mutations | 2 |
-| Container packaging | 3 |
+| Feature                             | Phase |
+| ----------------------------------- | ----- |
+| Graph topology (nodes/edges schema) | 2     |
+| Credential/auth management          | 2     |
+| REST API for graph mutations        | 2     |
+| Container packaging                 | 3     |
 
 ## Development
 
@@ -481,4 +479,3 @@ BSD-3-Clause
 ---
 
 Built for you with ❤️ on Bali by [Jason Williscroft](https://github.com/karmaniverous) & [Jeeves](https://github.com/jgs-jeeves).
-

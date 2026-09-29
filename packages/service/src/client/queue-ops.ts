@@ -106,7 +106,7 @@ export function createQueueOps(db: DatabaseSync): QueueOps {
           'INSERT INTO queue_items (queue_id, payload, priority, max_attempts, dedup_key) VALUES (?, ?, ?, ?, ?)',
         )
         .run(queue, payloadJson, priority, maxAttempts, dedupKey);
-      return result.lastInsertRowid;
+      return Number(result.lastInsertRowid);
     },
 
     dequeue(queue: string, count = 1): QueueItem[] {
@@ -158,8 +158,7 @@ export function createQueueOps(db: DatabaseSync): QueueOps {
       const item = db
         .prepare('SELECT attempts, max_attempts FROM queue_items WHERE id = ?')
         .get(queueItemId) as
-        | { attempts: number; max_attempts: number }
-        | undefined;
+        { attempts: number; max_attempts: number } | undefined;
 
       if (!item) return;
 

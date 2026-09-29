@@ -1,6 +1,6 @@
 {
   "name": "@karmaniverous/jeeves-runner-core",
-  "version": "0.2.1",
+  "version": "0.2.2-2",
   "author": "Jason Williscroft",
   "description": "Shared configuration schema and types for jeeves-runner packages.",
   "license": "BSD-3-Clause",
@@ -30,23 +30,23 @@
   },
   "homepage": "https://github.com/karmaniverous/jeeves-runner#readme",
   "engines": {
-    "node": ">=22"
+    "node": ">=22.13"
   },
   "dependencies": {
-    "@karmaniverous/jeeves": "^0.5.12",
-    "zod": "^4.4.3"
+    "@karmaniverous/jeeves": "0.6.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
-    "@dotenvx/dotenvx": "^1.65.0",
-    "@rollup/plugin-commonjs": "^29.0.2",
+    "@dotenvx/dotenvx": "^2.30.0",
+    "@rollup/plugin-commonjs": "^29.0.3",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rollup/plugin-typescript": "^12.3.0",
     "cross-env": "^10.1.0",
-    "release-it": "^20.0.1",
-    "rollup": "^4.60.3",
+    "release-it": "^21.1.0",
+    "rollup": "^4.63.5",
     "tslib": "^2.8.1",
-    "vitest": "^4.1.6"
+    "vitest": "^5.0.2"
   },
   "scripts": {
     "build": "rimraf dist && cross-env NO_COLOR=1 rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
@@ -56,7 +56,7 @@
     "typecheck": "tsc --noEmit",
     "changelog": "git-cliff -o CHANGELOG.md",
     "release": "dotenvx run -f .env.local -- release-it",
-    "release:pre": "dotenvx run -f .env.local -- release-it --no-git.requireBranch --github.prerelease --preRelease"
+    "release:pre": "dotenvx run -f .env.local -- release-it --no-git.requireBranch --github.preRelease --preRelease"
   },
   "release-it": {
     "git": {
@@ -74,6 +74,9 @@
         "npm run typecheck",
         "npm run test",
         "npm run build"
+      ],
+      "after:bump": [
+        "npm install --package-lock-only --ignore-scripts"
       ],
       "before:npm:release": [
         "npx git-cliff -o CHANGELOG.md",

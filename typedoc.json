@@ -1,7 +1,5 @@
 {
-  "entryPoints": [
-    "./packages/service/src/index.ts"
-  ],
+  "entryPoints": ["./packages/service/src/index.ts"],
   "tsconfig": "./packages/service/tsconfig.json",
   "highlightLanguages": [
     "bash",
@@ -26,10 +24,7 @@
     "GitHub": "https://github.com/karmaniverous/jeeves-runner"
   },
   "out": "./docs/",
-  "plugin": [
-    "typedoc-plugin-mdn-links",
-    "typedoc-plugin-replace-text"
-  ],
+  "plugin": ["typedoc-plugin-mdn-links", "typedoc-plugin-replace-text"],
   "projectDocuments": [
     "./packages/service/CHANGELOG.md",
     "./packages/service/guides/index.md",

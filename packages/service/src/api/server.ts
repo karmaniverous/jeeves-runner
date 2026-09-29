@@ -28,6 +28,8 @@ interface ServerDeps {
   descriptor: JeevesComponentDescriptor;
   /** Pino logger configuration. */
   logConfig: LogConfig;
+  /** Absolute path of the active config file (for config apply). */
+  configPath?: string;
 }
 
 /**
@@ -45,6 +47,7 @@ export function createServer(deps: ServerDeps): FastifyInstance {
     scheduler: deps.scheduler,
     getConfig: deps.getConfig,
     descriptor: deps.descriptor,
+    configPath: deps.configPath,
   });
 
   return app;

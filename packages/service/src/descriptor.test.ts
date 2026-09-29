@@ -17,7 +17,6 @@ describe('createRunnerDescriptor', () => {
     );
     expect(descriptor.defaultPort).toBe(1937);
     expect(descriptor.configFileName).toBe('config.json');
-    expect(descriptor.refreshIntervalSeconds).toBe(67);
   });
 
   it('initTemplate returns a valid default config object', () => {
@@ -40,13 +39,6 @@ describe('createRunnerDescriptor', () => {
     expect(cmd.some((arg: string) => arg.includes('index.js'))).toBe(true);
   });
 
-  it('uses default generateToolsContent when none provided', () => {
-    const descriptor = createRunnerDescriptor();
-    const content = descriptor.generateToolsContent();
-
-    expect(content).toContain('pending');
-  });
-
   it('forwards custom onConfigApply callback', async () => {
     let called = false;
     const descriptor = createRunnerDescriptor({
@@ -58,14 +50,6 @@ describe('createRunnerDescriptor', () => {
 
     await descriptor.onConfigApply!({});
     expect(called).toBe(true);
-  });
-
-  it('forwards custom generateToolsContent', () => {
-    const descriptor = createRunnerDescriptor({
-      generateToolsContent: () => '# Custom tools',
-    });
-
-    expect(descriptor.generateToolsContent()).toBe('# Custom tools');
   });
 
   it('onConfigApply is undefined when not provided', () => {

@@ -243,8 +243,7 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
 
     async triggerJob(jobId: string): Promise<ExecutionResult> {
       const job = db.prepare('SELECT * FROM jobs WHERE id = ?').get(jobId) as
-        | JobRow
-        | undefined;
+        JobRow | undefined;
 
       if (!job) throw new Error(`Job not found: ${jobId}`);
       return runJob(job, 'manual');

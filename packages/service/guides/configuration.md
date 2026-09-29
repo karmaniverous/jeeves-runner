@@ -58,7 +58,7 @@ Legacy config files named `jeeves-runner.config.json` are automatically migrated
 ### Top-Level Fields
 
 | Field | Type | Default | Description |
-|-------|------|---------|-------------|
+| --- | --- | --- | --- |
 | `port` | `number` | `1937` | HTTP server port for the runner API |
 | `host` | `string` | `"0.0.0.0"` | Bind address for the HTTP server |
 | `dbPath` | `string` | `"./data/runner.sqlite"` | Path to the SQLite database file |
@@ -74,7 +74,7 @@ Legacy config files named `jeeves-runner.config.json` are automatically migrated
 Slack notification configuration for job completion events.
 
 | Field | Type | Default | Description |
-|-------|------|---------|-------------|
+| --- | --- | --- | --- |
 | `slackTokenPath` | `string?` | � | Path to file containing Slack bot token |
 | `defaultOnFailure` | `string \| null` | `null` | Default Slack channel ID for failure notifications |
 | `defaultOnSuccess` | `string \| null` | `null` | Default Slack channel ID for success notifications |
@@ -86,7 +86,7 @@ Per-job overrides: each job can specify its own `on_failure` and `on_success` ch
 Logging configuration.
 
 | Field | Type | Default | Description |
-|-------|------|---------|-------------|
+| --- | --- | --- | --- |
 | `level` | `string` | `"info"` | Log level: `trace`, `debug`, `info`, `warn`, `error`, `fatal` |
 | `file` | `string?` | � | Optional log file path (logs to stdout if omitted) |
 
@@ -95,7 +95,7 @@ Logging configuration.
 OpenClaw Gateway configuration for session-type jobs.
 
 | Field | Type | Default | Description |
-|-------|------|---------|-------------|
+| --- | --- | --- | --- |
 | `url` | `string` | `"http://127.0.0.1:18789"` | Gateway HTTP API URL |
 | `tokenPath` | `string?` | � | Path to file containing Gateway auth token |
 

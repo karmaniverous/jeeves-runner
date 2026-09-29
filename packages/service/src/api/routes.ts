@@ -32,13 +32,19 @@ interface RouteDeps {
   getConfig: () => RunnerConfig;
   /** Component descriptor for factory-produced handlers. */
   descriptor: JeevesComponentDescriptor;
+  /**
+   * Absolute path of the config file the service was started with.
+   * When set, `POST /config/apply` writes here (temp file in the same
+   * directory) instead of deriving a path from the core config root.
+   */
+  configPath?: string;
 }
 
 /**
  * Register all API routes on the Fastify instance.
  */
 export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
-  const { db, scheduler, getConfig, descriptor } = deps;
+  const { db, scheduler, getConfig, descriptor, configPath } = deps;
 
   // --- GET /status (factory-produced) ---
   const statusHandler = createStatusHandler({
@@ -80,7 +86,7 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
   });
 
   // --- POST /config/apply (factory-produced) ---
-  const configApplyHandler = createConfigApplyHandler(descriptor);
+  const configApplyHandler = createConfigApplyHandler(descriptor, configPath);
 
   app.post<{ Body: { patch: Record<string, unknown>; replace?: boolean } }>(
     '/config/apply',

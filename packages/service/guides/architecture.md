@@ -49,6 +49,7 @@ Jobs transition through these states:
 ### Overlap Policy
 
 Each job has an `overlap_policy`:
+
 - **skip** (default) — If the job is already running when the next cron fires, the new run is skipped
 - **allow** — Multiple instances can run concurrently
 
@@ -88,7 +89,7 @@ Scripts can persist state and exchange data through the runner's client API:
 Stores job configuration. Registered via CLI or seed script, mutable via API.
 
 | Column | Type | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | `id` | TEXT PK | Unique job identifier |
 | `name` | TEXT | Human-readable name |
 | `schedule` | TEXT | Cron expression |
@@ -110,7 +111,7 @@ Stores job configuration. Registered via CLI or seed script, mutable via API.
 Stores execution history. Automatically pruned based on `runRetentionDays`.
 
 | Column | Type | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | `id` | INTEGER PK | Auto-increment run ID |
 | `job_id` | TEXT FK | References `jobs.id` |
 | `status` | TEXT | `pending`, `running`, `ok`, `error`, `timeout`, or `skipped` |
@@ -129,32 +130,32 @@ Stores execution history. Automatically pruned based on `runRetentionDays`.
 
 Scalar key-value store for script operational state.
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `namespace` | TEXT | Logical grouping (typically job ID) |
-| `key` | TEXT | State key |
-| `value` | TEXT | JSON-encoded value |
-| `expires_at` | TEXT | Optional TTL timestamp |
+| Column       | Type | Description                         |
+| ------------ | ---- | ----------------------------------- |
+| `namespace`  | TEXT | Logical grouping (typically job ID) |
+| `key`        | TEXT | State key                           |
+| `value`      | TEXT | JSON-encoded value                  |
+| `expires_at` | TEXT | Optional TTL timestamp              |
 
 ### `state_items` Table
 
 Collection state for tracking sets of items within a namespace. FK to `state(namespace, key)`.
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `namespace` | TEXT PK | Logical grouping (typically job ID) |
-| `key` | TEXT PK | Collection key |
-| `item_key` | TEXT PK | Individual item identifier |
-| `value` | TEXT | JSON-encoded value |
-| `created_at` | TEXT | Creation timestamp |
-| `updated_at` | TEXT | Last update timestamp |
+| Column       | Type    | Description                         |
+| ------------ | ------- | ----------------------------------- |
+| `namespace`  | TEXT PK | Logical grouping (typically job ID) |
+| `key`        | TEXT PK | Collection key                      |
+| `item_key`   | TEXT PK | Individual item identifier          |
+| `value`      | TEXT    | JSON-encoded value                  |
+| `created_at` | TEXT    | Creation timestamp                  |
+| `updated_at` | TEXT    | Last update timestamp               |
 
 ### `queues` Table
 
 Queue-level metadata including deduplication and retention configuration.
 
 | Column | Type | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | `id` | TEXT PK | Queue identifier |
 | `name` | TEXT | Human-readable queue name |
 | `description` | TEXT | Queue description |
@@ -169,7 +170,7 @@ Queue-level metadata including deduplication and retention configuration.
 Ordered message queue with claim semantics.
 
 | Column | Type | Description |
-|--------|------|-------------|
+| --- | --- | --- |
 | `id` | INTEGER PK | Auto-increment |
 | `queue_id` | TEXT FK | References `queues.id` |
 | `payload` | TEXT | JSON-encoded payload |

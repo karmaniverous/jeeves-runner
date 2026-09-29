@@ -36,6 +36,11 @@ export interface Runner {
 export interface RunnerDeps {
   /** Optional custom logger instance. */
   logger?: Logger;
+  /**
+   * Absolute path of the config file the runner was loaded from.
+   * Used by `POST /config/apply` so patches land in that file.
+   */
+  configPath?: string;
 }
 
 /**
@@ -117,6 +122,7 @@ export function createRunner(config: RunnerConfig, deps?: RunnerDeps): Runner {
         getConfig: () => config,
         descriptor,
         logConfig: config.logging,
+        configPath: deps?.configPath,
       });
       let effectiveHost = config.host;
       try {

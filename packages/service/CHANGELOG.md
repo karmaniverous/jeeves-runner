@@ -6,6 +6,46 @@ All notable changes to this project will be documented in this file.
 
 ### 💼 Other
 
+- [104] chore(deps): pin @karmaniverous/jeeves 0.6.0-9
+- [104] updated core
+## [0.11.0-1] - 2026-09-27
+
+### 💼 Other
+
+- [104] fix: tests and typecheck read source, not dist
+
+Service and openclaw vitest configs alias, and tsconfigs path-map,
+@karmaniverous/jeeves-runner-core to packages/core/src, so typecheck and
+tests pass on a clean checkout with no dist/. The rollup TS and dts
+plugins override paths so the build still types against built core and
+keeps it external. CLI tests run the CLI from source via tsx, and the
+service test script no longer builds first.
+
+Closes #112
+- [104] fix(release): update root package-lock in after:bump hook
+- [104] chore(deps): pin @karmaniverous/jeeves 0.6.0-8
+- [104] updated core
+- [104] chore: release @karmaniverous/jeeves-runner v0.11.0-1
+## [0.11.0-0] - 2026-09-27
+
+### 💼 Other
+
+- [104] chore(deps): ncu -u --peer across all packages (reject @karmaniverous/jeeves)
+- [104] style: apply prettier 3.9 formatting to service sources
+- [104] chore(knip): remove unused zod dependency from packages/service
+- [104] chore(prettier): format docs/config files; ignore generated CHANGELOG.md
+- [104] feat: move core and service to @karmaniverous/jeeves 0.6.0-4; drop v0.x TOOLS.md descriptor fields
+- [104] chore(deps): pin @karmaniverous/jeeves 0.6.0-6
+- [104] fix(release): use --github.preRelease for release-it 21
+- [104] fix(service): write config apply to the --config file, not relative to cwd (#109)
+- [104] refactor(service): drop node:sqlite shim in favour of @types/node (#111)
+- [104] fix(deps): runner-core ^0.2.2-0 for single core copy; engines node >=22.13 (#108, #110)
+- [104] chore(deps): pin @karmaniverous/jeeves 0.6.0-7
+- [104] chore: release @karmaniverous/jeeves-runner v0.11.0-0
+## [0.10.1] - 2026-07-15
+
+### 💼 Other
+
 - [93-95] fix: complete 0.10.1 spec gaps (#93, #95, #97)
 
 - Remove timeout from DispatchOptions, dispatchSession, runDispatcher (#93)
@@ -22,6 +62,10 @@ All notable changes to this project will be documented in this file.
 - Sync docs: add queue/state endpoint sections to api-reference.md
 - Sync docs: update job response examples with env/args/output_channel fields
 - Updated core
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner v0.10.1
 ## [0.10.0] - 2026-07-15
 
 ### 💼 Other
