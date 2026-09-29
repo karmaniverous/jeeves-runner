@@ -646,7 +646,6 @@ Scripts should pass these quality gates before deployment:
 - **lint** — `eslint .`
 - **test** — `vitest run`
 - **knip** — unused export detection
-- **STAN** — `npx stan run --sequential --no-archive`
 
 ### Job Registration
 

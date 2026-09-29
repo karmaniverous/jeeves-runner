@@ -18,7 +18,6 @@ export default defineConfig({
       ...configDefaults.exclude,
       '**/.rollup.cache/**',
       '**/dist/**',
-      '**/.stan/**',
       '**/docs/**',
     ],
     coverage: {
