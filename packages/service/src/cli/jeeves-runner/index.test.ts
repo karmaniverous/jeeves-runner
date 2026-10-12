@@ -166,15 +166,6 @@ describe('trigger command', () => {
   }, 15000);
 });
 
-describe('init-scripts command', () => {
-  it('should reference jeeves-scripts-template in help text', () => {
-    const result = execSync(`${CLI} init-scripts --help`, {
-      encoding: 'utf-8',
-    });
-    expect(result).toContain('jeeves-scripts-template');
-  });
-});
-
 describe('sync-jobs command', () => {
   vi.setConfig({ testTimeout: 15000 });
   let testDb: TestDb;
@@ -270,8 +261,22 @@ describe('sync-jobs command', () => {
     const result = execSync(`${CLI} sync-jobs --help`, { encoding: 'utf-8' });
     expect(result).toContain('--config');
     expect(result).toContain('--jobs-dir');
+    expect(result).toContain('--scripts-dir');
+    expect(result).toContain('--dry-run');
+    expect(result).toContain('--reset-enabled');
+    expect(result).toContain('--prune');
     expect(result).toContain('--workspace');
     expect(result).toContain('--config-root');
+  });
+});
+
+describe('removed commands', () => {
+  it('init-scripts is no longer a command', () => {
+    const help = execSync(`${CLI} --help`, { encoding: 'utf-8' });
+    expect(help).not.toContain('init-scripts');
+    expect(() =>
+      execSync(`${CLI} init-scripts`, { encoding: 'utf-8', stdio: 'pipe' }),
+    ).toThrow();
   });
 });
 
@@ -279,14 +284,6 @@ describe('shared CLI config flags', () => {
   it('trigger accepts --workspace and --config-root without error', () => {
     // Using --help to avoid actual execution; flags must be recognized.
     const result = execSync(`${CLI} trigger --help`, { encoding: 'utf-8' });
-    expect(result).toContain('--workspace');
-    expect(result).toContain('--config-root');
-  });
-
-  it('init-scripts accepts --workspace and --config-root without error', () => {
-    const result = execSync(`${CLI} init-scripts --help`, {
-      encoding: 'utf-8',
-    });
     expect(result).toContain('--workspace');
     expect(result).toContain('--config-root');
   });
