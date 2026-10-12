@@ -23,7 +23,7 @@ import {
 import { createRunnerDescriptor } from '../../descriptor.js';
 import { validateSchedule } from '../../scheduler/schedule-utils.js';
 import { loadConfig, withDb } from './config-helpers.js';
-import { syncJobs } from './sync-jobs.js';
+import { syncJobsCommand } from './sync-command.js';
 
 const descriptor = createRunnerDescriptor({
   customCliCommands: (program) => {
@@ -236,9 +236,27 @@ const descriptor = createRunnerDescriptor({
 
     program
       .command('sync-jobs')
-      .description('Sync job definitions from JSON files into the database')
+      .description(
+        'Sync job definitions from jeeves-scripts (list --json) or legacy JSON files into the database',
+      )
       .option('-c, --config <path>', 'Path to config file')
-      .option('--jobs-dir <dir>', 'Path to jobs directory (overrides config)')
+      .option(
+        '--scripts-dir <dir>',
+        'jeeves-scripts repo dir (overrides config scriptsDir)',
+      )
+      .option(
+        '--jobs-dir <dir>',
+        'Legacy jobs directory (deprecated; overrides config jobsDir)',
+      )
+      .option('--dry-run', 'Report what would change without writing')
+      .option(
+        '--reset-enabled',
+        'Overwrite enabled on existing jobs with the source value',
+      )
+      .option(
+        '--prune',
+        'Disable launcher jobs no longer listed (never deletes)',
+      )
       .option(
         '-w, --workspace <path>',
         'Workspace root path',
@@ -249,44 +267,7 @@ const descriptor = createRunnerDescriptor({
         'Platform config root path',
         WORKSPACE_CONFIG_DEFAULTS.core.configRoot,
       )
-      .action(
-        (options: {
-          config?: string;
-          jobsDir?: string;
-          workspace: string;
-          configRoot: string;
-        }) => {
-          init({
-            workspacePath: options.workspace,
-            configRoot: options.configRoot,
-          });
-
-          const config = loadConfig(options.config);
-          const configDir = options.config
-            ? dirname(resolve(options.config))
-            : getComponentConfigDir('runner');
-          const resolvedJobsDir =
-            options.jobsDir ??
-            config.jobsDir ??
-            join(configDir, 'scripts/jobs');
-
-          withDb(config.dbPath, (db) => {
-            const syncResult = syncJobs(db, resolvedJobsDir);
-
-            console.log(
-              `Sync complete: ${String(syncResult.added)} added, ${String(syncResult.updated)} updated, ${String(syncResult.skipped)} skipped`,
-            );
-
-            if (syncResult.errors.length > 0) {
-              console.error('Errors:');
-              for (const e of syncResult.errors) {
-                console.error(`  - ${e}`);
-              }
-              process.exit(1);
-            }
-          });
-        },
-      );
+      .action(syncJobsCommand);
   },
 });
 

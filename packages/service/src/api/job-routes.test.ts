@@ -118,6 +118,51 @@ describe('Job CRUD routes', () => {
     expect(job.name).toBe('Updated Name');
   });
 
+  it('PATCH /jobs/:id should leave omitted fields unchanged (#114)', async () => {
+    testDb.db
+      .prepare(
+        `INSERT INTO jobs (id, name, schedule, script, enabled, overlap_policy, type, source_type)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      )
+      .run(
+        'keep-disabled',
+        'Original',
+        '0 0 * * *',
+        'echo test',
+        0,
+        'allow',
+        'session',
+        'inline',
+      );
+
+    const response = await app.inject({
+      method: 'PATCH',
+      url: '/jobs/keep-disabled',
+      payload: { name: 'Renamed' },
+    });
+
+    expect(response.statusCode).toBe(200);
+
+    const job = testDb.db
+      .prepare(
+        'SELECT name, enabled, overlap_policy, type, source_type FROM jobs WHERE id = ?',
+      )
+      .get('keep-disabled') as {
+      name: string;
+      enabled: number;
+      overlap_policy: string;
+      type: string;
+      source_type: string;
+    };
+    expect(job).toEqual({
+      name: 'Renamed',
+      enabled: 0,
+      overlap_policy: 'allow',
+      type: 'session',
+      source_type: 'inline',
+    });
+  });
+
   it('PATCH /jobs/:id should return 404 for missing job', async () => {
     const response = await app.inject({
       method: 'PATCH',

@@ -97,4 +97,53 @@ describe('syncJobs', () => {
     });
     expect(JSON.parse(row.args)).toEqual(['--verbose', '--dry-run']);
   });
+
+  it('keeps an operator-disabled job disabled on re-sync (#103)', () => {
+    const jobDef = [
+      { id: 'j', name: 'J', script: 'test.ts', schedule: '*/5 * * * *' },
+    ];
+    writeFileSync(join(jobsDir, 'test.json'), JSON.stringify(jobDef));
+    syncJobs(testDb.db, jobsDir);
+    testDb.db.prepare('UPDATE jobs SET enabled = 0 WHERE id = ?').run('j');
+
+    const result = syncJobs(testDb.db, jobsDir);
+
+    const row = testDb.db
+      .prepare('SELECT enabled FROM jobs WHERE id = ?')
+      .get('j') as { enabled: number };
+    expect(row.enabled).toBe(0);
+    expect(result.details.enabledDrift).toEqual([
+      { id: 'j', source: true, stored: false, reset: false },
+    ]);
+  });
+
+  it('leaves fields a definition omits unchanged (DD#75)', () => {
+    writeFileSync(
+      join(jobsDir, 'test.json'),
+      JSON.stringify([
+        {
+          id: 'j',
+          name: 'J',
+          script: 'test.ts',
+          schedule: '*/5 * * * *',
+          on_failure: 'C1',
+        },
+      ]),
+    );
+    syncJobs(testDb.db, jobsDir);
+    writeFileSync(
+      join(jobsDir, 'test.json'),
+      JSON.stringify([
+        { id: 'j', name: 'J2', script: 'test.ts', schedule: '*/5 * * * *' },
+      ]),
+    );
+
+    const result = syncJobs(testDb.db, jobsDir);
+
+    const row = testDb.db
+      .prepare('SELECT name, on_failure FROM jobs WHERE id = ?')
+      .get('j') as { name: string; on_failure: string };
+    expect(row).toEqual({ name: 'J2', on_failure: 'C1' });
+    expect(result.updated).toBe(1);
+  });
 });

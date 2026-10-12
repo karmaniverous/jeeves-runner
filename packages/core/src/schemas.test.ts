@@ -117,13 +117,19 @@ describe('updateJobSchema', () => {
     expect(result.name).toBe('Updated Name');
   });
 
-  it('should accept empty object (defaults applied)', () => {
+  it('should parse an empty object to an empty object (#114, DD#75)', () => {
+    // No field carries an implicit default through .partial(); omitted
+    // means "leave unchanged", not "apply the create-time default".
     const result = updateJobSchema.parse({});
-    // Partial schema still applies defaults for fields with .default()
-    expect(result.source_type).toBe('path');
-    expect(result.type).toBe('script');
-    expect(result.overlap_policy).toBe('skip');
-    expect(result.enabled).toBe(true);
+    expect(result).toEqual({});
+  });
+
+  it('should leave every other omitted field genuinely absent', () => {
+    const result = updateJobSchema.parse({ enabled: false });
+    expect(result).toEqual({ enabled: false });
+    expect(result.source_type).toBeUndefined();
+    expect(result.type).toBeUndefined();
+    expect(result.overlap_policy).toBeUndefined();
   });
 
   it('should accept env and args updates', () => {

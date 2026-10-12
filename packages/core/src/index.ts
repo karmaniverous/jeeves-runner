@@ -34,6 +34,24 @@ export type {
 } from './endpoints.js';
 export { getEndpoint, RUNNER_ENDPOINTS } from './endpoints.js';
 
+// jeeves-scripts manifest mapping (DD#61, DD#62)
+export type {
+  LauncherJobDefinition,
+  PathPlatform,
+  ScriptsListEntry,
+  ScriptsManifest,
+} from './scripts-mapping.js';
+export {
+  getLauncherPath,
+  isLauncherScript,
+  manifestEntryToJob,
+  normalizeScriptPath,
+  SCRIPTS_LAUNCHER_PATH,
+  scriptsListEntrySchema,
+  scriptsListSchema,
+  scriptsManifestSchema,
+} from './scripts-mapping.js';
+
 // Schemas
 export type {
   CreateJob,

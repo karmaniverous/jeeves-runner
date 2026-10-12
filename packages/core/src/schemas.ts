@@ -53,6 +53,46 @@ export type Job = z.infer<typeof jobSchema>;
 // ---------------------------------------------------------------------------
 
 /**
+ * Defaults-free base shape for job create/update fields (excludes `id`).
+ *
+ * This is the single source of truth for field-level validation rules
+ * (string formats, enums, etc.), shared by both {@link createJobSchema}
+ * (where defaults apply on create) and {@link updateJobSchema} (where no
+ * field has a default, so `.partial()` leaves a genuinely-omitted key as
+ * `undefined` rather than silently filling in a value — DD#75 / #114).
+ */
+const jobFieldsBase = z.object({
+  /** Human-readable job name. */
+  name: z.string().min(1),
+  /** Cron or RRStack schedule expression. */
+  schedule: z.string().min(1),
+  /** Script path or command to execute. */
+  script: z.string().min(1),
+  /** Script source type: 'path' (file path) or 'inline' (source code). */
+  source_type: z.enum(['path', 'inline']),
+  /** Job execution type (script or session). */
+  type: z.enum(['script', 'session']),
+  /** Timeout in seconds (converted to timeout_ms internally). */
+  timeout_seconds: z.number().positive(),
+  /** Policy for handling overlapping job executions. */
+  overlap_policy: z.enum(['skip', 'allow']),
+  /** Whether the job is enabled for scheduling. */
+  enabled: z.boolean(),
+  /** Optional job description. */
+  description: z.string(),
+  /** Slack channel ID for failure notifications. */
+  on_failure: z.string().nullable(),
+  /** Slack channel ID for success notifications. */
+  on_success: z.string().nullable(),
+  /** Output channel identifier for routing session results. */
+  output_channel: z.string().nullable(),
+  /** Optional environment variables for script-type jobs. */
+  env: z.record(z.string(), z.string()),
+  /** Optional arguments for script-type jobs. */
+  args: z.array(z.string()),
+});
+
+/**
  * Zod schema for job creation request body.
  *
  * Uses snake_case field names to match the HTTP API convention. Required
@@ -61,43 +101,34 @@ export type Job = z.infer<typeof jobSchema>;
 export const createJobSchema = z.object({
   /** Unique job identifier. */
   id: z.string().min(1),
-  /** Human-readable job name. */
-  name: z.string().min(1),
-  /** Cron or RRStack schedule expression. */
-  schedule: z.string().min(1),
-  /** Script path or command to execute. */
-  script: z.string().min(1),
-  /** Script source type: 'path' (file path) or 'inline' (source code). */
+  ...jobFieldsBase.partial({
+    timeout_seconds: true,
+    description: true,
+    on_failure: true,
+    on_success: true,
+    output_channel: true,
+    env: true,
+    args: true,
+  }).shape,
   source_type: z.enum(['path', 'inline']).default('path'),
-  /** Job execution type (script or session). */
   type: z.enum(['script', 'session']).default('script'),
-  /** Timeout in seconds (converted to timeout_ms internally). */
-  timeout_seconds: z.number().positive().optional(),
-  /** Policy for handling overlapping job executions. */
   overlap_policy: z.enum(['skip', 'allow']).default('skip'),
-  /** Whether the job is enabled for scheduling. */
   enabled: z.boolean().default(true),
-  /** Optional job description. */
-  description: z.string().optional(),
-  /** Slack channel ID for failure notifications. */
-  on_failure: z.string().nullable().optional(),
-  /** Slack channel ID for success notifications. */
-  on_success: z.string().nullable().optional(),
-  /** Output channel identifier for routing session results. */
-  output_channel: z.string().nullable().optional(),
-  /** Optional environment variables for script-type jobs. */
-  env: z.record(z.string(), z.string()).optional(),
-  /** Optional arguments for script-type jobs. */
-  args: z.array(z.string()).optional(),
 });
 
 /** Inferred CreateJob type from schema. */
 export type CreateJob = z.infer<typeof createJobSchema>;
 
 /**
- * Zod schema for job update request body (all fields optional except id omitted).
+ * Zod schema for job update request body (all fields optional, no id).
+ *
+ * Built from {@link jobFieldsBase} — a defaults-free shape — so
+ * `updateJobSchema.safeParse({})` parses to `{}`. Every field is
+ * genuinely optional with no implicit default: omitted means "leave
+ * unchanged" for both the HTTP `PATCH /jobs/:id` route and `sync-jobs`
+ * (DD#75, fixes #114).
  */
-export const updateJobSchema = createJobSchema.omit({ id: true }).partial();
+export const updateJobSchema = jobFieldsBase.partial();
 
 /** Inferred UpdateJob type from schema. */
 export type UpdateJob = z.infer<typeof updateJobSchema>;
