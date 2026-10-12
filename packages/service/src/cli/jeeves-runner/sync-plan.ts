@@ -6,7 +6,10 @@
 
 import type { DatabaseSync, SQLInputValue } from 'node:sqlite';
 
-import { isLauncherScript } from '@karmaniverous/jeeves-runner-core';
+import {
+  isLauncherScript,
+  normalizeScriptPath,
+} from '@karmaniverous/jeeves-runner-core';
 
 import {
   getNextFireTime,
@@ -42,6 +45,28 @@ function readStoredJobs(db: DatabaseSync): Map<string, JobRow> {
   return new Map(rows.map((r) => [r.id, r]));
 }
 
+/**
+ * Whether a stored value already matches the source value. Path scripts
+ * compare after normalisation (DD#70), so `J:/x` and `J:\x` are equal.
+ */
+function sameValue(
+  column: string,
+  from: string | number | null,
+  to: string | number | null,
+  sourceType: string | number | null,
+): boolean {
+  if (from === to) return true;
+  if (
+    column === 'script' &&
+    sourceType === 'path' &&
+    typeof from === 'string' &&
+    typeof to === 'string'
+  ) {
+    return normalizeScriptPath(from) === normalizeScriptPath(to);
+  }
+  return false;
+}
+
 /** A pending column assignment. */
 type ColumnSet = [string, SQLInputValue];
 
@@ -65,7 +90,7 @@ function planUpdate(
     if (!job.provided.has(column)) continue;
     const to = job.row[column];
     const from = current[column];
-    if (from === to) continue;
+    if (sameValue(column, from, to, job.row.source_type)) continue;
     sets.push([column, to]);
     diffs.push({ column, from, to });
     if (column === 'schedule') {

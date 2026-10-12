@@ -216,6 +216,21 @@ describe('syncJobsFromScriptsDir', () => {
       expect(row(testDb, 'other')?.enabled).toBe(1);
     });
 
+    it('does not rewrite a launcher path stored in another form', () => {
+      const stored =
+        process.platform === 'win32'
+          ? getLauncherPath(scriptsDir).replace(/\\/g, '/')
+          : getLauncherPath(join(scriptsDir, 'bin', '..'));
+      testDb.db
+        .prepare('UPDATE jobs SET script = ? WHERE id = ?')
+        .run(stored, 'keep');
+
+      const result = sync();
+
+      expect(result.details.unchanged).toContain('keep');
+      expect(row(testDb, 'keep')?.script).toBe(stored);
+    });
+
     it('matches the launcher written in another form (no false orphans)', () => {
       const variant =
         process.platform === 'win32'
