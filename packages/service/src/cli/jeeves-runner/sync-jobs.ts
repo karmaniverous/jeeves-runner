@@ -38,11 +38,12 @@ import { runSync, scheduleError } from './sync-plan.js';
 import {
   type DesiredJob,
   emptyResult,
+  errorMessage,
+  recordSkip,
   SyncFatalError,
   type SyncOptions,
   type SyncResult,
-  toJson,
-  type UpdatableColumn,
+  toDesiredJob,
 } from './sync-types.js';
 
 export { syncJobs } from './sync-legacy.js';
@@ -67,12 +68,14 @@ export interface ScriptsSyncOptions extends SyncOptions {
 /** Default time allowed for `jeeves-scripts list --json` (cold start ~7s). */
 const LIST_TIMEOUT_MS = 120_000;
 
-/** Pick an error's stderr text when present. */
+/**
+ * An error's stderr text, when present. `execFileSync` runs with
+ * `encoding: 'utf-8'`, so stderr is a string.
+ */
 function stderrOf(err: unknown): string {
   if (typeof err === 'object' && err !== null && 'stderr' in err) {
     const { stderr } = err;
     if (typeof stderr === 'string') return stderr.trim();
-    if (Buffer.isBuffer(stderr)) return stderr.toString('utf-8').trim();
   }
   return '';
 }
@@ -98,7 +101,7 @@ export function runScriptsList(
     });
   } catch (err) {
     const stderr = stderrOf(err);
-    const message = err instanceof Error ? err.message : String(err);
+    const message = errorMessage(err);
     throw new SyncFatalError(
       `jeeves-scripts list --json failed (${launcher}): ${message}${stderr ? `\n${stderr}` : ''}`,
     );
@@ -112,7 +115,7 @@ function parseScriptsList(raw: string): ScriptsListEntry[] {
     json = JSON.parse(raw);
   } catch (err) {
     throw new SyncFatalError(
-      `jeeves-scripts list --json produced unparseable JSON: ${err instanceof Error ? err.message : String(err)}`,
+      `jeeves-scripts list --json produced unparseable JSON: ${errorMessage(err)}`,
     );
   }
 
@@ -135,26 +138,6 @@ function parseScriptsList(raw: string): ScriptsListEntry[] {
   return parsed.data;
 }
 
-/** Manifest keys mapped to the column each one controls on update. */
-const OPTIONAL_MANIFEST_COLUMNS: Array<[string, UpdatableColumn]> = [
-  ['type', 'type'],
-  ['description', 'description'],
-  ['timeout_seconds', 'timeout_ms'],
-  ['overlap_policy', 'overlap_policy'],
-  ['env', 'env'],
-  ['on_failure', 'on_failure'],
-  ['on_success', 'on_success'],
-];
-
-/** Columns every manifest determines. */
-const ALWAYS_PROVIDED: UpdatableColumn[] = [
-  'name',
-  'schedule',
-  'script',
-  'args',
-  'source_type',
-];
-
 /**
  * Sync launcher jobs from a jeeves-scripts repo (DD#61).
  *
@@ -174,41 +157,22 @@ export function syncJobsFromScriptsDir(
   const desired: DesiredJob[] = [];
   for (const entry of entries) {
     const job = manifestEntryToJob(entry, scriptsDir);
-    if (!job || !entry.manifest) continue;
+    if (!job) continue;
 
     const error = scheduleError(job.id, job.schedule);
     if (error) {
-      result.errors.push(error);
-      result.skipped++;
+      recordSkip(result, error);
       continue;
     }
 
-    const provided = new Set<UpdatableColumn>(ALWAYS_PROVIDED);
-    for (const [key, column] of OPTIONAL_MANIFEST_COLUMNS) {
-      if (key in entry.manifest) provided.add(column);
-    }
-
-    desired.push({
-      id: job.id,
-      row: {
-        name: job.name,
-        schedule: job.schedule,
-        script: job.script,
-        type: job.type,
-        description: job.description,
-        timeout_ms: job.timeout_ms,
-        overlap_policy: job.overlap_policy,
-        on_failure: job.on_failure,
-        on_success: job.on_success,
+    desired.push(
+      toDesiredJob({
+        ...job,
         output_channel: null,
         source_type: 'path',
-        env: toJson(job.env),
-        args: toJson(job.args),
-        enabled: job.enabled ? 1 : 0,
-      },
-      provided,
-      prerequisite: job.prerequisite,
-    });
+        specified: [...job.specified, 'source_type'],
+      }),
+    );
   }
 
   return runSync(db, desired, options, result, scriptsDir);

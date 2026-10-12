@@ -1,10 +1,11 @@
 /**
- * Tests for scheduled runs dropped at maxConcurrency (#113, DD#73).
+ * Tests for scheduled runs dropped at maxConcurrency (#113, DD#73) and for
+ * notification channel fallback (DD#77).
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createTestDb } from '../test-utils/db.js';
+import { createTestDb, type TestDb } from '../test-utils/db.js';
 import {
   createSchedulerMocks,
   createTestScheduler,
@@ -12,101 +13,160 @@ import {
 } from '../test-utils/scheduler.js';
 import type { ExecutionResult } from './executor.js';
 
-describe('scheduler maxConcurrency', () => {
+/** Insert a job; `busy` is disabled so only a manual trigger runs it. */
+function insertJob(
+  testDb: TestDb,
+  id: string,
+  enabled: boolean,
+  onFailure: string | null = null,
+): void {
+  testDb.db
+    .prepare(
+      `INSERT INTO jobs (id, name, schedule, script, enabled, on_failure)
+       VALUES (?, ?, '* * * * *', '/s.js', ?, ?)`,
+    )
+    .run(id, `Job ${id}`, enabled ? 1 : 0, onFailure);
+}
+
+describe('scheduler maxConcurrency (#113)', () => {
+  let testDb: TestDb;
+  let mocks: ReturnType<typeof createSchedulerMocks>;
+  let release: (r: ExecutionResult) => void;
+  let busyRun: Promise<unknown> = Promise.resolve();
+
   beforeEach(() => {
     vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it('records a skipped run and alerts when a scheduled fire hits the limit', async () => {
-    const testDb = createTestDb();
-    const db = testDb.db;
-    const insert = db.prepare(
-      `INSERT INTO jobs (id, name, schedule, script, enabled, on_failure)
-       VALUES (?, ?, '* * * * *', '/s.js', 1, ?)`,
-    );
-    insert.run('busy', 'Busy', null);
-    insert.run('late', 'Late', 'C-LATE');
-
-    const mocks = createSchedulerMocks();
-    let release: (r: ExecutionResult) => void = () => undefined;
+    testDb = createTestDb();
+    mocks = createSchedulerMocks();
+    release = () => undefined;
+    // The first execution (the manual 'busy' run) holds the only slot.
     mocks.executorMock.mockImplementation(
       () =>
         new Promise<ExecutionResult>((resolve) => {
           release = resolve;
         }),
     );
-    const scheduler = createTestScheduler(db, mocks, { maxConcurrency: 1 });
+  });
 
+  afterEach(async () => {
+    // Let the manual run finish writing before the DB closes.
+    release({ ...DEFAULT_EXECUTION_RESULT });
+    await busyRun;
+    vi.useRealTimers();
+    testDb.cleanup();
+  });
+
+  /** Occupy the single slot, then let the 'late' schedule fire. */
+  async function fireLateWhileBusy(
+    defaultOnFailure: string | null,
+  ): Promise<ReturnType<typeof createTestScheduler>> {
+    const scheduler = createTestScheduler(testDb.db, mocks, {
+      maxConcurrency: 1,
+      notifications: { defaultOnFailure, defaultOnSuccess: null },
+    });
     scheduler.start();
+    busyRun = scheduler.triggerJob('busy');
     await vi.advanceTimersByTimeAsync(60_000);
+    return scheduler;
+  }
 
-    expect(mocks.executorMock).toHaveBeenCalledTimes(1);
-    const skipped = db
+  /** Skipped run rows. */
+  function skippedRuns() {
+    return testDb.db
       .prepare(
         "SELECT job_id, trigger, error FROM runs WHERE status = 'skipped'",
       )
       .all() as Array<{ job_id: string; trigger: string; error: string }>;
-    expect(skipped).toHaveLength(1);
-    expect(skipped[0]?.trigger).toBe('schedule');
-    expect(skipped[0]?.error).toMatch(/^max_concurrency: 1\/1 running/);
+  }
 
-    // Fire order between the two jobs is not guaranteed; derive expectations.
-    const expected = {
-      late: ['Late', 'C-LATE'],
-      busy: ['Busy', null],
-    } as const;
-    const [name, channel] =
-      expected[(skipped[0]?.job_id ?? 'busy') as keyof typeof expected];
-    const calls = mocks.notifyFailureMock.mock.calls as unknown as Array<
-      [string, number, string, string]
-    >;
-    expect(calls.length).toBe(channel === null ? 0 : 1);
-    expect(calls.map((c) => [c[0], c[1], c[3]])).toEqual(
-      channel === null ? [] : [[name, 0, channel]],
-    );
-    expect(calls.every((c) => c[2].includes('Scheduled run skipped'))).toBe(
-      true,
-    );
+  it('records the skipped scheduled run and alerts the job channel', async () => {
+    insertJob(testDb, 'busy', false);
+    insertJob(testDb, 'late', true, 'C-LATE');
 
-    release({ ...DEFAULT_EXECUTION_RESULT });
-    void scheduler.stop();
-    testDb.cleanup();
+    const scheduler = await fireLateWhileBusy('C-DEFAULT');
+
+    expect(mocks.executorMock).toHaveBeenCalledTimes(1);
+    expect(skippedRuns()).toEqual([
+      {
+        job_id: 'late',
+        trigger: 'schedule',
+        error: 'max_concurrency: 1/1 running (busy)',
+      },
+    ]);
+    expect(mocks.notifyFailureMock).toHaveBeenCalledExactlyOnceWith(
+      'Job late',
+      0,
+      'Scheduled run skipped: max_concurrency: 1/1 running (busy)',
+      'C-LATE',
+    );
+    expect(scheduler.getRunningJobs()).toEqual(['busy']);
   });
 
-  it('falls back to notifications.defaultOnFailure', async () => {
-    const testDb = createTestDb();
-    const db = testDb.db;
-    const insert = db.prepare(
-      `INSERT INTO jobs (id, name, schedule, script, enabled)
-       VALUES (?, ?, '* * * * *', '/s.js', 1)`,
-    );
-    insert.run('a', 'A');
-    insert.run('b', 'B');
+  it('falls back to notifications.defaultOnFailure (DD#77)', async () => {
+    insertJob(testDb, 'busy', false);
+    insertJob(testDb, 'late', true);
 
-    const mocks = createSchedulerMocks();
-    mocks.executorMock.mockImplementation(
-      () => new Promise<ExecutionResult>(() => undefined),
-    );
-    const scheduler = createTestScheduler(db, mocks, {
-      maxConcurrency: 1,
-      notifications: { defaultOnFailure: 'C-DEFAULT', defaultOnSuccess: null },
-    });
+    await fireLateWhileBusy('C-DEFAULT');
 
-    scheduler.start();
-    await vi.advanceTimersByTimeAsync(60_000);
-
-    expect(mocks.notifyFailureMock).toHaveBeenCalledWith(
-      expect.any(String),
+    expect(mocks.notifyFailureMock).toHaveBeenCalledExactlyOnceWith(
+      'Job late',
       0,
       expect.any(String),
       'C-DEFAULT',
     );
+  });
 
-    void scheduler.stop();
+  it('records but does not alert when no channel is configured', async () => {
+    insertJob(testDb, 'busy', false);
+    insertJob(testDb, 'late', true);
+
+    await fireLateWhileBusy(null);
+
+    expect(skippedRuns()).toHaveLength(1);
+    expect(mocks.notifyFailureMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('notification channel fallback for job results (DD#77)', () => {
+  let testDb: TestDb;
+
+  beforeEach(() => {
+    testDb = createTestDb();
+  });
+
+  afterEach(() => {
     testDb.cleanup();
   });
+
+  it.each([
+    ['job channels win', 'C-JOB-F', 'C-JOB-S', 'C-JOB-S', 'C-JOB-F'],
+    ['defaults fill missing channels', null, null, 'C-DEF-S', 'C-DEF-F'],
+  ])(
+    '%s',
+    async (_label, onFailure, onSuccess, expectedSuccess, expectedFailure) => {
+      testDb.db
+        .prepare(
+          `INSERT INTO jobs (id, name, schedule, script, on_failure, on_success)
+           VALUES ('j', 'J', '0 0 * * *', '/s.js', ?, ?)`,
+        )
+        .run(onFailure, onSuccess);
+      const mocks = createSchedulerMocks();
+      const scheduler = createTestScheduler(testDb.db, mocks, {
+        notifications: {
+          defaultOnFailure: 'C-DEF-F',
+          defaultOnSuccess: 'C-DEF-S',
+        },
+      });
+
+      await scheduler.triggerJob('j');
+
+      expect(mocks.dispatchResultMock).toHaveBeenCalledExactlyOnceWith(
+        expect.objectContaining({ status: 'ok' }),
+        'J',
+        expectedSuccess,
+        expectedFailure,
+        expect.anything(),
+      );
+    },
+  );
 });

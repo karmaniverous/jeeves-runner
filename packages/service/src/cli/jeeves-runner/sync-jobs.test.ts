@@ -146,4 +146,108 @@ describe('syncJobs', () => {
     expect(row).toEqual({ name: 'J2', on_failure: 'C1' });
     expect(result.updated).toBe(1);
   });
+
+  it.each([
+    ['a non-object entry', ['nope'], 'job entry is not an object'],
+    [
+      'missing required fields',
+      [{ id: 'x', name: 'X', schedule: '* * * * *' }],
+      'missing or has invalid required fields',
+    ],
+    [
+      'a non-numeric timeout',
+      [
+        {
+          id: 'x',
+          name: 'X',
+          script: 's.js',
+          schedule: '* * * * *',
+          timeout_seconds: '60',
+        },
+      ],
+      "job 'x' has invalid timeout_seconds",
+    ],
+    [
+      'a non-boolean enabled',
+      [
+        {
+          id: 'x',
+          name: 'X',
+          script: 's.js',
+          schedule: '* * * * *',
+          enabled: 'yes',
+        },
+      ],
+      "job 'x' has invalid enabled field",
+    ],
+    [
+      'a file that is not an array',
+      { id: 'x' },
+      'expected an array of job definitions',
+    ],
+  ])('skips %s as an error', (_label, content, message) => {
+    writeFileSync(join(jobsDir, 'test.json'), JSON.stringify(content));
+
+    const result = syncJobs(testDb.db, jobsDir);
+
+    expect(result.skipped).toBe(1);
+    expect(result.errors).toEqual([expect.stringContaining(message)]);
+    expect(testDb.db.prepare('SELECT COUNT(*) AS n FROM jobs').get()).toEqual({
+      n: 0,
+    });
+  });
+
+  it('skips an unparseable file and still syncs the others', () => {
+    writeFileSync(join(jobsDir, 'bad.json'), '{ not json');
+    writeFileSync(
+      join(jobsDir, 'good.json'),
+      JSON.stringify([
+        { id: 'ok', name: 'OK', script: 's.js', schedule: '* * * * *' },
+      ]),
+    );
+
+    const result = syncJobs(testDb.db, jobsDir);
+
+    expect(result.errors).toEqual([
+      expect.stringMatching(/^Failed to parse bad\.json: /),
+    ]);
+    expect(result.added).toBe(1);
+  });
+
+  it('reports an unreadable jobs directory', () => {
+    const result = syncJobs(testDb.db, join(jobsDir, 'missing'));
+
+    expect(result.errors).toEqual([
+      expect.stringMatching(/^Cannot read jobs directory: /),
+    ]);
+  });
+
+  it('adds nothing when the directory has no JSON files', () => {
+    const result = syncJobs(testDb.db, jobsDir);
+
+    expect(result).toMatchObject({ added: 0, errors: [] });
+  });
+
+  it('stores an inline script as given, without resolving it as a path', () => {
+    writeFileSync(
+      join(jobsDir, 'test.json'),
+      JSON.stringify([
+        {
+          id: 'inline',
+          name: 'Inline',
+          script: 'console.log(1)',
+          source_type: 'inline',
+          schedule: '* * * * *',
+        },
+      ]),
+    );
+
+    syncJobs(testDb.db, jobsDir);
+
+    expect(
+      testDb.db
+        .prepare('SELECT script, source_type FROM jobs WHERE id = ?')
+        .get('inline'),
+    ).toEqual({ script: 'console.log(1)', source_type: 'inline' });
+  });
 });

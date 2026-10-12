@@ -4,6 +4,8 @@
  * @module
  */
 
+import type { JobField } from '@karmaniverous/jeeves-runner-core';
+
 /** Columns a sync may write on update (all but `enabled`). */
 export const UPDATABLE_COLUMNS = [
   'name',
@@ -39,6 +41,69 @@ export interface DesiredJob {
   provided: ReadonlySet<UpdatableColumn>;
   /** Informational prerequisite text (DD#76). */
   prerequisite: string | null;
+}
+
+/** A job definition from any source, with defaults already applied. */
+export interface JobInput {
+  /** Job id. */
+  id: string;
+  /** Human-readable name. */
+  name: string;
+  /** Stored schedule string. */
+  schedule: string;
+  /** Script path or inline source. */
+  script: string;
+  /** Script arguments, or `null`. */
+  args: string[] | null;
+  /** Job type. */
+  type: 'script' | 'session';
+  /** Description, or `null`. */
+  description: string | null;
+  /** Timeout in milliseconds, or `null`. */
+  timeout_ms: number | null;
+  /** Overlap policy. */
+  overlap_policy: 'skip' | 'allow';
+  /** Per-job environment, or `null`. */
+  env: Record<string, string> | null;
+  /** Failure channel, or `null`. */
+  on_failure: string | null;
+  /** Success channel, or `null`. */
+  on_success: string | null;
+  /** Output channel, or `null`. */
+  output_channel: string | null;
+  /** Whether `script` is a path or inline source. */
+  source_type: 'path' | 'inline';
+  /** Enabled state for a newly added job. */
+  enabled: boolean;
+  /** Informational prerequisite text, or `null` (DD#76). */
+  prerequisite: string | null;
+  /** Fields the source specifies; only these are written on update. */
+  specified: ReadonlyArray<JobField | 'output_channel' | 'source_type'>;
+}
+
+/** Convert a job definition to the row and update set the sync writes. */
+export function toDesiredJob(input: JobInput): DesiredJob {
+  return {
+    id: input.id,
+    row: {
+      name: input.name,
+      schedule: input.schedule,
+      script: input.script,
+      type: input.type,
+      description: input.description,
+      timeout_ms: input.timeout_ms,
+      overlap_policy: input.overlap_policy,
+      on_failure: input.on_failure,
+      on_success: input.on_success,
+      output_channel: input.output_channel,
+      source_type: input.source_type,
+      env: toJson(input.env),
+      args: toJson(input.args),
+      enabled: input.enabled ? 1 : 0,
+    },
+    provided: new Set(input.specified),
+    prerequisite: input.prerequisite,
+  };
 }
 
 /** Options shared by both sync sources. */
@@ -129,7 +194,18 @@ export function emptyResult(dryRun: boolean): SyncResult {
   };
 }
 
+/** Record an entry skipped because of an error. */
+export function recordSkip(result: SyncResult, message: string): void {
+  result.errors.push(message);
+  result.skipped++;
+}
+
+/** Message text of an unknown thrown value. */
+export function errorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 /** JSON-encode an optional value for storage. */
-export function toJson(value: unknown): string | null {
+function toJson(value: unknown): string | null {
   return value == null ? null : JSON.stringify(value);
 }

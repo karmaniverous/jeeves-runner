@@ -122,9 +122,12 @@ describe('syncJobsFromScriptsDir', () => {
     sync();
     testDb.db.prepare('UPDATE jobs SET enabled = 0 WHERE id = ?').run('a');
 
-    sync({ resetEnabled: true });
+    const result = sync({ resetEnabled: true });
 
     expect(row(testDb, 'a')?.enabled).toBe(1);
+    expect(formatSyncReport(result)).toContain(
+      '  a: source true, stored false (reset to source)',
+    );
   });
 
   it('reverts an API schedule change and reports it (DD#66)', () => {
@@ -219,6 +222,17 @@ describe('syncJobsFromScriptsDir', () => {
     expect(timeout()).toBe(300000);
   });
 
+  it('rolls back every write when applying the plan fails', () => {
+    testDb.db.exec(
+      `CREATE TRIGGER fail_boom BEFORE INSERT ON jobs WHEN NEW.id = 'boom'
+       BEGIN SELECT RAISE(ABORT, 'boom refused'); END`,
+    );
+    list = [entry('first'), entry('boom')];
+
+    expect(() => sync()).toThrow(/boom refused/);
+    expect(row(testDb, 'first')).toBeUndefined();
+  });
+
   it('skips an invalid schedule as an error', () => {
     list = [entry('bad', { schedule: 'not a schedule' }), entry('ok')];
 
@@ -270,10 +284,22 @@ describe('syncJobsFromScriptsDir', () => {
     });
 
     it('--prune disables launcher orphans only, never deletes', () => {
-      sync({ prune: true });
+      const result = sync({ prune: true });
 
       expect(row(testDb, 'gone')?.enabled).toBe(0);
       expect(row(testDb, 'other')?.enabled).toBe(1);
+      expect(formatSyncReport(result)).toContain('  gone: disabled');
+    });
+
+    it('reports an orphan that is already disabled, and leaves it alone', () => {
+      sync({ prune: true });
+
+      const result = sync({ prune: true });
+
+      expect(result.details.orphans).toEqual([
+        { id: 'gone', enabled: false, disabled: false },
+      ]);
+      expect(formatSyncReport(result)).toContain('  gone: already disabled');
     });
 
     it('does not rewrite a launcher path stored in another form', () => {
@@ -338,6 +364,12 @@ describe('runScriptsList', () => {
     );
 
     expect(() => runScriptsList(scriptsDir)).toThrow(/config invalid/);
+  });
+
+  it('throws SyncFatalError naming the launcher when it does not exist', () => {
+    expect(() => runScriptsList(join(scriptsDir, 'nowhere'))).toThrow(
+      /jeeves-scripts list --json failed \(.*nowhere/,
+    );
   });
 
   it('throws SyncFatalError when list --json times out', () => {

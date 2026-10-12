@@ -56,6 +56,19 @@ describe('manifestEntryToJob', () => {
       on_failure: 'C1',
       on_success: null,
       prerequisite: 'GitHub CLI auth',
+      specified: [
+        'name',
+        'schedule',
+        'script',
+        'args',
+        'type',
+        'description',
+        'timeout_ms',
+        'overlap_policy',
+        'env',
+        'on_failure',
+        'on_success',
+      ],
     });
   });
 
@@ -78,7 +91,23 @@ describe('manifestEntryToJob', () => {
       on_failure: null,
       on_success: null,
       prerequisite: null,
+      // Only the always-set fields: defaults above apply to new jobs only.
+      specified: ['name', 'schedule', 'script', 'args'],
     });
+  });
+
+  it('marks an explicit null as specified (it clears the field)', () => {
+    const job = manifestEntryToJob(
+      {
+        id: 'n',
+        manifest: { name: 'N', schedule: '0 * * * *', on_failure: null },
+      },
+      '/srv/s',
+      'posix',
+    );
+
+    expect(job?.specified).toContain('on_failure');
+    expect(job?.on_failure).toBeNull();
   });
 
   it('returns null for an entry without a manifest', () => {

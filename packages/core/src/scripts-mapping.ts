@@ -77,6 +77,62 @@ export type ScriptsListEntry = z.infer<typeof scriptsListEntrySchema>;
 /** Full `jeeves-scripts list --json` output. */
 export const scriptsListSchema = z.array(scriptsListEntrySchema);
 
+/**
+ * A job field a source can set. On update only the fields a source
+ * actually specifies are written; omitted means unchanged (DD#75).
+ */
+export type JobField =
+  | 'name'
+  | 'schedule'
+  | 'script'
+  | 'args'
+  | 'type'
+  | 'description'
+  | 'timeout_ms'
+  | 'overlap_policy'
+  | 'env'
+  | 'on_failure'
+  | 'on_success';
+
+/**
+ * Optional manifest keys and the job field each one sets. Shared by every
+ * job source that uses manifest key names (jeeves-scripts manifests and the
+ * legacy JSON job files).
+ */
+export const OPTIONAL_JOB_KEYS: ReadonlyArray<readonly [string, JobField]> = [
+  ['type', 'type'],
+  ['description', 'description'],
+  ['timeout_seconds', 'timeout_ms'],
+  ['overlap_policy', 'overlap_policy'],
+  ['env', 'env'],
+  ['on_failure', 'on_failure'],
+  ['on_success', 'on_success'],
+];
+
+/**
+ * Job fields a source object specifies: the given always-set fields plus
+ * each optional field whose manifest key is present.
+ */
+export function specifiedJobFields(
+  source: object,
+  always: readonly JobField[],
+): JobField[] {
+  return [
+    ...always,
+    ...OPTIONAL_JOB_KEYS.filter(([key]) => key in source).map(
+      ([, field]) => field,
+    ),
+  ];
+}
+
+/** Fields every launcher manifest determines. */
+const LAUNCHER_ALWAYS_SET: readonly JobField[] = [
+  'name',
+  'schedule',
+  'script',
+  'args',
+];
+
 /** A runner job definition derived from a manifest. */
 export interface LauncherJobDefinition {
   /** Job id (the runnable id). */
@@ -107,6 +163,11 @@ export interface LauncherJobDefinition {
   on_success: string | null;
   /** Informational prerequisite text, or `null` (DD#76). */
   prerequisite: string | null;
+  /**
+   * Fields the manifest specifies. On update, write only these; other
+   * fields hold defaults for a newly added job (DD#75).
+   */
+  specified: JobField[];
 }
 
 /** Platform whose path rules apply. */
@@ -186,5 +247,6 @@ export function manifestEntryToJob(
     on_failure: manifest.on_failure ?? null,
     on_success: manifest.on_success ?? null,
     prerequisite: manifest.prerequisite ?? null,
+    specified: specifiedJobFields(manifest, LAUNCHER_ALWAYS_SET),
   };
 }

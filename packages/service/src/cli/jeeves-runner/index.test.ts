@@ -7,7 +7,7 @@ import { mkdirSync, mkdtempSync, unlinkSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import type { AddressInfo, Server } from 'node:net';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { promisify } from 'node:util';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -257,16 +257,28 @@ describe('sync-jobs command', () => {
     }).toThrow();
   });
 
-  it('should show expected options in --help', () => {
-    const result = execSync(`${CLI} sync-jobs --help`, { encoding: 'utf-8' });
-    expect(result).toContain('--config');
-    expect(result).toContain('--jobs-dir');
-    expect(result).toContain('--scripts-dir');
-    expect(result).toContain('--dry-run');
-    expect(result).toContain('--reset-enabled');
-    expect(result).toContain('--prune');
-    expect(result).toContain('--workspace');
-    expect(result).toContain('--config-root');
+  it('wires --scripts-dir, --dry-run, --reset-enabled and --prune through the CLI', () => {
+    const scriptsDir = join(dirname(configPath), 'jeeves-scripts');
+    mkdirSync(join(scriptsDir, 'bin'), { recursive: true });
+    writeFileSync(
+      join(scriptsDir, 'bin', 'jeeves-scripts.js'),
+      `process.stdout.write(${JSON.stringify(
+        JSON.stringify([
+          { id: 'cli-job', manifest: { name: 'CLI', schedule: '0 * * * *' } },
+        ]),
+      )});`,
+    );
+
+    const result = execSync(
+      `${CLI} sync-jobs --config "${configPath}" --scripts-dir "${scriptsDir}" --dry-run --reset-enabled --prune`,
+      { encoding: 'utf-8' },
+    );
+
+    expect(result).toContain('DRY RUN: nothing written.');
+    expect(result).toContain('  + cli-job');
+    expect(testDb.db.prepare('SELECT COUNT(*) AS n FROM jobs').get()).toEqual({
+      n: 0,
+    });
   });
 });
 

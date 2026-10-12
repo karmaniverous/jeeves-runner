@@ -262,8 +262,8 @@ jeeves-runner add-job \
 | `type` | No | `script` | `script` or `session` |
 | `timeout_seconds` | No | — | Kill the job after this many seconds |
 | `overlap_policy` | No | `skip` | `skip` (don't start if already running) or `allow` |
-| `on_failure` | No | config default | Slack channel ID for failure alerts |
-| `on_success` | No | config default | Slack channel ID for success alerts |
+| `on_failure` | No | `notifications.defaultOnFailure` | Slack channel ID for failure alerts |
+| `on_success` | No | `notifications.defaultOnSuccess` | Slack channel ID for success alerts |
 | `output_channel` | No | — | Slack channel ID for stdout relay |
 | `description` | No | — | Human-readable job description |
 | `env` | No | — | `Record<string, string>` — environment variables spread into spawn env alongside `JR_*` vars (script-type jobs only) |

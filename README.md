@@ -392,8 +392,8 @@ Config file: `jeeves-runner/config.json` (legacy `jeeves-runner.config.json` is 
 | `scriptsDir` | string | — | jeeves-scripts repo dir; `sync-jobs` reads `node <scriptsDir>/bin/jeeves-scripts.js list --json` |
 | `jobsDir` | string | — | **Deprecated** (use `scriptsDir`). Directory of legacy job definition JSON files for `sync-jobs` |
 | `notifications.slackTokenPath` | string | — | Path to Slack bot token file |
-| `notifications.defaultOnFailure` | string \| null | `null` | Default Slack channel for failures |
-| `notifications.defaultOnSuccess` | string \| null | `null` | Default Slack channel for successes |
+| `notifications.defaultOnFailure` | string \| null | `null` | Slack channel for failure alerts of jobs without their own `on_failure` (also used for runner startup and max-concurrency alerts) |
+| `notifications.defaultOnSuccess` | string \| null | `null` | Slack channel for success notifications of jobs without their own `on_success` |
 | `logging.level` | string | `info` | Log level (trace/debug/info/warn/error/fatal) |
 | `logging.file` | string | — | Log file path (stdout if omitted) |
 

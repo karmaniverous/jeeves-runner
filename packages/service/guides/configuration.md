@@ -75,8 +75,8 @@ Slack notification configuration for job completion events.
 | Field | Type | Default | Description |
 | --- | --- | --- | --- |
 | `slackTokenPath` | `string?` | � | Path to file containing Slack bot token |
-| `defaultOnFailure` | `string \| null` | `null` | Default Slack channel ID for failure notifications |
-| `defaultOnSuccess` | `string \| null` | `null` | Default Slack channel ID for success notifications |
+| `defaultOnFailure` | `string \| null` | `null` | Slack channel ID for failure alerts of jobs without their own `on_failure` (also runner startup and max-concurrency alerts) |
+| `defaultOnSuccess` | `string \| null` | `null` | Slack channel ID for success notifications of jobs without their own `on_success` |
 
 Per-job overrides: each job can specify its own `on_failure` and `on_success` channels that override the defaults.
 

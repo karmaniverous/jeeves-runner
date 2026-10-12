@@ -1,5 +1,5 @@
 /**
- * `jeeves-runner sync-jobs` command action.
+ * `jeeves-runner sync-jobs` command.
  *
  * Source precedence, highest first: the `--scripts-dir` or `--jobs-dir`
  * flag (not both); config `scriptsDir`; legacy config `jobsDir`; the legacy
@@ -19,10 +19,10 @@ import { getComponentConfigDir, init } from '@karmaniverous/jeeves';
 import { loadConfig, withDb } from './config-helpers.js';
 import {
   formatSyncReport,
+  type ScriptsSyncOptions,
   SyncFatalError,
   syncJobs,
   syncJobsFromScriptsDir,
-  type SyncResult,
 } from './sync-jobs.js';
 
 /** Parsed `sync-jobs` options. */
@@ -39,10 +39,32 @@ export interface SyncCommandOptions {
   resetEnabled?: boolean;
   /** Disable orphaned launcher jobs. */
   prune?: boolean;
+}
+
+/** Commander options for the `sync-jobs` action. */
+interface SyncActionOptions extends SyncCommandOptions {
   /** Workspace root path. */
   workspace: string;
   /** Platform config root path. */
   configRoot: string;
+}
+
+/** Console-like output sink (injectable for tests). */
+export interface SyncOutput {
+  /** Normal output. */
+  log: (message: string) => void;
+  /** Warnings. */
+  warn: (message: string) => void;
+  /** Errors. */
+  error: (message: string) => void;
+}
+
+/** Test seams for {@link runSyncCommand}. */
+export interface SyncCommandDeps {
+  /** Output sink; defaults to `console`. */
+  out?: SyncOutput;
+  /** Override for producing `list --json` output. */
+  listRunner?: ScriptsSyncOptions['listRunner'];
 }
 
 /** Selected sync source. */
@@ -70,24 +92,30 @@ function selectSource(
   };
 }
 
-/** Run the `sync-jobs` command. */
-export function syncJobsCommand(options: SyncCommandOptions): void {
-  init({ workspacePath: options.workspace, configRoot: options.configRoot });
-
+/**
+ * Run a sync and report it.
+ *
+ * @returns The process exit code.
+ */
+export function runSyncCommand(
+  options: SyncCommandOptions,
+  deps: SyncCommandDeps = {},
+): number {
+  const out = deps.out ?? console;
   const config = loadConfig(options.config);
   const source = selectSource(options, config);
   if (typeof source === 'string') {
-    console.error(source);
-    process.exit(1);
+    out.error(source);
+    return 1;
   }
 
   if (source.kind === 'legacy') {
-    console.warn(
+    out.warn(
       'Warning: the jobsDir / --jobs-dir source is deprecated; use scriptsDir / --scripts-dir (jeeves-scripts).',
     );
     if (options.prune) {
-      console.error('--prune requires the jeeves-scripts source');
-      process.exit(1);
+      out.error('--prune requires the jeeves-scripts source');
+      return 1;
     }
   }
 
@@ -97,21 +125,29 @@ export function syncJobsCommand(options: SyncCommandOptions): void {
     prune: options.prune === true,
   };
 
-  let result: SyncResult;
   try {
-    result = withDb(config.dbPath, (db) =>
+    const result = withDb(config.dbPath, (db) =>
       source.kind === 'scripts'
-        ? syncJobsFromScriptsDir(db, source.dir, syncOptions)
+        ? syncJobsFromScriptsDir(db, source.dir, {
+            ...syncOptions,
+            listRunner: deps.listRunner,
+          })
         : syncJobs(db, source.dir, syncOptions),
     );
+    out.log(formatSyncReport(result));
+    return result.errors.length > 0 ? 1 : 0;
   } catch (err) {
     if (err instanceof SyncFatalError) {
-      console.error(`Sync aborted, nothing written: ${err.message}`);
-      process.exit(1);
+      out.error(`Sync aborted, nothing written: ${err.message}`);
+      return 1;
     }
     throw err;
   }
+}
 
-  console.log(formatSyncReport(result));
-  if (result.errors.length > 0) process.exit(1);
+/** Commander action for `sync-jobs`. */
+export function syncJobsCommand(options: SyncActionOptions): void {
+  init({ workspacePath: options.workspace, configRoot: options.configRoot });
+  const code = runSyncCommand(options);
+  if (code !== 0) process.exit(code);
 }

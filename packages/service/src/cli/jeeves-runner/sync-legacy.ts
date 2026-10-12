@@ -9,15 +9,21 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
 
+import {
+  type JobField,
+  specifiedJobFields,
+} from '@karmaniverous/jeeves-runner-core';
+
 import { runSync, scheduleError } from './sync-plan.js';
 import {
   type DesiredJob,
   emptyResult,
+  errorMessage,
+  type JobInput,
+  recordSkip,
   type SyncOptions,
   type SyncResult,
-  toJson,
-  UPDATABLE_COLUMNS,
-  type UpdatableColumn,
+  toDesiredJob,
 } from './sync-types.js';
 
 /** Shape of a single job definition in a legacy JSON file. */
@@ -43,22 +49,11 @@ interface JobDefinition {
   args?: string[];
 }
 
-/** Legacy JSON key for each updatable column. */
-const LEGACY_KEYS: Record<UpdatableColumn, keyof JobDefinition> = {
-  name: 'name',
-  schedule: 'schedule',
-  script: 'script',
-  type: 'type',
-  description: 'description',
-  timeout_ms: 'timeout_seconds',
-  overlap_policy: 'overlap_policy',
-  on_failure: 'on_failure',
-  on_success: 'on_success',
-  output_channel: 'output_channel',
-  source_type: 'source_type',
-  env: 'env',
-  args: 'args',
-};
+/** Fields every legacy definition sets (required keys). */
+const LEGACY_ALWAYS_SET: readonly JobField[] = ['name', 'schedule', 'script'];
+
+/** Legacy-only keys that also count as specified when present. */
+const LEGACY_EXTRA_KEYS = ['args', 'output_channel', 'source_type'] as const;
 
 /** Validate one legacy entry; return the definition or an error message. */
 function validateLegacyEntry(
@@ -88,35 +83,36 @@ function validateLegacyEntry(
 }
 
 /** Build the desired job for a validated legacy definition. */
-function toDesiredJob(
+function legacyDesiredJob(
   job: JobDefinition,
   schedule: string,
   scriptsRoot: string,
 ): DesiredJob {
   const sourceType = job.source_type ?? 'path';
-  return {
+  const specified: JobInput['specified'] = [
+    ...specifiedJobFields(job, LEGACY_ALWAYS_SET),
+    ...LEGACY_EXTRA_KEYS.filter((key) => key in job),
+  ];
+  return toDesiredJob({
     id: job.id,
-    row: {
-      name: job.name,
-      schedule,
-      script:
-        sourceType === 'path' ? resolve(scriptsRoot, job.script) : job.script,
-      type: job.type ?? 'script',
-      description: job.description ?? null,
-      timeout_ms:
-        job.timeout_seconds != null ? job.timeout_seconds * 1000 : null,
-      overlap_policy: job.overlap_policy ?? 'skip',
-      on_failure: job.on_failure ?? null,
-      on_success: job.on_success ?? null,
-      output_channel: job.output_channel ?? null,
-      source_type: sourceType,
-      env: toJson(job.env),
-      args: toJson(job.args),
-      enabled: (job.enabled ?? true) ? 1 : 0,
-    },
-    provided: new Set(UPDATABLE_COLUMNS.filter((c) => LEGACY_KEYS[c] in job)),
+    name: job.name,
+    schedule,
+    script:
+      sourceType === 'path' ? resolve(scriptsRoot, job.script) : job.script,
+    args: job.args ?? null,
+    type: job.type ?? 'script',
+    description: job.description ?? null,
+    timeout_ms: job.timeout_seconds != null ? job.timeout_seconds * 1000 : null,
+    overlap_policy: job.overlap_policy ?? 'skip',
+    env: job.env ?? null,
+    on_failure: job.on_failure ?? null,
+    on_success: job.on_success ?? null,
+    output_channel: job.output_channel ?? null,
+    source_type: sourceType,
+    enabled: job.enabled ?? true,
     prerequisite: job.prerequisite ?? null,
-  };
+    specified,
+  });
 }
 
 /**
@@ -136,10 +132,9 @@ export function syncJobs(
   const result = emptyResult(options.dryRun === true);
 
   /** Record a skipped entry. */
-  function skip(message: string): void {
-    result.errors.push(message);
-    result.skipped++;
-  }
+  const skip = (message: string): void => {
+    recordSkip(result, message);
+  };
 
   let files: string[];
   try {
@@ -160,9 +155,7 @@ export function syncJobs(
     try {
       jobs = JSON.parse(readFileSync(join(resolvedDir, file), 'utf-8'));
     } catch (err) {
-      skip(
-        `Failed to parse ${file}: ${err instanceof Error ? err.message : String(err)}`,
-      );
+      skip(`Failed to parse ${file}: ${errorMessage(err)}`);
       continue;
     }
 
@@ -188,7 +181,7 @@ export function syncJobs(
         continue;
       }
 
-      desired.push(toDesiredJob(job, schedule, scriptsRoot));
+      desired.push(legacyDesiredJob(job, schedule, scriptsRoot));
     }
   }
 

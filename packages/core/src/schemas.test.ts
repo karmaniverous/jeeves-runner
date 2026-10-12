@@ -124,12 +124,10 @@ describe('updateJobSchema', () => {
     expect(result).toEqual({});
   });
 
-  it('should leave every other omitted field genuinely absent', () => {
-    const result = updateJobSchema.parse({ enabled: false });
-    expect(result).toEqual({ enabled: false });
-    expect(result.source_type).toBeUndefined();
-    expect(result.type).toBeUndefined();
-    expect(result.overlap_policy).toBeUndefined();
+  it('should keep only the supplied field (no defaulted siblings)', () => {
+    expect(updateJobSchema.parse({ enabled: false })).toEqual({
+      enabled: false,
+    });
   });
 
   it('should accept env and args updates', () => {

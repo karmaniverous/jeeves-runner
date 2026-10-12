@@ -71,6 +71,21 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
 
   let reconcileInterval: NodeJS.Timeout | null = null;
 
+  /**
+   * Notification channels for a job: its own `on_success`/`on_failure`,
+   * falling back to `notifications.defaultOnSuccess`/`defaultOnFailure`
+   * (DD#77).
+   */
+  function resolveChannels(job: JobRow): {
+    onSuccess: string | null;
+    onFailure: string | null;
+  } {
+    return {
+      onSuccess: job.on_success ?? config.notifications.defaultOnSuccess,
+      onFailure: job.on_failure ?? config.notifications.defaultOnFailure,
+    };
+  }
+
   /** Execute a job: create run record, run script, update record, send notifications. */
   async function runJob(
     job: JobRow,
@@ -82,8 +97,6 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
       script,
       type,
       timeout_ms,
-      on_success,
-      on_failure,
       source_type,
       env: envJson,
       args: argsJson,
@@ -149,13 +162,8 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
       logger.info({ jobId: id, runId, status: result.status }, 'Job finished');
 
       // Send notifications
-      await notifier.dispatchResult(
-        result,
-        name,
-        on_success,
-        on_failure,
-        logger,
-      );
+      const { onSuccess, onFailure } = resolveChannels(job);
+      await notifier.dispatchResult(result, name, onSuccess, onFailure, logger);
 
       return result;
     } finally {
@@ -175,7 +183,7 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
       { jobId: job.id, running },
       'Max concurrency reached, scheduled run skipped and recorded',
     );
-    const channel = job.on_failure ?? config.notifications.defaultOnFailure;
+    const channel = resolveChannels(job).onFailure;
     if (channel) {
       void notifier.notifyFailure(
         job.name,
