@@ -13,6 +13,12 @@ import { posix, win32 } from 'node:path';
 
 import { z } from 'zod';
 
+/**
+ * Timeout applied to a launcher job whose manifest sets no
+ * `timeout_seconds` (DD#71). Covers the ~7s launcher cold start.
+ */
+export const DEFAULT_LAUNCHER_TIMEOUT_MS = 10_000;
+
 /** Path of the jeeves-scripts launcher, relative to the scripts dir. */
 export const SCRIPTS_LAUNCHER_PATH = 'bin/jeeves-scripts.js';
 
@@ -87,8 +93,8 @@ export interface LauncherJobDefinition {
   type: 'script' | 'session';
   /** Description, or `null`. */
   description: string | null;
-  /** Timeout in milliseconds, or `null` for none. */
-  timeout_ms: number | null;
+  /** Timeout in milliseconds (default {@link DEFAULT_LAUNCHER_TIMEOUT_MS}). */
+  timeout_ms: number;
   /** Overlap policy (default `skip`). */
   overlap_policy: 'skip' | 'allow';
   /** Enabled state applied when the job is first added (default `true`). */
@@ -171,7 +177,9 @@ export function manifestEntryToJob(
     type: manifest.type ?? 'script',
     description: manifest.description ?? null,
     timeout_ms:
-      manifest.timeout_seconds != null ? manifest.timeout_seconds * 1000 : null,
+      manifest.timeout_seconds != null
+        ? manifest.timeout_seconds * 1000
+        : DEFAULT_LAUNCHER_TIMEOUT_MS,
     overlap_policy: manifest.overlap_policy ?? 'skip',
     enabled: manifest.enabled ?? true,
     env: manifest.env ?? null,

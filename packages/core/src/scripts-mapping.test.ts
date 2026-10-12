@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  DEFAULT_LAUNCHER_TIMEOUT_MS,
   getLauncherPath,
   isLauncherScript,
   manifestEntryToJob,
@@ -70,7 +71,7 @@ describe('manifestEntryToJob', () => {
       args: ['run', 'min'],
       type: 'script',
       description: null,
-      timeout_ms: null,
+      timeout_ms: DEFAULT_LAUNCHER_TIMEOUT_MS,
       overlap_policy: 'skip',
       enabled: true,
       env: null,

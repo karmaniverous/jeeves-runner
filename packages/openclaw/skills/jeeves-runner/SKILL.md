@@ -583,23 +583,23 @@ jeeves-runner sync-jobs --scripts-dir J:/jeeves-scripts --dry-run   # review
 jeeves-runner sync-jobs --scripts-dir J:/jeeves-scripts             # apply
 ```
 
-Or set `scriptsDir` in the runner config and run `sync-jobs` with no source flag. `sync-jobs` runs `jeeves-scripts list --json` and registers each runnable with a manifest (`script` = the launcher, `args` = `["run", <id>, ...]`). It never changes `enabled` on existing jobs unless `--reset-enabled` (drift is reported), always applies the manifest schedule, prints each job's `prerequisite` when adding it, and disables jobs no longer listed only with `--prune`. Use `--dry-run` to check for drift. The launcher cold-starts in about 7 s, so leave timeouts room for it.
+Or set `scriptsDir` in the runner config and run `sync-jobs` with no source flag. `sync-jobs` runs `jeeves-scripts list --json` and registers each runnable with a manifest (`script` = the launcher, `args` = `["run", <id>, ...]`). It never changes `enabled` on existing jobs unless `--reset-enabled` (drift is reported), always applies the manifest schedule, prints each job's `prerequisite` when adding it, and disables jobs no longer listed only with `--prune`. Use `--dry-run` to check for drift. The launcher cold-starts in about 7 s, so leave timeouts room for it. A manifest without `timeout_seconds` gets a 10 s default timeout when the job is added; give long-running jobs an explicit `timeout_seconds`.
 
 The legacy `jobsDir` / `--jobs-dir` JSON source still works but is deprecated. The `init-scripts` command has been removed.
 
-### TypeScript Execution via `runners` Config
+### Custom Runners via `runners` Config
 
-The `runners` config map specifies custom command runners keyed by file extension. To run TypeScript scripts:
+The `runners` config map specifies custom command runners keyed by file extension, for scripts that are not plain Node:
 
 ```json
 {
   "runners": {
-    "ts": "node ./scripts/node_modules/tsx/dist/cli.mjs"
+    "py": "python"
   }
 }
 ```
 
-When a job's script path ends in `.ts`, the runner uses this command instead of the default `node` executor. The command string is split on whitespace; the first token is the executable, the rest are prefix args before the script path.
+When a job's script path ends in a mapped extension, the runner uses that command instead of the default `node` executor. The command string is split on whitespace; the first token is the executable, the rest are prefix args before the script path. jeeves-scripts jobs run through plain `node` and need no runner entry.
 
 ### Script Structure
 

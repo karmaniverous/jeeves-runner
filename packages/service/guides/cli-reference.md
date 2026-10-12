@@ -225,7 +225,7 @@ jeeves-runner sync-jobs [--scripts-dir <dir> | --jobs-dir <dir>] [--dry-run] [--
 | `--reset-enabled` | Overwrite `enabled` on existing jobs with the source value |
 | `--prune` | Disable launcher jobs no longer listed (scripts source only; never deletes) |
 
-**Source.** Flags first (not both), then config `scriptsDir`, then legacy `jobsDir`. With the jeeves-scripts source the runner runs `node <scriptsDir>/bin/jeeves-scripts.js list --json` with its own Node and environment (timeout 120 s; the launcher cold-starts in about 7 s) and registers each runnable that has a manifest: `script` is the launcher, `args` are `["run", <id>, ...manifest.args]`. A failing, unparseable, invalid or duplicate-id list aborts the sync with nothing written. The legacy source prints a deprecation warning.
+**Source.** Flags first (not both), then config `scriptsDir`, then legacy `jobsDir`. With the jeeves-scripts source the runner runs `node <scriptsDir>/bin/jeeves-scripts.js list --json` with its own Node and environment (timeout 120 s; the launcher cold-starts in about 7 s) and registers each runnable that has a manifest: `script` is the launcher, `args` are `["run", <id>, ...manifest.args]`. A manifest without `timeout_seconds` gets a default timeout of 10 s when the job is added (enough for the cold start); existing jobs keep their timeout. A failing, unparseable, invalid or duplicate-id list aborts the sync with nothing written. The legacy source prints a deprecation warning.
 
 **What a sync changes.**
 

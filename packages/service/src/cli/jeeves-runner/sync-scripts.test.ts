@@ -1,7 +1,10 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { getLauncherPath } from '@karmaniverous/jeeves-runner-core';
+import {
+  DEFAULT_LAUNCHER_TIMEOUT_MS,
+  getLauncherPath,
+} from '@karmaniverous/jeeves-runner-core';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { TestDb } from '../../test-utils/db.js';
@@ -159,6 +162,63 @@ describe('syncJobsFromScriptsDir', () => {
     expect(formatSyncReport(result)).toContain('DRY RUN: nothing written.');
   });
 
+  it('prints the full --dry-run report (DD#68)', () => {
+    list = [entry('keep'), entry('drift'), entry('moved'), entry('gone')];
+    sync();
+    testDb.db.prepare('UPDATE jobs SET enabled = 0 WHERE id = ?').run('drift');
+    testDb.db
+      .prepare("UPDATE jobs SET schedule = '0 * * * *' WHERE id = ?")
+      .run('moved');
+    list = [
+      entry('keep'),
+      entry('drift'),
+      entry('moved'),
+      entry('fresh', { prerequisite: 'gh auth login' }),
+      entry('bad', { schedule: 'not a schedule' }),
+    ];
+
+    const report = formatSyncReport(sync({ dryRun: true }));
+
+    expect(report.split('\n')).toEqual([
+      'DRY RUN: nothing written.',
+      'Added (1):',
+      '  + fresh (prerequisite: gh auth login)',
+      'Updated (1):',
+      '  ~ moved',
+      '      schedule: "0 * * * *" -> "*/5 * * * *"',
+      'Unchanged (2)',
+      'Skipped (1):',
+      // The schedule parser's own message follows the colon.
+      expect.stringMatching(/^ {2}! job 'bad' has invalid schedule: \S/),
+      'Enabled drift (1):',
+      '  drift: source true, stored false (kept; use --reset-enabled to apply)',
+      'Schedule reverts (1):',
+      '  moved: 0 * * * * -> */5 * * * *',
+      'Orphans (1):',
+      '  gone: enabled (use --prune to disable)',
+      'Sync plan: 1 added, 1 updated, 2 unchanged, 1 skipped',
+    ]);
+  });
+
+  it('gives a new job without timeout_seconds the 10s default, on insert only (DD#71)', () => {
+    list = [entry('a')];
+    sync();
+    const timeout = () =>
+      (
+        testDb.db
+          .prepare('SELECT timeout_ms FROM jobs WHERE id = ?')
+          .get('a') as { timeout_ms: number | null }
+      ).timeout_ms;
+    expect(timeout()).toBe(DEFAULT_LAUNCHER_TIMEOUT_MS);
+
+    testDb.db
+      .prepare('UPDATE jobs SET timeout_ms = 300000 WHERE id = ?')
+      .run('a');
+    sync();
+
+    expect(timeout()).toBe(300000);
+  });
+
   it('skips an invalid schedule as an error', () => {
     list = [entry('bad', { schedule: 'not a schedule' }), entry('ok')];
 
@@ -278,5 +338,14 @@ describe('runScriptsList', () => {
     );
 
     expect(() => runScriptsList(scriptsDir)).toThrow(/config invalid/);
+  });
+
+  it('throws SyncFatalError when list --json times out', () => {
+    writeFileSync(
+      join(scriptsDir, 'bin', 'jeeves-scripts.js'),
+      'setTimeout(() => undefined, 10000);',
+    );
+
+    expect(() => runScriptsList(scriptsDir, 300)).toThrow(SyncFatalError);
   });
 });

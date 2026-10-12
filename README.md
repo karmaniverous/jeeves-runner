@@ -70,9 +70,6 @@ Or create `jeeves-runner/config.json` manually:
   "stateCleanupIntervalMs": 3600000,
   "reconcileIntervalMs": 60000,
   "shutdownGraceMs": 30000,
-  "runners": {
-    "ts": "node ./scripts/node_modules/tsx/dist/cli.mjs"
-  },
   "gatewayUrl": "http://127.0.0.1:18789",
   "gatewayApiKey": "your-api-key-or-use-OPENCLAW_GATEWAY_TOKEN-env",
   "notifications": {

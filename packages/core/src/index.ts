@@ -42,6 +42,7 @@ export type {
   ScriptsManifest,
 } from './scripts-mapping.js';
 export {
+  DEFAULT_LAUNCHER_TIMEOUT_MS,
   getLauncherPath,
   isLauncherScript,
   manifestEntryToJob,

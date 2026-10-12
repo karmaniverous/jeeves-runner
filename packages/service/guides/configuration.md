@@ -34,9 +34,6 @@ Legacy config files named `jeeves-runner.config.json` are automatically migrated
   "stateCleanupIntervalMs": 3600000,
   "shutdownGraceMs": 30000,
   "reconcileIntervalMs": 60000,
-  "runners": {
-    "ts": "node ./scripts/node_modules/tsx/dist/cli.mjs"
-  },
   "notifications": {
     "slackTokenPath": "/path/to/slack-bot-token",
     "defaultOnFailure": "C0123456789",
@@ -67,7 +64,7 @@ Legacy config files named `jeeves-runner.config.json` are automatically migrated
 | `stateCleanupIntervalMs` | `number` | `3600000` | Interval (ms) for expired state cleanup |
 | `shutdownGraceMs` | `number` | `30000` | Grace period (ms) for in-flight jobs during shutdown |
 | `reconcileIntervalMs` | `number` | `60000` | Interval (ms) for job reconciliation checks |
-| `runners` | `Record<string, string>` | `{}` | Custom command runners keyed by file extension (e.g., `{ "ts": "node path/to/tsx/cli.mjs" }`) |
+| `runners` | `Record<string, string>` | `{}` | Custom command runners keyed by file extension (e.g., `{ "py": "python" }`). Not needed for jeeves-scripts jobs, which run through plain `node` |
 | `scriptsDir` | `string?` | — | jeeves-scripts repo dir; `sync-jobs` registers jobs from its `list --json` |
 | `jobsDir` | `string?` | — | **Deprecated** (use `scriptsDir`). Legacy JSON job definitions dir for `sync-jobs` |
 
