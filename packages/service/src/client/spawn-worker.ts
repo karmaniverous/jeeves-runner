@@ -17,7 +17,7 @@ export interface DispatchOptions {
   label?: string;
   /** Thinking level for the LLM session. */
   thinking?: 'low' | 'medium' | 'high';
-  /** Custom command runners keyed by file extension (e.g. `{ ts: "node /path/to/tsx/cli.mjs" }`). */
+  /** Custom command runners keyed by file extension (e.g. `{ ts: "<runner command>" }`). */
   runners?: Record<string, string>;
   /** Output channel identifier for routing session results. */
   outputChannel?: string;

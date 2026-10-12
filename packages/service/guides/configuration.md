@@ -62,12 +62,14 @@ Legacy config files named `jeeves-runner.config.json` are automatically migrated
 | `port` | `number` | `1937` | HTTP server port for the runner API |
 | `host` | `string` | `"0.0.0.0"` | Bind address for the HTTP server |
 | `dbPath` | `string` | `"./data/runner.sqlite"` | Path to the SQLite database file |
-| `maxConcurrency` | `number` | `4` | Maximum number of concurrent job executions |
+| `maxConcurrency` | `number` | `4` | Maximum number of concurrent job executions. A scheduled run at the limit is recorded as `skipped` and alerted, not retried |
 | `runRetentionDays` | `number` | `30` | Number of days to retain completed run records |
 | `stateCleanupIntervalMs` | `number` | `3600000` | Interval (ms) for expired state cleanup |
 | `shutdownGraceMs` | `number` | `30000` | Grace period (ms) for in-flight jobs during shutdown |
 | `reconcileIntervalMs` | `number` | `60000` | Interval (ms) for job reconciliation checks |
 | `runners` | `Record<string, string>` | `{}` | Custom command runners keyed by file extension (e.g., `{ "ts": "node path/to/tsx/cli.mjs" }`) |
+| `scriptsDir` | `string?` | — | jeeves-scripts repo dir; `sync-jobs` registers jobs from its `list --json` |
+| `jobsDir` | `string?` | — | **Deprecated** (use `scriptsDir`). Legacy JSON job definitions dir for `sync-jobs` |
 
 ### `notifications`
 
