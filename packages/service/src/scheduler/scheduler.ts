@@ -163,6 +163,29 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
     }
   }
 
+  /**
+   * Record and alert a scheduled run dropped because `maxConcurrency` is
+   * reached (#113, DD#73). Not retried.
+   */
+  function recordConcurrencySkip(job: JobRow): void {
+    const running = Array.from(runningJobs);
+    const reason = `max_concurrency: ${String(running.length)}/${String(config.maxConcurrency)} running (${running.join(', ')})`;
+    runRepository.recordSkippedRun(job.id, 'schedule', reason);
+    logger.warn(
+      { jobId: job.id, running },
+      'Max concurrency reached, scheduled run skipped and recorded',
+    );
+    const channel = job.on_failure ?? config.notifications.defaultOnFailure;
+    if (channel) {
+      void notifier.notifyFailure(
+        job.name,
+        0,
+        `Scheduled run skipped: ${reason}`,
+        channel,
+      );
+    }
+  }
+
   /** Handle scheduled job fire. */
   async function onScheduledRun(job: JobRow): Promise<void> {
     const { id, overlap_policy } = job;
@@ -177,6 +200,11 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
         return;
       }
       // 'allow' policy: proceed
+    }
+
+    if (runningJobs.size >= config.maxConcurrency) {
+      recordConcurrencySkip(job);
+      return;
     }
 
     await runJob(job, 'schedule').catch((err: unknown) => {

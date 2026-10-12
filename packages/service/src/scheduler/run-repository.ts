@@ -14,6 +14,8 @@ export interface RunRepository {
   createRun(jobId: string, trigger: string): number;
   /** Update run record with completion data. */
   finishRun(runId: number, execResult: ExecutionResult): void;
+  /** Insert a finished `skipped` run record with a reason; return its ID. */
+  recordSkippedRun(jobId: string, trigger: string, reason: string): number;
 }
 
 /** Create a run repository for the given database connection. */
@@ -45,6 +47,16 @@ export function createRunRepository(db: DatabaseSync): RunRepository {
         execResult.stderrTail,
         runId,
       );
+    },
+
+    recordSkippedRun(jobId: string, trigger: string, reason: string): number {
+      const result = db
+        .prepare(
+          `INSERT INTO runs (job_id, status, started_at, finished_at, duration_ms, trigger, error)
+           VALUES (?, 'skipped', datetime('now'), datetime('now'), 0, ?, ?)`,
+        )
+        .run(jobId, trigger, reason);
+      return Number(result.lastInsertRowid);
     },
   };
 }
