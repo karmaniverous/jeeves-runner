@@ -166,112 +166,13 @@ describe('trigger command', () => {
   }, 15000);
 });
 
-describe('init-scripts command', () => {
-  it('should reference jeeves-scripts-template in help text', () => {
-    const result = execSync(`${CLI} init-scripts --help`, {
-      encoding: 'utf-8',
-    });
-    expect(result).toContain('jeeves-scripts-template');
-  });
-});
-
-describe('sync-jobs command', () => {
-  vi.setConfig({ testTimeout: 15000 });
-  let testDb: TestDb;
-  let configPath: string;
-  let jobsDir: string;
-
-  beforeEach(() => {
-    testDb = createTestDb();
-    const tmpDir = mkdtempSync(join(tmpdir(), 'sync-jobs-test-'));
-    configPath = join(tmpDir, 'config.json');
-    // Jobs dir is at <tmpDir>/scripts/jobs; scripts resolve relative to <tmpDir>/scripts/
-    jobsDir = join(tmpDir, 'scripts', 'jobs');
-    mkdirSync(jobsDir, { recursive: true });
-    writeFileSync(
-      configPath,
-      JSON.stringify({ dbPath: testDb.dbPath, port: 18780 }),
-    );
-  });
-
-  afterEach(() => {
-    testDb.cleanup();
-  });
-
-  it('should sync jobs from a temp directory with valid job definitions', () => {
-    writeFileSync(
-      join(jobsDir, 'batch.json'),
-      JSON.stringify([
-        {
-          id: 'sync-test-1',
-          name: 'Sync Test 1',
-          script: 'hello.ts',
-          schedule: '0 0 * * *',
-          description: 'A synced job',
-        },
-        {
-          id: 'sync-test-2',
-          name: 'Sync Test 2',
-          script: 'world.ts',
-          schedule: '*/5 * * * *',
-          timeout_seconds: 60,
-          enabled: false,
-        },
-      ]),
-    );
-
-    const result = execSync(
-      `${CLI} sync-jobs --config "${configPath}" --jobs-dir "${jobsDir}"`,
-      { encoding: 'utf-8' },
-    );
-
-    expect(result).toContain('2 added');
-    expect(result).toContain('0 updated');
-    expect(result).toContain('0 skipped');
-
-    const rows = testDb.db
-      .prepare('SELECT * FROM jobs ORDER BY id')
-      .all() as Array<{
-      id: string;
-      name: string;
-      enabled: number;
-      timeout_ms: number | null;
-    }>;
-    expect(rows).toHaveLength(2);
-    expect(rows[0]?.id).toBe('sync-test-1');
-    expect(rows[0]?.enabled).toBe(1);
-    expect(rows[1]?.id).toBe('sync-test-2');
-    expect(rows[1]?.enabled).toBe(0);
-    expect(rows[1]?.timeout_ms).toBe(60000);
-  });
-
-  it('should report errors for invalid schedules', () => {
-    writeFileSync(
-      join(jobsDir, 'bad.json'),
-      JSON.stringify([
-        {
-          id: 'bad-schedule',
-          name: 'Bad Schedule',
-          script: 'fail.ts',
-          schedule: 'not-a-cron',
-        },
-      ]),
-    );
-
-    expect(() => {
-      execSync(
-        `${CLI} sync-jobs --config "${configPath}" --jobs-dir "${jobsDir}"`,
-        { encoding: 'utf-8', stdio: 'pipe' },
-      );
-    }).toThrow();
-  });
-
-  it('should show expected options in --help', () => {
-    const result = execSync(`${CLI} sync-jobs --help`, { encoding: 'utf-8' });
-    expect(result).toContain('--config');
-    expect(result).toContain('--jobs-dir');
-    expect(result).toContain('--workspace');
-    expect(result).toContain('--config-root');
+describe('removed commands', () => {
+  it('init-scripts is no longer a command', () => {
+    const help = execSync(`${CLI} --help`, { encoding: 'utf-8' });
+    expect(help).not.toContain('init-scripts');
+    expect(() =>
+      execSync(`${CLI} init-scripts`, { encoding: 'utf-8', stdio: 'pipe' }),
+    ).toThrow();
   });
 });
 
@@ -279,14 +180,6 @@ describe('shared CLI config flags', () => {
   it('trigger accepts --workspace and --config-root without error', () => {
     // Using --help to avoid actual execution; flags must be recognized.
     const result = execSync(`${CLI} trigger --help`, { encoding: 'utf-8' });
-    expect(result).toContain('--workspace');
-    expect(result).toContain('--config-root');
-  });
-
-  it('init-scripts accepts --workspace and --config-root without error', () => {
-    const result = execSync(`${CLI} init-scripts --help`, {
-      encoding: 'utf-8',
-    });
     expect(result).toContain('--workspace');
     expect(result).toContain('--config-root');
   });

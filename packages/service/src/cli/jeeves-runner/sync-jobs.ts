@@ -1,224 +1,184 @@
 /**
- * Sync job definitions from JSON files into the runner database.
+ * Sync job definitions into the runner database.
+ *
+ * Two sources:
+ * - **jeeves-scripts** (`scriptsDir`, DD#61): runs
+ *   `node <scriptsDir>/bin/jeeves-scripts.js list --json` and maps each
+ *   entry with a manifest through the shared runner-core mapping (DD#62).
+ * - **Legacy JSON files** (`jobsDir`, deprecated by DD#64); see
+ *   {@link syncJobs}.
+ *
+ * Both sources share one plan/apply pipeline (`sync-plan.ts`):
+ * - a field the source omits is left unchanged on update (DD#75);
+ * - `enabled` is set only when a job is added, unless `resetEnabled`
+ *   (DD#65, #103), and disagreements are reported as enabled drift;
+ * - the source schedule is applied on every sync and each revert is
+ *   reported (DD#66);
+ * - `prerequisite` is informational only and is printed when a job is
+ *   added (DD#76);
+ * - orphans (launcher jobs no longer listed) are reported, and disabled
+ *   (never deleted) only with `prune` (DD#69, DD#70);
+ * - `dryRun` computes and reports the plan without writing (DD#68).
  *
  * @module
  */
 
-import { readdirSync, readFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { execFileSync } from 'node:child_process';
+import { resolve } from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
 
 import {
-  getNextFireTime,
-  validateSchedule,
-} from '../../scheduler/schedule-utils.js';
+  getLauncherPath,
+  manifestEntryToJob,
+  type ScriptsListEntry,
+  scriptsListSchema,
+} from '@karmaniverous/jeeves-runner-core';
 
-/** Shape of a single job definition in a JSON file. */
-interface JobDefinition {
-  id: string;
-  name: string;
-  script: string;
-  schedule: string | Record<string, unknown>;
-  description?: string;
-  overlap_policy?: 'skip' | 'allow';
-  timeout_seconds?: number;
-  enabled?: boolean;
-  type?: 'script' | 'session';
-  on_failure?: string | null;
-  on_success?: string | null;
-  output_channel?: string | null;
-  source_type?: 'path' | 'inline';
+import { runSync, scheduleError } from './sync-plan.js';
+import {
+  type DesiredJob,
+  emptyResult,
+  errorMessage,
+  recordSkip,
+  SyncFatalError,
+  type SyncOptions,
+  type SyncResult,
+  toDesiredJob,
+} from './sync-types.js';
+
+export { syncJobs } from './sync-legacy.js';
+export { formatSyncReport } from './sync-report.js';
+export type {
+  FieldDiff,
+  SyncDetails,
+  SyncOptions,
+  SyncResult,
+} from './sync-types.js';
+export { SyncFatalError } from './sync-types.js';
+
+/** Options for the jeeves-scripts source. */
+export interface ScriptsSyncOptions extends SyncOptions {
   /**
-   * Forward-compatibility stub for future graph metadata (DD#43).
-   * Parsed from JSON but not persisted to the DB.
+   * Produce the raw `list --json` output for a scripts dir. Defaults to
+   * {@link runScriptsList}; injectable for tests.
    */
-  domain?: string;
-  /**
-   * Forward-compatibility stub for future graph metadata (DD#43).
-   * Parsed from JSON but not persisted to the DB.
-   */
-  prerequisite?: string | null;
-  env?: Record<string, string>;
-  args?: string[];
+  listRunner?: (scriptsDir: string) => string;
 }
 
-/** Result counts from a sync operation. */
-export interface SyncResult {
-  added: number;
-  updated: number;
-  skipped: number;
-  errors: string[];
+/** Default time allowed for `jeeves-scripts list --json` (cold start ~7s). */
+const LIST_TIMEOUT_MS = 120_000;
+
+/**
+ * An error's stderr text, when present. `execFileSync` runs with
+ * `encoding: 'utf-8'`, so stderr is a string.
+ */
+function stderrOf(err: unknown): string {
+  if (typeof err === 'object' && err !== null && 'stderr' in err) {
+    const { stderr } = err;
+    if (typeof stderr === 'string') return stderr.trim();
+  }
+  return '';
 }
 
 /**
- * Sync all job definitions from JSON files in `jobsDir` into the database.
+ * Run `node <scriptsDir>/bin/jeeves-scripts.js list --json` with the
+ * runner's own node and environment.
  *
- * Each JSON file must contain an array of job objects. Script paths are
- * resolved relative to the parent of `jobsDir`.
+ * @throws SyncFatalError on a non-zero exit or timeout.
  */
-export function syncJobs(db: DatabaseSync, jobsDir: string): SyncResult {
-  const resolvedDir = resolve(jobsDir);
-  const scriptsRoot = resolve(resolvedDir, '..');
-  const result: SyncResult = { added: 0, updated: 0, skipped: 0, errors: [] };
-
-  /** Record a skipped job with an error message. */
-  function skip(message: string): void {
-    result.errors.push(message);
-    result.skipped++;
-  }
-
-  let files: string[];
+export function runScriptsList(
+  scriptsDir: string,
+  timeoutMs = LIST_TIMEOUT_MS,
+): string {
+  const launcher = getLauncherPath(scriptsDir);
   try {
-    files = readdirSync(resolvedDir).filter((f) => f.endsWith('.json'));
-  } catch {
-    result.errors.push(`Cannot read jobs directory: ${resolvedDir}`);
-    return result;
+    return execFileSync(process.execPath, [launcher, 'list', '--json'], {
+      cwd: resolve(scriptsDir),
+      encoding: 'utf-8',
+      timeout: timeoutMs,
+      maxBuffer: 64 * 1024 * 1024,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+  } catch (err) {
+    const stderr = stderrOf(err);
+    const message = errorMessage(err);
+    throw new SyncFatalError(
+      `jeeves-scripts list --json failed (${launcher}): ${message}${stderr ? `\n${stderr}` : ''}`,
+    );
+  }
+}
+
+/** Parse and validate raw `list --json` output (fatal on any failure). */
+function parseScriptsList(raw: string): ScriptsListEntry[] {
+  let json: unknown;
+  try {
+    json = JSON.parse(raw);
+  } catch (err) {
+    throw new SyncFatalError(
+      `jeeves-scripts list --json produced unparseable JSON: ${errorMessage(err)}`,
+    );
   }
 
-  if (files.length === 0) {
-    console.log(`No JSON files found in ${resolvedDir}`);
-    return result;
+  const parsed = scriptsListSchema.safeParse(json);
+  if (!parsed.success) {
+    throw new SyncFatalError(
+      `jeeves-scripts list --json output is invalid: ${parsed.error.message}`,
+    );
   }
 
-  // Track existing job IDs to determine add vs update
-  const existingIds = new Set(
-    (db.prepare('SELECT id FROM jobs').all() as Array<{ id: string }>).map(
-      (r) => r.id,
-    ),
-  );
-
-  const stmt = db.prepare(
-    `INSERT INTO jobs
-       (id, name, schedule, script, type, description, enabled, timeout_ms,
-        overlap_policy, on_failure, on_success, output_channel, source_type, env, args, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
-     ON CONFLICT(id) DO UPDATE SET
-       name = excluded.name,
-       schedule = excluded.schedule,
-       script = excluded.script,
-       type = excluded.type,
-       description = excluded.description,
-       enabled = excluded.enabled,
-       timeout_ms = excluded.timeout_ms,
-       overlap_policy = excluded.overlap_policy,
-       on_failure = excluded.on_failure,
-       on_success = excluded.on_success,
-       output_channel = excluded.output_channel,
-       source_type = excluded.source_type,
-       env = excluded.env,
-       args = excluded.args,
-       updated_at = datetime('now')`,
-  );
-
-  for (const file of files) {
-    const filePath = join(resolvedDir, file);
-    let jobs: unknown;
-
-    try {
-      jobs = JSON.parse(readFileSync(filePath, 'utf-8'));
-    } catch (err) {
-      skip(
-        `Failed to parse ${file}: ${err instanceof Error ? err.message : String(err)}`,
+  const seen = new Set<string>();
+  for (const entry of parsed.data) {
+    if (seen.has(entry.id)) {
+      throw new SyncFatalError(
+        `jeeves-scripts list --json contains duplicate id '${entry.id}'`,
       );
+    }
+    seen.add(entry.id);
+  }
+  return parsed.data;
+}
+
+/**
+ * Sync launcher jobs from a jeeves-scripts repo (DD#61).
+ *
+ * @throws SyncFatalError when `list --json` fails, is unparseable, is
+ *   schema-invalid or contains a duplicate id; nothing is written.
+ */
+export function syncJobsFromScriptsDir(
+  db: DatabaseSync,
+  scriptsDir: string,
+  options: ScriptsSyncOptions = {},
+): SyncResult {
+  const result = emptyResult(options.dryRun === true);
+  const entries = parseScriptsList(
+    (options.listRunner ?? runScriptsList)(scriptsDir),
+  );
+
+  const desired: DesiredJob[] = [];
+  for (const entry of entries) {
+    const job = manifestEntryToJob(entry, scriptsDir);
+    if (!job) continue;
+
+    const error = scheduleError(job.id, job.schedule);
+    if (error) {
+      recordSkip(result, error);
       continue;
     }
 
-    if (!Array.isArray(jobs)) {
-      skip(`${file}: expected an array of job definitions`);
-      continue;
-    }
-
-    for (const raw of jobs as unknown[]) {
-      if (typeof raw !== 'object' || raw === null) {
-        skip(`${file}: job entry is not an object`);
-        continue;
-      }
-
-      const obj = raw as Record<string, unknown>;
-      if (
-        typeof obj.id !== 'string' ||
-        typeof obj.name !== 'string' ||
-        typeof obj.script !== 'string' ||
-        obj.schedule == null
-      ) {
-        skip(
-          `${file}: job missing or has invalid required fields (id, name, script must be strings, schedule must be defined)`,
-        );
-        continue;
-      }
-
-      const job = obj as unknown as JobDefinition;
-
-      if (
-        job.timeout_seconds != null &&
-        typeof job.timeout_seconds !== 'number'
-      ) {
-        skip(
-          `${file}: job '${job.id}' has invalid timeout_seconds (must be a number)`,
-        );
-        continue;
-      }
-
-      if (job.enabled != null && typeof job.enabled !== 'boolean') {
-        skip(
-          `${file}: job '${job.id}' has invalid enabled field (must be a boolean)`,
-        );
-        continue;
-      }
-
-      const scheduleStr =
-        typeof job.schedule === 'object'
-          ? JSON.stringify(job.schedule)
-          : job.schedule;
-
-      const validation = validateSchedule(scheduleStr);
-      if (!validation.valid) {
-        skip(
-          `${file}: job '${job.id}' has invalid schedule: ${validation.error}`,
-        );
-        continue;
-      }
-
-      const nextFire = getNextFireTime(scheduleStr);
-      if (!nextFire) {
-        skip(
-          `${file}: job '${job.id}' has a valid schedule that produces no upcoming fire time — job will never run`,
-        );
-        continue;
-      }
-
-      const scriptPath =
-        (job.source_type ?? 'path') === 'path'
-          ? resolve(scriptsRoot, job.script)
-          : job.script;
-      const isUpdate = existingIds.has(job.id);
-
-      stmt.run(
-        job.id,
-        job.name,
-        scheduleStr,
-        scriptPath,
-        job.type ?? 'script',
-        job.description ?? null,
-        (job.enabled ?? true) ? 1 : 0,
-        job.timeout_seconds != null ? job.timeout_seconds * 1000 : null,
-        job.overlap_policy ?? 'skip',
-        job.on_failure ?? null,
-        job.on_success ?? null,
-        job.output_channel ?? null,
-        job.source_type ?? 'path',
-        job.env ? JSON.stringify(job.env) : null,
-        job.args ? JSON.stringify(job.args) : null,
-      );
-
-      if (isUpdate) {
-        result.updated++;
-      } else {
-        result.added++;
-        existingIds.add(job.id);
-      }
-    }
+    desired.push(
+      toDesiredJob({
+        ...job,
+        output_channel: null,
+        source_type: 'path',
+        specified: [...job.specified, 'source_type'],
+      }),
+    );
   }
 
-  return result;
+  return runSync(db, desired, options, result, {
+    launcherDir: scriptsDir,
+    // Every manifested entry, valid or not: a runnable that lost its
+    // manifest is an orphan; one with an invalid schedule is not.
+    listedIds: new Set(entries.filter((e) => e.manifest).map((e) => e.id)),
+  });
 }

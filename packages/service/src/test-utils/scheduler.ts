@@ -51,11 +51,12 @@ export function createSchedulerMocks() {
 
   const notifySuccessMock = vi.fn(() => Promise.resolve(undefined));
   const notifyFailureMock = vi.fn(() => Promise.resolve(undefined));
+  const dispatchResultMock = vi.fn(async () => {});
 
   const notifier: Notifier = {
     notifySuccess: notifySuccessMock,
     notifyFailure: notifyFailureMock,
-    dispatchResult: vi.fn(async () => {}),
+    dispatchResult: dispatchResultMock,
   };
 
   const logger = createMockLogger();
@@ -66,6 +67,7 @@ export function createSchedulerMocks() {
     logger,
     notifySuccessMock,
     notifyFailureMock,
+    dispatchResultMock,
   };
 }
 

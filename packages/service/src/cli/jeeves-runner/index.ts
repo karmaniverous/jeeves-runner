@@ -3,18 +3,15 @@
  *
  * Uses `createServiceCli(descriptor)` from core for standard commands
  * (start, status, config, init, service). Adds custom commands for
- * job management (add-job, list-jobs, trigger).
+ * job management (add-job, list-jobs, trigger, sync-jobs).
  *
  * @module
  */
 
-import { execSync } from 'node:child_process';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { resolve } from 'node:path';
 
 import {
   createServiceCli,
-  getComponentConfigDir,
   getServiceUrl,
   init,
   WORKSPACE_CONFIG_DEFAULTS,
@@ -23,7 +20,7 @@ import {
 import { createRunnerDescriptor } from '../../descriptor.js';
 import { validateSchedule } from '../../scheduler/schedule-utils.js';
 import { loadConfig, withDb } from './config-helpers.js';
-import { syncJobs } from './sync-jobs.js';
+import { syncJobsCommand } from './sync-command.js';
 
 const descriptor = createRunnerDescriptor({
   customCliCommands: (program) => {
@@ -158,87 +155,28 @@ const descriptor = createRunnerDescriptor({
       );
 
     program
-      .command('init-scripts')
-      .description(
-        'Clone jeeves-scripts-template into scripts/ and configure tsx runner',
-      )
-      .option('-c, --config <path>', 'Path to config file')
-      .option(
-        '-w, --workspace <path>',
-        'Workspace root path',
-        WORKSPACE_CONFIG_DEFAULTS.core.workspace,
-      )
-      .option(
-        '--config-root <path>',
-        'Platform config root path',
-        WORKSPACE_CONFIG_DEFAULTS.core.configRoot,
-      )
-      .action(
-        (options: {
-          config?: string;
-          workspace: string;
-          configRoot: string;
-        }) => {
-          init({
-            workspacePath: options.workspace,
-            configRoot: options.configRoot,
-          });
-          const configDir = options.config
-            ? dirname(resolve(options.config))
-            : getComponentConfigDir('runner');
-          const configPath = options.config
-            ? resolve(options.config)
-            : join(configDir, 'config.json');
-          const scriptsDir = join(configDir, 'scripts');
-
-          if (existsSync(scriptsDir)) {
-            console.error(`Scripts directory already exists: ${scriptsDir}`);
-            process.exit(1);
-          }
-
-          console.log(`Cloning scripts template into ${scriptsDir}...`);
-          execSync(
-            `git clone https://github.com/karmaniverous/jeeves-scripts-template.git "${scriptsDir}"`,
-            { stdio: 'inherit' },
-          );
-
-          console.log('Installing dependencies...');
-          execSync('npm install', { cwd: scriptsDir, stdio: 'inherit' });
-
-          const tsxPath = join(
-            scriptsDir,
-            'node_modules',
-            'tsx',
-            'dist',
-            'cli.mjs',
-          );
-          const tsRunner = `node ${tsxPath}`;
-
-          if (existsSync(configPath)) {
-            const raw = JSON.parse(readFileSync(configPath, 'utf-8')) as Record<
-              string,
-              unknown
-            >;
-            const runners = (raw.runners ?? {}) as Record<string, string>;
-            runners.ts = tsRunner;
-            raw.runners = runners;
-            writeFileSync(configPath, JSON.stringify(raw, null, 2) + '\n');
-            console.log(`Updated runners.ts in ${configPath}`);
-          } else {
-            const template = { runners: { ts: tsRunner } };
-            writeFileSync(configPath, JSON.stringify(template, null, 2) + '\n');
-            console.log(`Created config with runners.ts at ${configPath}`);
-          }
-
-          console.log('Scripts initialized successfully.');
-        },
-      );
-
-    program
       .command('sync-jobs')
-      .description('Sync job definitions from JSON files into the database')
+      .description(
+        'Sync job definitions from jeeves-scripts (list --json) or legacy JSON files into the database',
+      )
       .option('-c, --config <path>', 'Path to config file')
-      .option('--jobs-dir <dir>', 'Path to jobs directory (overrides config)')
+      .option(
+        '--scripts-dir <dir>',
+        'jeeves-scripts repo dir (overrides config scriptsDir)',
+      )
+      .option(
+        '--jobs-dir <dir>',
+        'Legacy jobs directory (deprecated; overrides config jobsDir)',
+      )
+      .option('--dry-run', 'Report what would change without writing')
+      .option(
+        '--reset-enabled',
+        'Overwrite enabled on existing jobs with the source value',
+      )
+      .option(
+        '--prune',
+        'Disable launcher jobs no longer listed (never deletes)',
+      )
       .option(
         '-w, --workspace <path>',
         'Workspace root path',
@@ -249,44 +187,7 @@ const descriptor = createRunnerDescriptor({
         'Platform config root path',
         WORKSPACE_CONFIG_DEFAULTS.core.configRoot,
       )
-      .action(
-        (options: {
-          config?: string;
-          jobsDir?: string;
-          workspace: string;
-          configRoot: string;
-        }) => {
-          init({
-            workspacePath: options.workspace,
-            configRoot: options.configRoot,
-          });
-
-          const config = loadConfig(options.config);
-          const configDir = options.config
-            ? dirname(resolve(options.config))
-            : getComponentConfigDir('runner');
-          const resolvedJobsDir =
-            options.jobsDir ??
-            config.jobsDir ??
-            join(configDir, 'scripts/jobs');
-
-          withDb(config.dbPath, (db) => {
-            const syncResult = syncJobs(db, resolvedJobsDir);
-
-            console.log(
-              `Sync complete: ${String(syncResult.added)} added, ${String(syncResult.updated)} updated, ${String(syncResult.skipped)} skipped`,
-            );
-
-            if (syncResult.errors.length > 0) {
-              console.error('Errors:');
-              for (const e of syncResult.errors) {
-                console.error(`  - ${e}`);
-              }
-              process.exit(1);
-            }
-          });
-        },
-      );
+      .action(syncJobsCommand);
   },
 });
 

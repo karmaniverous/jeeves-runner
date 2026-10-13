@@ -57,7 +57,8 @@ export const RUNNER_ENDPOINTS = [
     name: 'updateJob',
     method: 'PATCH',
     path: '/jobs/:id',
-    description: 'Partial update of job config',
+    description:
+      'Partial update of job config; omitted fields stay unchanged. Schedule changes on jeeves-scripts launcher jobs revert on the next sync-jobs (the manifest schedule is authoritative); change those in jeeves-scripts.json instead.',
   },
   {
     name: 'deleteJob',

@@ -70,9 +70,6 @@ Or create `jeeves-runner/config.json` manually:
   "stateCleanupIntervalMs": 3600000,
   "reconcileIntervalMs": 60000,
   "shutdownGraceMs": 30000,
-  "runners": {
-    "ts": "node ./scripts/node_modules/tsx/dist/cli.mjs"
-  },
   "gatewayUrl": "http://127.0.0.1:18789",
   "gatewayApiKey": "your-api-key-or-use-OPENCLAW_GATEWAY_TOKEN-env",
   "notifications": {
@@ -134,8 +131,7 @@ Built with `createServiceCli(descriptor)` from core. Standard commands plus cust
 | `add-job` | Add a new job to the database |
 | `list-jobs` | List all configured jobs |
 | `trigger` | Manually trigger a job run (queries the HTTP API) |
-| `init-scripts` | Scaffold a scripts project from the template |
-| `sync-jobs` | Sync job definitions from JSON files into the database |
+| `sync-jobs` | Sync jobs from jeeves-scripts (`--scripts-dir`) or legacy JSON files into the database |
 
 ## HTTP API
 
@@ -338,7 +334,7 @@ The package exports a full suite of script helper utilities. See the [Script Hel
 
 ### Concurrency
 
-A global semaphore limits concurrent jobs (default: 4, configurable via `maxConcurrency`). When the limit is hit, behavior follows the job's overlap policy.
+A global semaphore limits concurrent jobs (default: 4, configurable via `maxConcurrency`). A scheduled run that fires while the limit is reached is not executed: it is recorded as a `skipped` run (error `max_concurrency: ...`) and alerted to the job's `on_failure` channel, falling back to `notifications.defaultOnFailure`. It is not retried. Manual triggers at the limit return an error to the caller.
 
 ### Notifications
 
@@ -393,10 +389,11 @@ Config file: `jeeves-runner/config.json` (legacy `jeeves-runner.config.json` is 
 | `runners` | Record | `{}` | Custom command runners keyed by file extension |
 | `gatewayUrl` | string | `http://127.0.0.1:18789` | OpenClaw Gateway URL (for session jobs) |
 | `gatewayApiKey` | string | — | Gateway API key (falls back to `OPENCLAW_GATEWAY_TOKEN` env var) |
-| `jobsDir` | string | — | Directory containing job definition JSON files (for `sync-jobs`) |
+| `scriptsDir` | string | — | jeeves-scripts repo dir; `sync-jobs` reads `node <scriptsDir>/bin/jeeves-scripts.js list --json` |
+| `jobsDir` | string | — | **Deprecated** (use `scriptsDir`). Directory of legacy job definition JSON files for `sync-jobs` |
 | `notifications.slackTokenPath` | string | — | Path to Slack bot token file |
-| `notifications.defaultOnFailure` | string \| null | `null` | Default Slack channel for failures |
-| `notifications.defaultOnSuccess` | string \| null | `null` | Default Slack channel for successes |
+| `notifications.defaultOnFailure` | string \| null | `null` | Slack channel for failure alerts of jobs without their own `on_failure` (also used for runner startup and max-concurrency alerts) |
+| `notifications.defaultOnSuccess` | string \| null | `null` | Slack channel for success notifications of jobs without their own `on_success` |
 | `logging.level` | string | `info` | Log level (trace/debug/info/warn/error/fatal) |
 | `logging.file` | string | — | Log file path (stdout if omitted) |
 
@@ -441,7 +438,6 @@ jeeves-runner is one component of a four-part platform:
 - ✅ Standard `/status`, `/config`, `/config/apply` endpoints
 - ✅ Config path migration (`jeeves-runner.config.json` to `jeeves-runner/config.json`)
 - ✅ Build-time version injection via `@rollup/plugin-replace`
-- ✅ `init-scripts` CLI command for scaffolding script projects
 - ✅ Client utility modules (`run-script`, `runner-client`, `fs-utils`, `shell`, `google-auth`, `spawn-worker`, `slack-workspace`)
 
 ### What's next

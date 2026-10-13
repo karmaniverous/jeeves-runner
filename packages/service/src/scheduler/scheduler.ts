@@ -11,6 +11,7 @@ import type { Logger } from 'pino';
 import type { GatewayClient } from '../gateway/client.js';
 import type { Notifier } from '../notify/slack.js';
 import type { RunnerConfig } from '../schemas/config.js';
+import { createSchedulerAlerts } from './alerts.js';
 import type { JobRow } from './cron-registry.js';
 import { createCronRegistry } from './cron-registry.js';
 import type { ExecutionResult } from './executor.js';
@@ -71,6 +72,12 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
 
   let reconcileInterval: NodeJS.Timeout | null = null;
 
+  const { resolveChannels, alertFailure } = createSchedulerAlerts({
+    notifier,
+    config,
+    logger,
+  });
+
   /** Execute a job: create run record, run script, update record, send notifications. */
   async function runJob(
     job: JobRow,
@@ -82,8 +89,6 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
       script,
       type,
       timeout_ms,
-      on_success,
-      on_failure,
       source_type,
       env: envJson,
       args: argsJson,
@@ -149,17 +154,30 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
       logger.info({ jobId: id, runId, status: result.status }, 'Job finished');
 
       // Send notifications
-      await notifier.dispatchResult(
-        result,
-        name,
-        on_success,
-        on_failure,
-        logger,
-      );
+      const { onSuccess, onFailure } = resolveChannels(job);
+      await notifier.dispatchResult(result, name, onSuccess, onFailure, logger);
 
       return result;
     } finally {
       runningJobs.delete(id);
+    }
+  }
+
+  /**
+   * Record and alert a scheduled run dropped because `maxConcurrency` is
+   * reached (#113, DD#73). Not retried.
+   */
+  function recordConcurrencySkip(job: JobRow): void {
+    const running = Array.from(runningJobs);
+    const reason = `max_concurrency: ${String(running.length)}/${String(config.maxConcurrency)} running (${running.join(', ')})`;
+    runRepository.recordSkippedRun(job.id, 'schedule', reason);
+    logger.warn(
+      { jobId: job.id, running },
+      'Max concurrency reached, scheduled run skipped and recorded',
+    );
+    const channel = resolveChannels(job).onFailure;
+    if (channel) {
+      alertFailure(job.name, `Scheduled run skipped: ${reason}`, channel);
     }
   }
 
@@ -177,6 +195,11 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
         return;
       }
       // 'allow' policy: proceed
+    }
+
+    if (runningJobs.size >= config.maxConcurrency) {
+      recordConcurrencySkip(job);
+      return;
     }
 
     await runJob(job, 'schedule').catch((err: unknown) => {
@@ -201,7 +224,7 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
         const message = `⚠️ jeeves-runner started: ${String(ok)}/${String(totalEnabled)} jobs scheduled, ${String(failedIds.length)} failed: ${failedIds.join(', ')}`;
         const channel = config.notifications.defaultOnFailure;
         if (channel) {
-          void notifier.notifyFailure('jeeves-runner', 0, message, channel);
+          alertFailure('jeeves-runner', message, channel);
         }
       }
 

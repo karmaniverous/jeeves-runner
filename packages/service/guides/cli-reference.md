@@ -208,16 +208,31 @@ Calls `POST /jobs/:id/run` and prints the result.
 
 ---
 
-### `init-scripts`
+### `sync-jobs`
 
-Scaffold a new scripts project from the `jeeves-scripts-template`.
+Sync job definitions into the database.
 
 ```bash
-jeeves-runner init-scripts [-c <path>]
+jeeves-runner sync-jobs [--scripts-dir <dir> | --jobs-dir <dir>] [--dry-run] [--reset-enabled] [--prune] [-c <path>]
 ```
 
-| Flag                  | Description                                    |
-| --------------------- | ---------------------------------------------- |
-| `-c, --config <path>` | Config file path (determines scripts location) |
+| Flag | Description |
+| --- | --- |
+| `-c, --config <path>` | Config file path |
+| `--scripts-dir <dir>` | jeeves-scripts repo dir (overrides config `scriptsDir`) |
+| `--jobs-dir <dir>` | Legacy JSON jobs dir (deprecated; overrides config `jobsDir`) |
+| `--dry-run` | Report what would change; write nothing |
+| `--reset-enabled` | Overwrite `enabled` on existing jobs with the source value |
+| `--prune` | Disable launcher jobs no longer listed (scripts source only; never deletes) |
 
-Clones the template into a `scripts/` directory next to the config, installs dependencies, and configures the `runners.ts` entry in the config file for TypeScript execution via tsx.
+**Source.** Flags first (not both), then config `scriptsDir`, then legacy `jobsDir`. With the jeeves-scripts source the runner runs `node <scriptsDir>/bin/jeeves-scripts.js list --json` with its own Node and environment (timeout 120 s; the launcher cold-starts in about 7 s) and registers each runnable that has a manifest: `script` is the launcher, `args` are `["run", <id>, ...manifest.args]`. A manifest without `timeout_seconds` gets a default timeout of 10 s when the job is added (enough for the cold start); existing jobs keep their timeout. A failing, unparseable, invalid or duplicate-id list aborts the sync with nothing written. The legacy source prints a deprecation warning.
+
+**What a sync changes.**
+
+- New jobs are added with the source's `enabled` (default `true`). A manifest `prerequisite` is printed and never blocks the add.
+- On existing jobs, only fields the source specifies are updated; omitted fields stay unchanged.
+- `enabled` on existing jobs is never changed unless `--reset-enabled` is given; disagreements are listed under **Enabled drift**.
+- The manifest schedule is applied on every sync, and each schedule it reverts is listed. **Schedule changes made through the API or `runner_update_job` on launcher jobs don't last**; change them in `jeeves-scripts.json`.
+- Launcher jobs no longer listed are reported as **Orphans**, and disabled only with `--prune`. Jobs from other sources are never touched. Paths are compared after normalisation (absolute, separators, case-insensitive on Windows).
+
+**Exit codes.** 0 when clean; 1 when any entry is skipped for an error or the sync is aborted.

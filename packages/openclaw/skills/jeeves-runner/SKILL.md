@@ -262,8 +262,8 @@ jeeves-runner add-job \
 | `type` | No | `script` | `script` or `session` |
 | `timeout_seconds` | No | — | Kill the job after this many seconds |
 | `overlap_policy` | No | `skip` | `skip` (don't start if already running) or `allow` |
-| `on_failure` | No | config default | Slack channel ID for failure alerts |
-| `on_success` | No | config default | Slack channel ID for success alerts |
+| `on_failure` | No | `notifications.defaultOnFailure` | Slack channel ID for failure alerts |
+| `on_success` | No | `notifications.defaultOnSuccess` | Slack channel ID for success alerts |
 | `output_channel` | No | — | Slack channel ID for stdout relay |
 | `description` | No | — | Human-readable job description |
 | `env` | No | — | `Record<string, string>` — environment variables spread into spawn env alongside `JR_*` vars (script-type jobs only) |
@@ -404,7 +404,9 @@ Create a new runner job. Requires `id`, `name`, `schedule`, and `script`.
 
 #### `runner_update_job`
 
-Update an existing job. Only supplied fields are changed (PATCH with partial body).
+Update an existing job. Only supplied fields are changed (PATCH with partial body); omitted fields, including `enabled`, stay unchanged.
+
+**Launcher jobs (registered from jeeves-scripts by `sync-jobs`): schedule changes made here don't last.** The next `sync-jobs` applies the manifest schedule and reports the revert. Change a launcher job's schedule in `jeeves-scripts.json` (`jobs.<id>.schedule`). Never hand-edit a launcher job's `script` or `args`.
 
 - `jobId` (string, required) — The job to update
 - All fields from `runner_create_job` except `id` are accepted as optional updates
@@ -572,36 +574,32 @@ Get-Content <log-path> -Tail 20   # Recent logs
 
 For script authoring patterns (repo setup, TypeScript execution, script structure, quality gates), see the [jeeves-scripts README](https://github.com/karmaniverous/jeeves-scripts/blob/main/README.md).
 
-### Template Repo
+### Registering Jobs from jeeves-scripts
 
-New script projects start from `karmaniverous/jeeves-scripts-template`. Use the CLI to scaffold:
-
-```bash
-jeeves-runner init-scripts -c /path/to/config.json
-```
-
-This clones the template into a `scripts/` directory next to the config, installs dependencies, and configures the `runners.ts` entry in the config file for TypeScript execution via tsx.
-
-Alternatively, clone manually:
+Script projects are jeeves-scripts instances (start one with `npx @karmaniverous/jeeves-scripts-core init`). The runner registers their jobs from the instance itself:
 
 ```bash
-git clone https://github.com/karmaniverous/jeeves-scripts-template.git scripts
-cd scripts && npm install
+jeeves-runner sync-jobs --scripts-dir J:/jeeves-scripts --dry-run   # review
+jeeves-runner sync-jobs --scripts-dir J:/jeeves-scripts             # apply
 ```
 
-### TypeScript Execution via `runners` Config
+Or set `scriptsDir` in the runner config and run `sync-jobs` with no source flag. `sync-jobs` runs `jeeves-scripts list --json` and registers each runnable with a manifest (`script` = the launcher, `args` = `["run", <id>, ...]`). It never changes `enabled` on existing jobs unless `--reset-enabled` (drift is reported), always applies the manifest schedule, prints each job's `prerequisite` when adding it, and disables jobs no longer listed only with `--prune`. Use `--dry-run` to check for drift. The launcher cold-starts in about 7 s, so leave timeouts room for it. A manifest without `timeout_seconds` gets a 10 s default timeout when the job is added; give long-running jobs an explicit `timeout_seconds`.
 
-The `runners` config map specifies custom command runners keyed by file extension. To run TypeScript scripts:
+The legacy `jobsDir` / `--jobs-dir` JSON source still works but is deprecated. The `init-scripts` command has been removed.
+
+### Custom Runners via `runners` Config
+
+The `runners` config map specifies custom command runners keyed by file extension, for scripts that are not plain Node:
 
 ```json
 {
   "runners": {
-    "ts": "node ./scripts/node_modules/tsx/dist/cli.mjs"
+    "py": "python"
   }
 }
 ```
 
-When a job's script path ends in `.ts`, the runner uses this command instead of the default `node` executor. The command string is split on whitespace; the first token is the executable, the rest are prefix args before the script path.
+When a job's script path ends in a mapped extension, the runner uses that command instead of the default `node` executor. The command string is split on whitespace; the first token is the executable, the rest are prefix args before the script path. jeeves-scripts jobs run through plain `node` and need no runner entry.
 
 ### Script Structure
 
@@ -708,4 +706,4 @@ If tools are unavailable (plugin not loaded in this session):
 - `jeeves-runner config validate -c <config>` — validate config file
 - `jeeves-runner config apply -f <patch.json>` — apply config patch
 - `jeeves-runner service start|stop|restart|status` — manage system service
-- `jeeves-runner init-scripts` — scaffold a scripts project from `jeeves-scripts-template` (supports `--config-root` and `--workspace`)
+- `jeeves-runner sync-jobs --scripts-dir <dir> [--dry-run] [--reset-enabled] [--prune]` — register jobs from a jeeves-scripts instance

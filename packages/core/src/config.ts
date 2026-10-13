@@ -101,8 +101,23 @@ export const runnerConfigSchema = z.preprocess(
     gatewayApiKey: z.string().optional(),
     /** Custom command runners keyed by file extension. The command string is split on whitespace; first token is the executable, rest are prefix args before the script path. Falls back to built-in defaults for unconfigured extensions. */
     runners: z.record(z.string(), z.string().trim().min(1)).default({}),
-    /** Absolute path to directory containing job definition files. When omitted, sync-jobs falls back to join(configDir, 'scripts/jobs'). */
+    /**
+     * Deprecated (DD#64): use `scriptsDir` instead. Not tagged
+     * `@deprecated` because the runner itself must still read it until the
+     * next major; `sync-jobs` warns at runtime instead. Absolute path to directory
+     * containing legacy job-definition JSON files (`*.json` arrays). When
+     * omitted, sync-jobs falls back to join(configDir, 'scripts/jobs').
+     * This source is kept for the 0.12.0 release with a deprecation
+     * warning on use; it is removed in the next major (DD#64).
+     */
     jobsDir: z.string().optional(),
+    /**
+     * Absolute path to an instance's jeeves-scripts repo (the directory
+     * containing `bin/jeeves-scripts.js`). When set, `sync-jobs` runs
+     * `node <scriptsDir>/bin/jeeves-scripts.js list --json` and registers
+     * each non-null-manifest entry as a launcher job (DD#61).
+     */
+    scriptsDir: z.string().optional(),
   }),
 );
 

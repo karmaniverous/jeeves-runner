@@ -34,9 +34,6 @@ Legacy config files named `jeeves-runner.config.json` are automatically migrated
   "stateCleanupIntervalMs": 3600000,
   "shutdownGraceMs": 30000,
   "reconcileIntervalMs": 60000,
-  "runners": {
-    "ts": "node ./scripts/node_modules/tsx/dist/cli.mjs"
-  },
   "notifications": {
     "slackTokenPath": "/path/to/slack-bot-token",
     "defaultOnFailure": "C0123456789",
@@ -62,12 +59,14 @@ Legacy config files named `jeeves-runner.config.json` are automatically migrated
 | `port` | `number` | `1937` | HTTP server port for the runner API |
 | `host` | `string` | `"0.0.0.0"` | Bind address for the HTTP server |
 | `dbPath` | `string` | `"./data/runner.sqlite"` | Path to the SQLite database file |
-| `maxConcurrency` | `number` | `4` | Maximum number of concurrent job executions |
+| `maxConcurrency` | `number` | `4` | Maximum number of concurrent job executions. A scheduled run at the limit is recorded as `skipped` and alerted, not retried |
 | `runRetentionDays` | `number` | `30` | Number of days to retain completed run records |
 | `stateCleanupIntervalMs` | `number` | `3600000` | Interval (ms) for expired state cleanup |
 | `shutdownGraceMs` | `number` | `30000` | Grace period (ms) for in-flight jobs during shutdown |
 | `reconcileIntervalMs` | `number` | `60000` | Interval (ms) for job reconciliation checks |
-| `runners` | `Record<string, string>` | `{}` | Custom command runners keyed by file extension (e.g., `{ "ts": "node path/to/tsx/cli.mjs" }`) |
+| `runners` | `Record<string, string>` | `{}` | Custom command runners keyed by file extension (e.g., `{ "py": "python" }`). Not needed for jeeves-scripts jobs, which run through plain `node` |
+| `scriptsDir` | `string?` | — | jeeves-scripts repo dir; `sync-jobs` registers jobs from its `list --json` |
+| `jobsDir` | `string?` | — | **Deprecated** (use `scriptsDir`). Legacy JSON job definitions dir for `sync-jobs` |
 
 ### `notifications`
 
@@ -76,8 +75,8 @@ Slack notification configuration for job completion events.
 | Field | Type | Default | Description |
 | --- | --- | --- | --- |
 | `slackTokenPath` | `string?` | � | Path to file containing Slack bot token |
-| `defaultOnFailure` | `string \| null` | `null` | Default Slack channel ID for failure notifications |
-| `defaultOnSuccess` | `string \| null` | `null` | Default Slack channel ID for success notifications |
+| `defaultOnFailure` | `string \| null` | `null` | Slack channel ID for failure alerts of jobs without their own `on_failure` (also runner startup and max-concurrency alerts) |
+| `defaultOnSuccess` | `string \| null` | `null` | Slack channel ID for success notifications of jobs without their own `on_success` |
 
 Per-job overrides: each job can specify its own `on_failure` and `on_success` channels that override the defaults.
 
