@@ -2,11 +2,81 @@
 
 All notable changes to this project will be documented in this file.
 
-## [unreleased]
+## [0.4.0] - 2026-10-13
+
+### 💼 Other
+
+- [116] feat: sync-jobs from jeeves-scripts list --json; shared manifest mapping in runner-core
+
+- core: pure manifestEntryToJob mapping, list --json schemas, launcher path
+  normalisation (DD#61, DD#62, DD#70); scriptsDir config, jobsDir deprecated (DD#64)
+- core: update schema built from a defaults-free base so omitted fields stay
+  unchanged on PATCH (#114, DD#75)
+- service: sync-jobs --scripts-dir/--dry-run/--reset-enabled/--prune; enabled set
+  on insert only with drift report (#103, DD#65); manifest schedule applied and
+  reverts reported (DD#66); prerequisite informational and printed on add (DD#76);
+  orphans disabled only with --prune, never deleted (DD#69); fatal list failures
+  write nothing (DD#63); single transaction
+
+Refs #116, #103, #114
+- [116] fix: pass the release tag to git-cliff so releases are not filed under [unreleased]
+
+Refs #115
+- [116] docs: sync-jobs from jeeves-scripts, scriptsDir/jobsDir, maxConcurrency skips, launcher schedule-revert warnings
+
+Refs #116, #113
+- [116] feat: 10s default timeout for launcher jobs; review fixes
+
+- core: DEFAULT_LAUNCHER_TIMEOUT_MS (10s) for manifests without
+  timeout_seconds, applied on insert only (DD#71)
+- docs: stop recommending a tsx runners entry; generic runners example;
+  document the 10s default
+- tests: exact --dry-run report output; list --json timeout is fatal;
+  default timeout on insert only
+
+Refs #116
+- [116] feat: defaultOnFailure/defaultOnSuccess as per-job fallbacks; SOLID/DRY pass
+
+- scheduler: one resolveChannels helper; job result alerts and #113 skip
+  alerts fall back to notifications.defaultOnFailure/defaultOnSuccess (DD#77)
+- core: mapping reports the fields a manifest specifies (JobField,
+  OPTIONAL_JOB_KEYS, specifiedJobFields) so every consumer gets
+  omitted-means-unchanged
+- service: one toDesiredJob row builder for both sync sources; recordSkip and
+  errorMessage helpers; runSyncCommand returns an exit code (testable)
+- tests: in-process sync-command suite incl. real-launcher end to end;
+  deterministic #113 tests; channel fallback; legacy validation and I/O
+  errors; transaction rollback; report labels; CLI flag wiring end to end
+  (replaces --help string test)
+- docs: fallback semantics in README, configuration guide and skill
+
+Refs #116
+- [116] fix: address Copilot review on #117
+
+- sync: orphan detection uses every manifested id, so an entry skipped for
+  an invalid schedule is never pruned
+- core: explicit timeout_seconds: null means no timeout; only an absent key
+  gets the 10s default
+- legacy sync: unreadable jobs dir counts as a skip
+- scheduler: failure alerts (#113 skip and startup) catch and log
+  notifier errors; alert helpers moved to scheduler/alerts.ts
+- tests: typed output mock; split oversized test files (sync-scripts,
+  sync-orphans, run-scripts-list, sync-jobs.cli, job-routes.fields) with
+  a shared scripts-sync harness; regression tests for each fix
+
+Refs #116, #113
+- [116] chore(release): name GitHub releases <package>@<version>
+
+Refs #116
+## [0.3.0] - 2026-09-29
 
 ### 💼 Other
 
 - [104] updated jeeves
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner-core v0.3.0
 ## [0.2.2-2] - 2026-09-28
 
 ### 💼 Other
