@@ -6,7 +6,15 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  type Mock,
+  vi,
+} from 'vitest';
 
 import { createTestDb, type TestDb } from '../../test-utils/db.js';
 import { runSyncCommand, type SyncOutput } from './sync-command.js';
@@ -22,9 +30,9 @@ describe('runSyncCommand', () => {
   let testDb: TestDb;
   let root: string;
   let out: {
-    log: ReturnType<typeof vi.fn>;
-    warn: ReturnType<typeof vi.fn>;
-    error: ReturnType<typeof vi.fn>;
+    log: Mock<SyncOutput['log']>;
+    warn: Mock<SyncOutput['warn']>;
+    error: Mock<SyncOutput['error']>;
   };
 
   /** Write a runner config next to the test DB; return its path. */
@@ -49,7 +57,7 @@ describe('runSyncCommand', () => {
     seenDirs: string[] = [],
   ): number {
     return runSyncCommand(options, {
-      out: out as unknown as SyncOutput,
+      out: out,
       listRunner: (dir) => {
         seenDirs.push(dir);
         return JSON.stringify(list);
@@ -60,7 +68,11 @@ describe('runSyncCommand', () => {
   beforeEach(() => {
     testDb = createTestDb();
     root = dirname(testDb.dbPath);
-    out = { log: vi.fn(), warn: vi.fn(), error: vi.fn() };
+    out = {
+      log: vi.fn<SyncOutput['log']>(),
+      warn: vi.fn<SyncOutput['warn']>(),
+      error: vi.fn<SyncOutput['error']>(),
+    };
   });
 
   afterEach(() => {
@@ -78,7 +90,7 @@ describe('runSyncCommand', () => {
 
     const code = runSyncCommand(
       { config: writeConfig(), scriptsDir },
-      { out: out as unknown as SyncOutput },
+      { out: out },
     );
 
     expect(code).toBe(0);
@@ -160,7 +172,7 @@ describe('runSyncCommand', () => {
     const code = runSyncCommand(
       { config: writeConfig(), scriptsDir: 's' },
       {
-        out: out as unknown as SyncOutput,
+        out: out,
         listRunner: () => {
           throw new SyncFatalError('list exploded');
         },

@@ -11,6 +11,7 @@ import type { Logger } from 'pino';
 import type { GatewayClient } from '../gateway/client.js';
 import type { Notifier } from '../notify/slack.js';
 import type { RunnerConfig } from '../schemas/config.js';
+import { createSchedulerAlerts } from './alerts.js';
 import type { JobRow } from './cron-registry.js';
 import { createCronRegistry } from './cron-registry.js';
 import type { ExecutionResult } from './executor.js';
@@ -71,20 +72,11 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
 
   let reconcileInterval: NodeJS.Timeout | null = null;
 
-  /**
-   * Notification channels for a job: its own `on_success`/`on_failure`,
-   * falling back to `notifications.defaultOnSuccess`/`defaultOnFailure`
-   * (DD#77).
-   */
-  function resolveChannels(job: JobRow): {
-    onSuccess: string | null;
-    onFailure: string | null;
-  } {
-    return {
-      onSuccess: job.on_success ?? config.notifications.defaultOnSuccess,
-      onFailure: job.on_failure ?? config.notifications.defaultOnFailure,
-    };
-  }
+  const { resolveChannels, alertFailure } = createSchedulerAlerts({
+    notifier,
+    config,
+    logger,
+  });
 
   /** Execute a job: create run record, run script, update record, send notifications. */
   async function runJob(
@@ -185,12 +177,7 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
     );
     const channel = resolveChannels(job).onFailure;
     if (channel) {
-      void notifier.notifyFailure(
-        job.name,
-        0,
-        `Scheduled run skipped: ${reason}`,
-        channel,
-      );
+      alertFailure(job.name, `Scheduled run skipped: ${reason}`, channel);
     }
   }
 
@@ -237,7 +224,7 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
         const message = `⚠️ jeeves-runner started: ${String(ok)}/${String(totalEnabled)} jobs scheduled, ${String(failedIds.length)} failed: ${failedIds.join(', ')}`;
         const channel = config.notifications.defaultOnFailure;
         if (channel) {
-          void notifier.notifyFailure('jeeves-runner', 0, message, channel);
+          alertFailure('jeeves-runner', message, channel);
         }
       }
 

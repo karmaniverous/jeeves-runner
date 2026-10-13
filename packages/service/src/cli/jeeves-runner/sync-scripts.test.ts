@@ -1,100 +1,48 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
-
 import {
   DEFAULT_LAUNCHER_TIMEOUT_MS,
   getLauncherPath,
 } from '@karmaniverous/jeeves-runner-core';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
-import type { TestDb } from '../../test-utils/db.js';
-import { createTestDb } from '../../test-utils/db.js';
+import { entry, row, useScriptsSync } from '../../test-utils/scripts-sync.js';
 import {
   formatSyncReport,
-  runScriptsList,
   SyncFatalError,
   syncJobsFromScriptsDir,
 } from './sync-jobs.js';
 
-/** A `list --json` entry with a manifest. */
-function entry(id: string, manifest: Record<string, unknown> = {}) {
-  return {
-    id,
-    source: 'core',
-    domain: 'admin',
-    manifest: { name: `Job ${id}`, schedule: '*/5 * * * *', ...manifest },
-  };
-}
-
-/** Read one job row. */
-function row(testDb: TestDb, id: string) {
-  return testDb.db
-    .prepare(
-      'SELECT name, schedule, script, args, enabled, on_failure FROM jobs WHERE id = ?',
-    )
-    .get(id) as
-    | {
-        name: string;
-        schedule: string;
-        script: string;
-        args: string;
-        enabled: number;
-        on_failure: string | null;
-      }
-    | undefined;
-}
-
 describe('syncJobsFromScriptsDir', () => {
-  let testDb: TestDb;
-  let scriptsDir: string;
-  let list: unknown[];
-
-  /** Sync using the in-memory list. */
-  const sync = (opts: Parameters<typeof syncJobsFromScriptsDir>[2] = {}) =>
-    syncJobsFromScriptsDir(testDb.db, scriptsDir, {
-      listRunner: () => JSON.stringify(list),
-      ...opts,
-    });
-
-  beforeEach(() => {
-    testDb = createTestDb();
-    scriptsDir = join(testDb.dbPath, '..', 'scripts');
-    list = [];
-  });
-
-  afterEach(() => {
-    testDb.cleanup();
-  });
+  const h = useScriptsSync();
 
   it('adds launcher jobs and skips entries without a manifest', () => {
-    list = [
+    h.list = [
       entry('a', { args: ['--x'] }),
       { id: 'b', source: 'core', manifest: null },
     ];
 
-    const result = sync();
+    const result = h.sync();
 
     expect(result.added).toBe(1);
-    expect(row(testDb, 'b')).toBeUndefined();
-    const a = row(testDb, 'a');
-    expect(a?.script).toBe(getLauncherPath(scriptsDir));
+    expect(row(h.testDb, 'b')).toBeUndefined();
+    const a = row(h.testDb, 'a');
+    expect(a?.script).toBe(getLauncherPath(h.scriptsDir));
     expect(JSON.parse(a?.args ?? 'null')).toEqual(['run', 'a', '--x']);
   });
 
   it('reports unchanged jobs on a second sync', () => {
-    list = [entry('a')];
-    sync();
+    h.list = [entry('a')];
+    h.sync();
 
-    const result = sync();
+    const result = h.sync();
 
     expect(result.unchanged).toBe(1);
     expect(result.updated).toBe(0);
   });
 
   it('adds a job with a prerequisite and prints it (DD#76)', () => {
-    list = [entry('a', { prerequisite: 'gh auth login' })];
+    h.list = [entry('a', { prerequisite: 'gh auth login' })];
 
-    const result = sync();
+    const result = h.sync();
 
     expect(result.added).toBe(1);
     expect(result.errors).toHaveLength(0);
@@ -104,75 +52,77 @@ describe('syncJobsFromScriptsDir', () => {
   });
 
   it('applies manifest enabled only when adding (#103)', () => {
-    list = [entry('a', { enabled: false })];
-    sync();
-    expect(row(testDb, 'a')?.enabled).toBe(0);
+    h.list = [entry('a', { enabled: false })];
+    h.sync();
+    expect(row(h.testDb, 'a')?.enabled).toBe(0);
 
-    testDb.db.prepare('UPDATE jobs SET enabled = 1 WHERE id = ?').run('a');
-    const result = sync();
+    h.testDb.db.prepare('UPDATE jobs SET enabled = 1 WHERE id = ?').run('a');
+    const result = h.sync();
 
-    expect(row(testDb, 'a')?.enabled).toBe(1);
+    expect(row(h.testDb, 'a')?.enabled).toBe(1);
     expect(result.details.enabledDrift).toEqual([
       { id: 'a', source: false, stored: true, reset: false },
     ]);
   });
 
   it('--reset-enabled overwrites enabled with the source value', () => {
-    list = [entry('a')];
-    sync();
-    testDb.db.prepare('UPDATE jobs SET enabled = 0 WHERE id = ?').run('a');
+    h.list = [entry('a')];
+    h.sync();
+    h.testDb.db.prepare('UPDATE jobs SET enabled = 0 WHERE id = ?').run('a');
 
-    const result = sync({ resetEnabled: true });
+    const result = h.sync({ resetEnabled: true });
 
-    expect(row(testDb, 'a')?.enabled).toBe(1);
+    expect(row(h.testDb, 'a')?.enabled).toBe(1);
     expect(formatSyncReport(result)).toContain(
       '  a: source true, stored false (reset to source)',
     );
   });
 
   it('reverts an API schedule change and reports it (DD#66)', () => {
-    list = [entry('a')];
-    sync();
-    testDb.db
+    h.list = [entry('a')];
+    h.sync();
+    h.testDb.db
       .prepare("UPDATE jobs SET schedule = '0 * * * *' WHERE id = ?")
       .run('a');
 
-    const result = sync();
+    const result = h.sync();
 
-    expect(row(testDb, 'a')?.schedule).toBe('*/5 * * * *');
+    expect(row(h.testDb, 'a')?.schedule).toBe('*/5 * * * *');
     expect(result.details.scheduleReverts).toEqual([
       { id: 'a', from: '0 * * * *', to: '*/5 * * * *' },
     ]);
   });
 
   it('leaves fields the manifest omits unchanged (DD#75)', () => {
-    list = [entry('a', { on_failure: 'C1' })];
-    sync();
-    list = [entry('a')];
+    h.list = [entry('a', { on_failure: 'C1' })];
+    h.sync();
+    h.list = [entry('a')];
 
-    sync();
+    h.sync();
 
-    expect(row(testDb, 'a')?.on_failure).toBe('C1');
+    expect(row(h.testDb, 'a')?.on_failure).toBe('C1');
   });
 
   it('--dry-run writes nothing', () => {
-    list = [entry('a')];
+    h.list = [entry('a')];
 
-    const result = sync({ dryRun: true });
+    const result = h.sync({ dryRun: true });
 
     expect(result.added).toBe(1);
-    expect(row(testDb, 'a')).toBeUndefined();
+    expect(row(h.testDb, 'a')).toBeUndefined();
     expect(formatSyncReport(result)).toContain('DRY RUN: nothing written.');
   });
 
   it('prints the full --dry-run report (DD#68)', () => {
-    list = [entry('keep'), entry('drift'), entry('moved'), entry('gone')];
-    sync();
-    testDb.db.prepare('UPDATE jobs SET enabled = 0 WHERE id = ?').run('drift');
-    testDb.db
+    h.list = [entry('keep'), entry('drift'), entry('moved'), entry('gone')];
+    h.sync();
+    h.testDb.db
+      .prepare('UPDATE jobs SET enabled = 0 WHERE id = ?')
+      .run('drift');
+    h.testDb.db
       .prepare("UPDATE jobs SET schedule = '0 * * * *' WHERE id = ?")
       .run('moved');
-    list = [
+    h.list = [
       entry('keep'),
       entry('drift'),
       entry('moved'),
@@ -180,7 +130,7 @@ describe('syncJobsFromScriptsDir', () => {
       entry('bad', { schedule: 'not a schedule' }),
     ];
 
-    const report = formatSyncReport(sync({ dryRun: true }));
+    const report = formatSyncReport(h.sync({ dryRun: true }));
 
     expect(report.split('\n')).toEqual([
       'DRY RUN: nothing written.',
@@ -204,39 +154,39 @@ describe('syncJobsFromScriptsDir', () => {
   });
 
   it('gives a new job without timeout_seconds the 10s default, on insert only (DD#71)', () => {
-    list = [entry('a')];
-    sync();
+    h.list = [entry('a')];
+    h.sync();
     const timeout = () =>
       (
-        testDb.db
+        h.testDb.db
           .prepare('SELECT timeout_ms FROM jobs WHERE id = ?')
           .get('a') as { timeout_ms: number | null }
       ).timeout_ms;
     expect(timeout()).toBe(DEFAULT_LAUNCHER_TIMEOUT_MS);
 
-    testDb.db
+    h.testDb.db
       .prepare('UPDATE jobs SET timeout_ms = 300000 WHERE id = ?')
       .run('a');
-    sync();
+    h.sync();
 
     expect(timeout()).toBe(300000);
   });
 
   it('rolls back every write when applying the plan fails', () => {
-    testDb.db.exec(
+    h.testDb.db.exec(
       `CREATE TRIGGER fail_boom BEFORE INSERT ON jobs WHEN NEW.id = 'boom'
        BEGIN SELECT RAISE(ABORT, 'boom refused'); END`,
     );
-    list = [entry('first'), entry('boom')];
+    h.list = [entry('first'), entry('boom')];
 
-    expect(() => sync()).toThrow(/boom refused/);
-    expect(row(testDb, 'first')).toBeUndefined();
+    expect(() => h.sync()).toThrow(/boom refused/);
+    expect(row(h.testDb, 'first')).toBeUndefined();
   });
 
   it('skips an invalid schedule as an error', () => {
-    list = [entry('bad', { schedule: 'not a schedule' }), entry('ok')];
+    h.list = [entry('bad', { schedule: 'not a schedule' }), entry('ok')];
 
-    const result = sync();
+    const result = h.sync();
 
     expect(result.skipped).toBe(1);
     expect(result.added).toBe(1);
@@ -254,130 +204,11 @@ describe('syncJobsFromScriptsDir', () => {
         },
       ],
     ])('%s', (_label, listRunner) => {
-      list = [entry('x')];
+      h.list = [entry('x')];
       expect(() =>
-        syncJobsFromScriptsDir(testDb.db, scriptsDir, { listRunner }),
+        syncJobsFromScriptsDir(h.testDb.db, h.scriptsDir, { listRunner }),
       ).toThrow(SyncFatalError);
-      expect(row(testDb, 'x')).toBeUndefined();
+      expect(row(h.testDb, 'x')).toBeUndefined();
     });
-  });
-
-  describe('orphans (DD#69, DD#70)', () => {
-    beforeEach(() => {
-      list = [entry('keep'), entry('gone')];
-      sync();
-      testDb.db
-        .prepare(
-          `INSERT INTO jobs (id, name, schedule, script) VALUES ('other', 'Other', '* * * * *', 'other.js')`,
-        )
-        .run();
-      list = [entry('keep')];
-    });
-
-    it('reports orphans without --prune and changes nothing', () => {
-      const result = sync();
-
-      expect(result.details.orphans).toEqual([
-        { id: 'gone', enabled: true, disabled: false },
-      ]);
-      expect(row(testDb, 'gone')?.enabled).toBe(1);
-    });
-
-    it('--prune disables launcher orphans only, never deletes', () => {
-      const result = sync({ prune: true });
-
-      expect(row(testDb, 'gone')?.enabled).toBe(0);
-      expect(row(testDb, 'other')?.enabled).toBe(1);
-      expect(formatSyncReport(result)).toContain('  gone: disabled');
-    });
-
-    it('reports an orphan that is already disabled, and leaves it alone', () => {
-      sync({ prune: true });
-
-      const result = sync({ prune: true });
-
-      expect(result.details.orphans).toEqual([
-        { id: 'gone', enabled: false, disabled: false },
-      ]);
-      expect(formatSyncReport(result)).toContain('  gone: already disabled');
-    });
-
-    it('does not rewrite a launcher path stored in another form', () => {
-      const stored =
-        process.platform === 'win32'
-          ? getLauncherPath(scriptsDir).replace(/\\/g, '/')
-          : getLauncherPath(join(scriptsDir, 'bin', '..'));
-      testDb.db
-        .prepare('UPDATE jobs SET script = ? WHERE id = ?')
-        .run(stored, 'keep');
-
-      const result = sync();
-
-      expect(result.details.unchanged).toContain('keep');
-      expect(row(testDb, 'keep')?.script).toBe(stored);
-    });
-
-    it('matches the launcher written in another form (no false orphans)', () => {
-      const variant =
-        process.platform === 'win32'
-          ? getLauncherPath(scriptsDir).toUpperCase().replace(/\\/g, '/')
-          : getLauncherPath(join(scriptsDir, 'bin', '..'));
-      testDb.db
-        .prepare('UPDATE jobs SET script = ? WHERE id = ?')
-        .run(variant, 'keep');
-      list = [entry('keep'), entry('gone')];
-
-      const result = sync({ prune: true });
-
-      expect(result.details.orphans).toEqual([]);
-    });
-  });
-});
-
-describe('runScriptsList', () => {
-  let testDb: TestDb;
-  let scriptsDir: string;
-
-  beforeEach(() => {
-    testDb = createTestDb();
-    scriptsDir = join(testDb.dbPath, '..', 'scripts');
-    mkdirSync(join(scriptsDir, 'bin'), { recursive: true });
-  });
-
-  afterEach(() => {
-    testDb.cleanup();
-  });
-
-  it('returns the launcher output for list --json', () => {
-    writeFileSync(
-      join(scriptsDir, 'bin', 'jeeves-scripts.js'),
-      'process.stdout.write(JSON.stringify(process.argv.slice(2)));',
-    );
-
-    expect(JSON.parse(runScriptsList(scriptsDir))).toEqual(['list', '--json']);
-  });
-
-  it('throws SyncFatalError with stderr on a non-zero exit', () => {
-    writeFileSync(
-      join(scriptsDir, 'bin', 'jeeves-scripts.js'),
-      "process.stderr.write('config invalid'); process.exit(2);",
-    );
-
-    expect(() => runScriptsList(scriptsDir)).toThrow(/config invalid/);
-  });
-
-  it('throws SyncFatalError naming the launcher when it does not exist', () => {
-    expect(() => runScriptsList(join(scriptsDir, 'nowhere'))).toThrow(
-      /jeeves-scripts list --json failed \(.*nowhere/,
-    );
-  });
-
-  it('throws SyncFatalError when list --json times out', () => {
-    writeFileSync(
-      join(scriptsDir, 'bin', 'jeeves-scripts.js'),
-      'setTimeout(() => undefined, 10000);',
-    );
-
-    expect(() => runScriptsList(scriptsDir, 300)).toThrow(SyncFatalError);
   });
 });

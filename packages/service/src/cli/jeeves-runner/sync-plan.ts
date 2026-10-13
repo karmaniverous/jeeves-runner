@@ -130,7 +130,7 @@ function planUpdate(
 /**
  * Compare desired jobs with stored jobs and fill in `result`.
  *
- * @param launcherDir - Scripts dir whose launcher identifies orphans, or
+ * @param orphans - Launcher and listed ids for orphan detection, or
  *   `undefined` for the legacy source (no orphan detection).
  */
 function planSync(
@@ -138,7 +138,7 @@ function planSync(
   desired: DesiredJob[],
   options: SyncOptions,
   result: SyncResult,
-  launcherDir?: string,
+  orphans?: OrphanScope,
 ): SyncPlan {
   const stored = readStoredJobs(db);
   const plan: SyncPlan = { inserts: [], updates: [], disables: [] };
@@ -155,11 +155,10 @@ function planSync(
     if (sets.length > 0) plan.updates.push({ id: job.id, sets });
   }
 
-  if (launcherDir !== undefined) {
-    const listed = new Set(desired.map((j) => j.id));
+  if (orphans !== undefined) {
     for (const [id, row] of stored) {
-      if (listed.has(id)) continue;
-      if (!isLauncherScript(String(row.script), launcherDir)) continue;
+      if (orphans.listedIds.has(id)) continue;
+      if (!isLauncherScript(String(row.script), orphans.launcherDir)) continue;
       const enabled = row.enabled === 1;
       const disable = options.prune === true && enabled;
       details.orphans.push({ id, enabled, disabled: disable });
@@ -206,15 +205,27 @@ function applyPlan(db: DatabaseSync, plan: SyncPlan): void {
   }
 }
 
+/**
+ * Orphan detection scope. `listedIds` holds every id the source lists,
+ * including entries skipped for an error, so a listed job is never
+ * treated as an orphan.
+ */
+export interface OrphanScope {
+  /** Scripts dir whose launcher identifies candidate orphans. */
+  launcherDir: string;
+  /** Every id the source lists. */
+  listedIds: ReadonlySet<string>;
+}
+
 /** Plan, then apply unless dry-run. */
 export function runSync(
   db: DatabaseSync,
   desired: DesiredJob[],
   options: SyncOptions,
   result: SyncResult,
-  launcherDir?: string,
+  orphans?: OrphanScope,
 ): SyncResult {
-  const plan = planSync(db, desired, options, result, launcherDir);
+  const plan = planSync(db, desired, options, result, orphans);
   if (!options.dryRun) applyPlan(db, plan);
   return result;
 }

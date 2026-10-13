@@ -149,8 +149,11 @@ export interface LauncherJobDefinition {
   type: 'script' | 'session';
   /** Description, or `null`. */
   description: string | null;
-  /** Timeout in milliseconds (default {@link DEFAULT_LAUNCHER_TIMEOUT_MS}). */
-  timeout_ms: number;
+  /**
+   * Timeout in milliseconds; `null` (explicit manifest `null`) means none.
+   * Defaults to {@link DEFAULT_LAUNCHER_TIMEOUT_MS} when the key is absent.
+   */
+  timeout_ms: number | null;
   /** Overlap policy (default `skip`). */
   overlap_policy: 'skip' | 'allow';
   /** Enabled state applied when the job is first added (default `true`). */
@@ -168,6 +171,17 @@ export interface LauncherJobDefinition {
    * fields hold defaults for a newly added job (DD#75).
    */
   specified: JobField[];
+}
+
+/**
+ * Timeout for a launcher job: the manifest's `timeout_seconds` in ms; an
+ * explicit `null` means no timeout; an absent key gets
+ * {@link DEFAULT_LAUNCHER_TIMEOUT_MS} (DD#71).
+ */
+function launcherTimeoutMs(manifest: ScriptsManifest): number | null {
+  if (!('timeout_seconds' in manifest)) return DEFAULT_LAUNCHER_TIMEOUT_MS;
+  const seconds = manifest.timeout_seconds;
+  return seconds == null ? null : seconds * 1000;
 }
 
 /** Platform whose path rules apply. */
@@ -237,10 +251,7 @@ export function manifestEntryToJob(
     args: ['run', entry.id, ...(manifest.args ?? [])],
     type: manifest.type ?? 'script',
     description: manifest.description ?? null,
-    timeout_ms:
-      manifest.timeout_seconds != null
-        ? manifest.timeout_seconds * 1000
-        : DEFAULT_LAUNCHER_TIMEOUT_MS,
+    timeout_ms: launcherTimeoutMs(manifest),
     overlap_policy: manifest.overlap_policy ?? 'skip',
     enabled: manifest.enabled ?? true,
     env: manifest.env ?? null,

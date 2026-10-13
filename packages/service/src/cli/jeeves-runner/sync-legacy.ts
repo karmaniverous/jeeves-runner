@@ -140,7 +140,7 @@ export function syncJobs(
   try {
     files = readdirSync(resolvedDir).filter((f) => f.endsWith('.json'));
   } catch {
-    result.errors.push(`Cannot read jobs directory: ${resolvedDir}`);
+    recordSkip(result, `Cannot read jobs directory: ${resolvedDir}`);
     return result;
   }
 

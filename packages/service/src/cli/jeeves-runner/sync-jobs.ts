@@ -175,5 +175,10 @@ export function syncJobsFromScriptsDir(
     );
   }
 
-  return runSync(db, desired, options, result, scriptsDir);
+  return runSync(db, desired, options, result, {
+    launcherDir: scriptsDir,
+    // Every manifested entry, valid or not: a runnable that lost its
+    // manifest is an orphan; one with an invalid schedule is not.
+    listedIds: new Set(entries.filter((e) => e.manifest).map((e) => e.id)),
+  });
 }

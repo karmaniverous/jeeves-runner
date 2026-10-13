@@ -116,6 +116,19 @@ describe('scheduler maxConcurrency (#113)', () => {
     );
   });
 
+  it('logs, rather than leaks, a failing skip alert', async () => {
+    insertJob(testDb, 'busy', false);
+    insertJob(testDb, 'late', true, 'C-LATE');
+    mocks.notifyFailureMock.mockRejectedValueOnce(new Error('slack down'));
+
+    await fireLateWhileBusy(null);
+
+    expect(mocks.logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ jobName: 'Job late' }),
+      'Failure notification failed',
+    );
+  });
+
   it('records but does not alert when no channel is configured', async () => {
     insertJob(testDb, 'busy', false);
     insertJob(testDb, 'late', true);

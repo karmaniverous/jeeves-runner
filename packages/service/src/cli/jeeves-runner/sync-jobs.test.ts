@@ -220,6 +220,8 @@ describe('syncJobs', () => {
     expect(result.errors).toEqual([
       expect.stringMatching(/^Cannot read jobs directory: /),
     ]);
+    // Counted as a skip, so the report section and summary agree.
+    expect(result.skipped).toBe(1);
   });
 
   it('adds nothing when the directory has no JSON files', () => {

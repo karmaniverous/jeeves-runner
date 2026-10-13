@@ -96,6 +96,20 @@ describe('manifestEntryToJob', () => {
     });
   });
 
+  it('keeps an explicit null timeout as no timeout, not the default', () => {
+    const job = manifestEntryToJob(
+      {
+        id: 't',
+        manifest: { name: 'T', schedule: '0 * * * *', timeout_seconds: null },
+      },
+      '/srv/s',
+      'posix',
+    );
+
+    expect(job?.timeout_ms).toBeNull();
+    expect(job?.specified).toContain('timeout_ms');
+  });
+
   it('marks an explicit null as specified (it clears the field)', () => {
     const job = manifestEntryToJob(
       {
