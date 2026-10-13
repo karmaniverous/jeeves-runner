@@ -2,13 +2,57 @@
 
 All notable changes to this project will be documented in this file.
 
-## [unreleased]
+## [0.10.0] - 2026-10-13
+
+### 💼 Other
+
+- [116] fix: pass the release tag to git-cliff so releases are not filed under [unreleased]
+
+Refs #115
+- [116] docs: sync-jobs from jeeves-scripts, scriptsDir/jobsDir, maxConcurrency skips, launcher schedule-revert warnings
+
+Refs #116, #113
+- [116] feat: 10s default timeout for launcher jobs; review fixes
+
+- core: DEFAULT_LAUNCHER_TIMEOUT_MS (10s) for manifests without
+  timeout_seconds, applied on insert only (DD#71)
+- docs: stop recommending a tsx runners entry; generic runners example;
+  document the 10s default
+- tests: exact --dry-run report output; list --json timeout is fatal;
+  default timeout on insert only
+
+Refs #116
+- [116] feat: defaultOnFailure/defaultOnSuccess as per-job fallbacks; SOLID/DRY pass
+
+- scheduler: one resolveChannels helper; job result alerts and #113 skip
+  alerts fall back to notifications.defaultOnFailure/defaultOnSuccess (DD#77)
+- core: mapping reports the fields a manifest specifies (JobField,
+  OPTIONAL_JOB_KEYS, specifiedJobFields) so every consumer gets
+  omitted-means-unchanged
+- service: one toDesiredJob row builder for both sync sources; recordSkip and
+  errorMessage helpers; runSyncCommand returns an exit code (testable)
+- tests: in-process sync-command suite incl. real-launcher end to end;
+  deterministic #113 tests; channel fallback; legacy validation and I/O
+  errors; transaction rollback; report labels; CLI flag wiring end to end
+  (replaces --help string test)
+- docs: fallback semantics in README, configuration guide and skill
+
+Refs #116
+- [116] chore(release): name GitHub releases <package>@<version>
+
+Refs #116
+- Updated core
+## [0.9.0] - 2026-09-29
 
 ### 💼 Other
 
 - [104] chore: remove stan support
 - [104] updated jeeves
 - Updated core
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner-openclaw v0.9.0
 ## [0.9.0-3] - 2026-09-28
 
 ### 💼 Other
