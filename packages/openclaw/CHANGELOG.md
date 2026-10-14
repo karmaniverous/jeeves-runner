@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.11.0] - 2026-10-14
+
+### 🐛 Bug Fixes
+
+- *(release)* GitHub release notes and changelog use the new version tag
+
+### 💼 Other
+
+- [JEEVES-0] chore(deps): jeeves 0.7.0 and dependency updates
+
+- @karmaniverous/jeeves 0.6.0 -> 0.7.0 (exact) in core, service, openclaw
+- all other dependencies to latest within peer constraints; typescript
+  held at ^6.0.3 (typescript-eslint 8.71.2 peers typescript <6.1.0);
+  happy-dom 20 -> 21
+- plugin tests: fetchJson now passes its default timeout signal (jeeves#119)
+- [JEEVES-0] fix: no default launcher timeout, trigger status codes, release notes
+
+- core: a manifest without timeout_seconds means no timeout; remove
+  DEFAULT_LAUNCHER_TIMEOUT_MS (#119)
+- service: typed scheduler errors; POST /jobs/:id/run returns 404/409/500;
+  CLI trigger exits 1 on a non-OK response (#118)
+- openclaw: runner_trigger uses a 30-minute client timeout (jeeves 0.7.0
+  fetchJson defaults to 2 minutes; the route waits for the job)
+- release-it: releaseNotes use git-cliff --unreleased
+  (karmaniverous/npm-package-template-ts#30)
+
+Closes #118
+Closes #119
+- [JEEVES-0] fix: address PR #121 review
+
+- CLI trigger reads the body as text so a non-JSON error still reports
+  the HTTP status (adds 502 test)
+- docs: no-timeout applies to script jobs; session jobs keep the
+  5-minute session default
+- Updated core
 ## [0.10.0] - 2026-10-13
 
 ### 💼 Other
@@ -42,6 +77,10 @@ Refs #116
 
 Refs #116
 - Updated core
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner-openclaw v0.10.0
 ## [0.9.0] - 2026-09-29
 
 ### 💼 Other
