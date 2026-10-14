@@ -583,7 +583,7 @@ jeeves-runner sync-jobs --scripts-dir J:/jeeves-scripts --dry-run   # review
 jeeves-runner sync-jobs --scripts-dir J:/jeeves-scripts             # apply
 ```
 
-Or set `scriptsDir` in the runner config and run `sync-jobs` with no source flag. `sync-jobs` runs `jeeves-scripts list --json` and registers each runnable with a manifest (`script` = the launcher, `args` = `["run", <id>, ...]`). It never changes `enabled` on existing jobs unless `--reset-enabled` (drift is reported), always applies the manifest schedule, prints each job's `prerequisite` when adding it, and disables jobs no longer listed only with `--prune`. Use `--dry-run` to check for drift. The launcher cold-starts in about 7 s, so leave timeouts room for it. A manifest without `timeout_seconds` gets a 10 s default timeout when the job is added; give long-running jobs an explicit `timeout_seconds`.
+Or set `scriptsDir` in the runner config and run `sync-jobs` with no source flag. `sync-jobs` runs `jeeves-scripts list --json` and registers each runnable with a manifest (`script` = the launcher, `args` = `["run", <id>, ...]`). It never changes `enabled` on existing jobs unless `--reset-enabled` (drift is reported), always applies the manifest schedule, prints each job's `prerequisite` when adding it, and disables jobs no longer listed only with `--prune`. Use `--dry-run` to check for drift. The launcher cold-starts in about 7 s, so leave timeouts room for it. A script job whose manifest has no `timeout_seconds` gets no timeout, as in jeeves-scripts itself (a `session` job falls back to the 5-minute session default); set `timeout_seconds` to bound a job.
 
 The legacy `jobsDir` / `--jobs-dir` JSON source still works but is deprecated. The `init-scripts` command has been removed.
 

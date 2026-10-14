@@ -19,6 +19,14 @@ import {
   registerApiTool,
 } from './toolHelpers.js';
 
+/**
+ * Client timeout for `runner_trigger`. `POST /jobs/:id/run` answers only
+ * when the job finishes, so the 2-minute fetch default would abort long
+ * jobs client-side while they keep running. 30 minutes covers the
+ * longest registered jobs; the job itself keeps its own timeout.
+ */
+export const TRIGGER_TIMEOUT_MS = 30 * 60_000;
+
 /** Register the 16 custom runner_* tools (excludes runner_status). */
 export function registerRunnerCustomTools(
   api: PluginApi,
@@ -35,10 +43,13 @@ export function registerRunnerCustomTools(
       () => ['/jobs'],
     ),
 
-    catalogTool('triggerJob', 'runner_trigger', JOB_ID_PARAM, (params) => [
-      jobPath(params, '/run'),
-      {},
-    ]),
+    {
+      ...catalogTool('triggerJob', 'runner_trigger', JOB_ID_PARAM, (params) => [
+        jobPath(params, '/run'),
+        {},
+      ]),
+      timeoutMs: TRIGGER_TIMEOUT_MS,
+    },
 
     catalogTool(
       'jobRuns',

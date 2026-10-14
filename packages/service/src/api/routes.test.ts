@@ -5,6 +5,7 @@
 import type { FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { JobNotFoundError, MaxConcurrencyError } from '../scheduler/errors.js';
 import type { TestDb } from '../test-utils/db.js';
 import type { createMockScheduler } from '../test-utils/routes.js';
 import { createRouteTestHarness } from '../test-utils/routes.js';
@@ -134,17 +135,20 @@ describe('API routes', () => {
     expect(scheduler.triggerJobMock).toHaveBeenCalledWith('test-job');
   });
 
-  it('POST /jobs/:id/run should return 404 for missing job', async () => {
-    scheduler.triggerJob = vi.fn(() =>
-      Promise.reject(new Error('Job not found: nonexistent')),
-    );
+  it.each([
+    ['404 for a missing job', new JobNotFoundError('nonexistent'), 404],
+    ['409 when refused at maxConcurrency', new MaxConcurrencyError(), 409],
+    ['500 for any other failure', new Error('gateway unavailable'), 500],
+  ])('POST /jobs/:id/run returns %s (#118)', async (_label, error, status) => {
+    scheduler.triggerJob = vi.fn(() => Promise.reject(error));
 
     const response = await app.inject({
       method: 'POST',
       url: '/jobs/nonexistent/run',
     });
 
-    expect(response.statusCode).toBe(404);
+    expect(response.statusCode).toBe(status);
+    expect(JSON.parse(response.body)).toEqual({ error: error.message });
   });
 
   it('GET /config should return full config', async () => {

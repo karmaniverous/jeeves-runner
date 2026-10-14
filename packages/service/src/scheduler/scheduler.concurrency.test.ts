@@ -11,6 +11,7 @@ import {
   createTestScheduler,
   DEFAULT_EXECUTION_RESULT,
 } from '../test-utils/scheduler.js';
+import { MaxConcurrencyError } from './errors.js';
 import type { ExecutionResult } from './executor.js';
 
 /** Insert a job; `busy` is disabled so only a manual trigger runs it. */
@@ -78,6 +79,19 @@ describe('scheduler maxConcurrency (#113)', () => {
       )
       .all() as Array<{ job_id: string; trigger: string; error: string }>;
   }
+
+  it('refuses a manual trigger at the limit with MaxConcurrencyError, unrecorded (#118)', async () => {
+    insertJob(testDb, 'busy', false);
+    insertJob(testDb, 'second', false);
+
+    const scheduler = await fireLateWhileBusy(null);
+
+    await expect(scheduler.triggerJob('second')).rejects.toBeInstanceOf(
+      MaxConcurrencyError,
+    );
+    expect(skippedRuns()).toEqual([]);
+    expect(mocks.notifyFailureMock).not.toHaveBeenCalled();
+  });
 
   it('records the skipped scheduled run and alerts the job channel', async () => {
     insertJob(testDb, 'busy', false);

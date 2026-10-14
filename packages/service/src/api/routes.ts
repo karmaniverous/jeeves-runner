@@ -18,6 +18,7 @@ import {
 import { getEndpoint } from '@karmaniverous/jeeves-runner-core';
 import type { FastifyInstance } from 'fastify';
 
+import { JobNotFoundError, MaxConcurrencyError } from '../scheduler/errors.js';
 import type { Scheduler } from '../scheduler/scheduler.js';
 import type { RunnerConfig } from '../schemas/config.js';
 import { registerJobRoutes } from './job-routes.js';
@@ -146,7 +147,15 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
         const result = await scheduler.triggerJob(request.params.id);
         return { result };
       } catch (err) {
-        reply.code(404);
+        // 404 unknown job; 409 refused at maxConcurrency (not recorded as
+        // a run: the caller gets the refusal directly); 500 otherwise (#118).
+        reply.code(
+          err instanceof JobNotFoundError
+            ? 404
+            : err instanceof MaxConcurrencyError
+              ? 409
+              : 500,
+        );
         return { error: err instanceof Error ? err.message : 'Unknown error' };
       }
     },

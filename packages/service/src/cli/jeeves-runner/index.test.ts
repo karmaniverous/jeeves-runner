@@ -117,15 +117,18 @@ const execAsync = promisify(exec);
 describe('trigger command', () => {
   vi.setConfig({ testTimeout: 15000 });
 
-  it('should POST to /jobs/:id/run on the resolved service URL', async () => {
-    // Start a mock HTTP server that records incoming requests.
+  /** Run `trigger` against a mock runner answering with `status` and `body` (sent verbatim if a string). */
+  async function triggerAgainst(
+    status: number,
+    body: unknown,
+  ): Promise<{ method: string; path: string; stdout: string }> {
     let receivedPath = '';
     let receivedMethod = '';
     const server: Server = createServer((req, res) => {
       receivedMethod = req.method ?? '';
       receivedPath = req.url ?? '';
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ status: 'triggered' }));
+      res.writeHead(status, { 'Content-Type': 'application/json' });
+      res.end(typeof body === 'string' ? body : JSON.stringify(body));
     });
 
     await new Promise<void>((resolve) => {
@@ -152,10 +155,7 @@ describe('trigger command', () => {
         `${CLI} trigger --id my-job --config-root "${configRoot}"`,
         { encoding: 'utf-8', timeout: 10000 },
       );
-
-      expect(receivedMethod).toBe('POST');
-      expect(receivedPath).toBe('/jobs/my-job/run');
-      expect(stdout).toContain('triggered');
+      return { method: receivedMethod, path: receivedPath, stdout };
     } finally {
       await new Promise<void>((resolve) => {
         server.close(() => {
@@ -163,6 +163,36 @@ describe('trigger command', () => {
         });
       });
     }
+  }
+
+  it('should POST to /jobs/:id/run on the resolved service URL', async () => {
+    const { method, path, stdout } = await triggerAgainst(200, {
+      status: 'triggered',
+    });
+
+    expect(method).toBe('POST');
+    expect(path).toBe('/jobs/my-job/run');
+    expect(stdout).toContain('triggered');
+  }, 15000);
+
+  it('exits non-zero and reports the status when the runner refuses (#118)', async () => {
+    await expect(
+      triggerAgainst(409, { error: 'Max concurrency reached' }),
+    ).rejects.toMatchObject({
+      code: 1,
+      stderr: expect.stringContaining(
+        'Trigger failed (HTTP 409): {"error":"Max concurrency reached"}',
+      ) as unknown,
+    });
+  }, 15000);
+
+  it('reports the status for a non-JSON error body, not "not reachable" (#118)', async () => {
+    await expect(triggerAgainst(502, 'Bad Gateway')).rejects.toMatchObject({
+      code: 1,
+      stderr: expect.stringContaining(
+        'Trigger failed (HTTP 502): Bad Gateway',
+      ) as unknown,
+    });
   }, 15000);
 });
 

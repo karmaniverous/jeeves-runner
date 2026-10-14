@@ -144,7 +144,16 @@ const descriptor = createRunnerDescriptor({
               const resp = await fetch(`${url}/jobs/${options.id}/run`, {
                 method: 'POST',
               });
-              const result = (await resp.json()) as Record<string, unknown>;
+              const text = await resp.text();
+              if (!resp.ok) {
+                // 404 unknown job, 409 at maxConcurrency, 500 other (#118).
+                // The body may be empty or non-JSON; report it verbatim.
+                console.error(
+                  `Trigger failed (HTTP ${String(resp.status)}): ${text}`,
+                );
+                process.exit(1);
+              }
+              const result = JSON.parse(text) as Record<string, unknown>;
               console.log(JSON.stringify(result, null, 2));
             } catch {
               console.error(`Runner not reachable at ${url}. Is it running?`);

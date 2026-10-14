@@ -2,10 +2,17 @@
  * Tests for custom runner tool registrations.
  */
 
-import { type PluginApi, type ToolResult } from '@karmaniverous/jeeves';
+import {
+  DEFAULT_FETCH_TIMEOUT_MS,
+  type PluginApi,
+  type ToolResult,
+} from '@karmaniverous/jeeves';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { registerRunnerCustomTools } from './runnerTools.js';
+import {
+  registerRunnerCustomTools,
+  TRIGGER_TIMEOUT_MS,
+} from './runnerTools.js';
 
 /** Create a mock PluginApi that captures registered tools. */
 function createMockApi(): PluginApi & {
@@ -83,6 +90,28 @@ describe('registerRunnerCustomTools', () => {
     );
   });
 
+  it.each([
+    [
+      'runner_trigger waits for long jobs',
+      'runner_trigger',
+      TRIGGER_TIMEOUT_MS,
+    ],
+    [
+      'runner_runs keeps the fetch default',
+      'runner_runs',
+      DEFAULT_FETCH_TIMEOUT_MS,
+    ],
+  ])('%s', async (_label, tool, expected) => {
+    const timeout = vi.spyOn(AbortSignal, 'timeout');
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response('{}', { status: 200 }),
+    );
+
+    await api.tools.get(tool)!('test', { jobId: 'poll-email' });
+
+    expect(timeout).toHaveBeenCalledExactlyOnceWith(expected);
+  });
+
   it('runner_runs appends limit query param', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
       new Response(JSON.stringify({ runs: [] }), { status: 200 }),
@@ -91,10 +120,12 @@ describe('registerRunnerCustomTools', () => {
     const execute = api.tools.get('runner_runs')!;
     await execute('test', { jobId: 'poll-email', limit: 5 });
 
-    expect(fetch).toHaveBeenCalledWith(
+    const [calledUrl, init] = vi.mocked(fetch).mock.calls[0];
+    expect(calledUrl).toBe(
       'http://localhost:1937/jobs/poll-email/runs?limit=5',
-      undefined,
     );
+    // jeeves 0.7.0 fetchJson adds its default timeout signal (#119).
+    expect(init?.signal).toBeInstanceOf(AbortSignal);
   });
 
   it('runner_enable calls PATCH /jobs/:id/enable', async () => {
@@ -158,10 +189,10 @@ describe('registerRunnerCustomTools', () => {
     const result = await execute('test', { namespace: 'poll-email' });
 
     expect(result.isError).toBeUndefined();
-    expect(fetch).toHaveBeenCalledWith(
-      'http://localhost:1937/state/poll-email',
-      undefined,
-    );
+    const [calledUrl, init] = vi.mocked(fetch).mock.calls[0];
+    expect(calledUrl).toBe('http://localhost:1937/state/poll-email');
+    // jeeves 0.7.0 fetchJson adds its default timeout signal (#119).
+    expect(init?.signal).toBeInstanceOf(AbortSignal);
   });
 
   it('returns connection error when service unreachable', async () => {

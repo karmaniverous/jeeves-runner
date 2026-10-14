@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  DEFAULT_LAUNCHER_TIMEOUT_MS,
   getLauncherPath,
   isLauncherScript,
   manifestEntryToJob,
@@ -84,7 +83,8 @@ describe('manifestEntryToJob', () => {
       args: ['run', 'min'],
       type: 'script',
       description: null,
-      timeout_ms: DEFAULT_LAUNCHER_TIMEOUT_MS,
+      // No timeout_seconds means no timeout (#119).
+      timeout_ms: null,
       overlap_policy: 'skip',
       enabled: true,
       env: null,
@@ -96,7 +96,7 @@ describe('manifestEntryToJob', () => {
     });
   });
 
-  it('keeps an explicit null timeout as no timeout, not the default', () => {
+  it('keeps an explicit null timeout as no timeout', () => {
     const job = manifestEntryToJob(
       {
         id: 't',
