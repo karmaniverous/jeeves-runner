@@ -91,10 +91,12 @@ describe('registerRunnerCustomTools', () => {
     const execute = api.tools.get('runner_runs')!;
     await execute('test', { jobId: 'poll-email', limit: 5 });
 
-    expect(fetch).toHaveBeenCalledWith(
+    const [calledUrl, init] = vi.mocked(fetch).mock.calls[0];
+    expect(calledUrl).toBe(
       'http://localhost:1937/jobs/poll-email/runs?limit=5',
-      undefined,
     );
+    // jeeves 0.7.0 fetchJson adds its default timeout signal (#119).
+    expect(init?.signal).toBeInstanceOf(AbortSignal);
   });
 
   it('runner_enable calls PATCH /jobs/:id/enable', async () => {
@@ -158,10 +160,10 @@ describe('registerRunnerCustomTools', () => {
     const result = await execute('test', { namespace: 'poll-email' });
 
     expect(result.isError).toBeUndefined();
-    expect(fetch).toHaveBeenCalledWith(
-      'http://localhost:1937/state/poll-email',
-      undefined,
-    );
+    const [calledUrl, init] = vi.mocked(fetch).mock.calls[0];
+    expect(calledUrl).toBe('http://localhost:1937/state/poll-email');
+    // jeeves 0.7.0 fetchJson adds its default timeout signal (#119).
+    expect(init?.signal).toBeInstanceOf(AbortSignal);
   });
 
   it('returns connection error when service unreachable', async () => {
