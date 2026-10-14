@@ -14,6 +14,7 @@ import type { RunnerConfig } from '../schemas/config.js';
 import { createSchedulerAlerts } from './alerts.js';
 import type { JobRow } from './cron-registry.js';
 import { createCronRegistry } from './cron-registry.js';
+import { JobNotFoundError, MaxConcurrencyError } from './errors.js';
 import type { ExecutionResult } from './executor.js';
 import type { executeJob } from './executor.js';
 import { createRunRepository } from './run-repository.js';
@@ -112,7 +113,7 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
     // Check concurrency limit
     if (runningJobs.size >= config.maxConcurrency) {
       logger.warn({ jobId: id }, 'Max concurrency reached, skipping job');
-      throw new Error('Max concurrency reached');
+      throw new MaxConcurrencyError();
     }
 
     runningJobs.add(id);
@@ -268,7 +269,7 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
       const job = db.prepare('SELECT * FROM jobs WHERE id = ?').get(jobId) as
         JobRow | undefined;
 
-      if (!job) throw new Error(`Job not found: ${jobId}`);
+      if (!job) throw new JobNotFoundError(jobId);
       return runJob(job, 'manual');
     },
 

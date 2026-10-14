@@ -83,7 +83,7 @@
     "github": {
       "release": true,
       "releaseName": "${name.split('/').pop()}@${version}",
-      "releaseNotes": "npx git-cliff --tag openclaw/${version} --latest --strip header"
+      "releaseNotes": "npx git-cliff --tag openclaw/${version} --unreleased --strip header"
     },
     "hooks": {
       "after:init": [

@@ -27,6 +27,11 @@ export interface ApiToolConfig {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   /** Build the request: return [endpoint, body?]. No body = GET. */
   buildRequest: (params: Record<string, unknown>) => [string, unknown?];
+  /**
+   * Request timeout in ms. Defaults to jeeves `fetchJson`'s default
+   * (`DEFAULT_FETCH_TIMEOUT_MS`, 2 minutes).
+   */
+  timeoutMs?: number;
 }
 
 /** Register a single API tool with standard try/catch + ok/connectionFail. */
@@ -62,7 +67,13 @@ export function registerApiTool(
                 }
               : undefined;
 
-          const data = await fetchJson(url, init);
+          const data = await fetchJson(
+            url,
+            init,
+            config.timeoutMs === undefined
+              ? undefined
+              : { timeoutMs: config.timeoutMs },
+          );
           return ok(data);
         } catch (error) {
           return connectionFail(error, baseUrl, PLUGIN_ID);

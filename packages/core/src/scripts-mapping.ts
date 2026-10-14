@@ -13,12 +13,6 @@ import { posix, win32 } from 'node:path';
 
 import { z } from 'zod';
 
-/**
- * Timeout applied to a launcher job whose manifest sets no
- * `timeout_seconds` (DD#71). Covers the ~7s launcher cold start.
- */
-export const DEFAULT_LAUNCHER_TIMEOUT_MS = 10_000;
-
 /** Path of the jeeves-scripts launcher, relative to the scripts dir. */
 export const SCRIPTS_LAUNCHER_PATH = 'bin/jeeves-scripts.js';
 
@@ -150,8 +144,8 @@ export interface LauncherJobDefinition {
   /** Description, or `null`. */
   description: string | null;
   /**
-   * Timeout in milliseconds; `null` (explicit manifest `null`) means none.
-   * Defaults to {@link DEFAULT_LAUNCHER_TIMEOUT_MS} when the key is absent.
+   * Timeout in milliseconds, or `null` for none. An absent or `null`
+   * manifest `timeout_seconds` means no timeout (#119).
    */
   timeout_ms: number | null;
   /** Overlap policy (default `skip`). */
@@ -174,12 +168,11 @@ export interface LauncherJobDefinition {
 }
 
 /**
- * Timeout for a launcher job: the manifest's `timeout_seconds` in ms; an
- * explicit `null` means no timeout; an absent key gets
- * {@link DEFAULT_LAUNCHER_TIMEOUT_MS} (DD#71).
+ * Timeout for a launcher job: the manifest's `timeout_seconds` in ms.
+ * An absent or `null` value means no timeout, matching jeeves-scripts-core
+ * (#119, which replaces the 10 s default of DD#71).
  */
 function launcherTimeoutMs(manifest: ScriptsManifest): number | null {
-  if (!('timeout_seconds' in manifest)) return DEFAULT_LAUNCHER_TIMEOUT_MS;
   const seconds = manifest.timeout_seconds;
   return seconds == null ? null : seconds * 1000;
 }

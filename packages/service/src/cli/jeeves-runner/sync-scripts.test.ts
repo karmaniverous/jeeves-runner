@@ -1,7 +1,4 @@
-import {
-  DEFAULT_LAUNCHER_TIMEOUT_MS,
-  getLauncherPath,
-} from '@karmaniverous/jeeves-runner-core';
+import { getLauncherPath } from '@karmaniverous/jeeves-runner-core';
 import { describe, expect, it } from 'vitest';
 
 import { entry, row, useScriptsSync } from '../../test-utils/scripts-sync.js';
@@ -153,7 +150,7 @@ describe('syncJobsFromScriptsDir', () => {
     ]);
   });
 
-  it('gives a new job without timeout_seconds the 10s default, on insert only (DD#71)', () => {
+  it('gives a new job without timeout_seconds no timeout, and keeps an operator-set timeout on update (#119)', () => {
     h.list = [entry('a')];
     h.sync();
     const timeout = () =>
@@ -162,7 +159,7 @@ describe('syncJobsFromScriptsDir', () => {
           .prepare('SELECT timeout_ms FROM jobs WHERE id = ?')
           .get('a') as { timeout_ms: number | null }
       ).timeout_ms;
-    expect(timeout()).toBe(DEFAULT_LAUNCHER_TIMEOUT_MS);
+    expect(timeout()).toBeNull();
 
     h.testDb.db
       .prepare('UPDATE jobs SET timeout_ms = 300000 WHERE id = ?')

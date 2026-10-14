@@ -145,6 +145,13 @@ const descriptor = createRunnerDescriptor({
                 method: 'POST',
               });
               const result = (await resp.json()) as Record<string, unknown>;
+              if (!resp.ok) {
+                // 404 unknown job, 409 at maxConcurrency, 500 other (#118).
+                console.error(
+                  `Trigger failed (HTTP ${String(resp.status)}): ${JSON.stringify(result)}`,
+                );
+                process.exit(1);
+              }
               console.log(JSON.stringify(result, null, 2));
             } catch {
               console.error(`Runner not reachable at ${url}. Is it running?`);

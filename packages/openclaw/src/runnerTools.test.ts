@@ -2,10 +2,17 @@
  * Tests for custom runner tool registrations.
  */
 
-import { type PluginApi, type ToolResult } from '@karmaniverous/jeeves';
+import {
+  DEFAULT_FETCH_TIMEOUT_MS,
+  type PluginApi,
+  type ToolResult,
+} from '@karmaniverous/jeeves';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { registerRunnerCustomTools } from './runnerTools.js';
+import {
+  registerRunnerCustomTools,
+  TRIGGER_TIMEOUT_MS,
+} from './runnerTools.js';
 
 /** Create a mock PluginApi that captures registered tools. */
 function createMockApi(): PluginApi & {
@@ -81,6 +88,28 @@ describe('registerRunnerCustomTools', () => {
       'http://localhost:1937/jobs/poll-email/run',
       expect.objectContaining({ method: 'POST' }),
     );
+  });
+
+  it.each([
+    [
+      'runner_trigger waits for long jobs',
+      'runner_trigger',
+      TRIGGER_TIMEOUT_MS,
+    ],
+    [
+      'runner_runs keeps the fetch default',
+      'runner_runs',
+      DEFAULT_FETCH_TIMEOUT_MS,
+    ],
+  ])('%s', async (_label, tool, expected) => {
+    const timeout = vi.spyOn(AbortSignal, 'timeout');
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response('{}', { status: 200 }),
+    );
+
+    await api.tools.get(tool)!('test', { jobId: 'poll-email' });
+
+    expect(timeout).toHaveBeenCalledExactlyOnceWith(expected);
   });
 
   it('runner_runs appends limit query param', async () => {
