@@ -96,7 +96,7 @@
     "github": {
       "release": true,
       "releaseName": "${name.split('/').pop()}@${version}",
-      "releaseNotes": "npx git-cliff --tag service/${version} --latest --strip header"
+      "releaseNotes": "npx git-cliff --tag service/${version} --unreleased --strip header"
     },
     "hooks": {
       "after:init": [
