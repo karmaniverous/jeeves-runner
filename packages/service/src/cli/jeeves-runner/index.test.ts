@@ -117,7 +117,7 @@ const execAsync = promisify(exec);
 describe('trigger command', () => {
   vi.setConfig({ testTimeout: 15000 });
 
-  /** Run `trigger` against a mock runner answering with `status` and `body`. */
+  /** Run `trigger` against a mock runner answering with `status` and `body` (sent verbatim if a string). */
   async function triggerAgainst(
     status: number,
     body: unknown,
@@ -128,7 +128,7 @@ describe('trigger command', () => {
       receivedMethod = req.method ?? '';
       receivedPath = req.url ?? '';
       res.writeHead(status, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(body));
+      res.end(typeof body === 'string' ? body : JSON.stringify(body));
     });
 
     await new Promise<void>((resolve) => {
@@ -182,6 +182,15 @@ describe('trigger command', () => {
       code: 1,
       stderr: expect.stringContaining(
         'Trigger failed (HTTP 409): {"error":"Max concurrency reached"}',
+      ) as unknown,
+    });
+  }, 15000);
+
+  it('reports the status for a non-JSON error body, not "not reachable" (#118)', async () => {
+    await expect(triggerAgainst(502, 'Bad Gateway')).rejects.toMatchObject({
+      code: 1,
+      stderr: expect.stringContaining(
+        'Trigger failed (HTTP 502): Bad Gateway',
       ) as unknown,
     });
   }, 15000);

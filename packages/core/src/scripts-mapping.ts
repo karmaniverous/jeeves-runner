@@ -145,7 +145,9 @@ export interface LauncherJobDefinition {
   description: string | null;
   /**
    * Timeout in milliseconds, or `null` for none. An absent or `null`
-   * manifest `timeout_seconds` means no timeout (#119).
+   * manifest `timeout_seconds` maps to `null` (#119): no timeout for a
+   * script job; a session job falls back to the session executor's
+   * 5-minute default.
    */
   timeout_ms: number | null;
   /** Overlap policy (default `skip`). */
