@@ -1,6 +1,7 @@
 ---
 name: jeeves-runner
-description: Operate and troubleshoot the jeeves-runner job execution engine. Use when managing scheduled jobs, checking run status, triggering manual runs, debugging script failures, updating job configuration, or working with the runner's SQLite database, HTTP API, or process scripts.
+description: >
+  jeeves-runner jobs: scheduling (cron/RRStack), run status, manual triggers, failing scripts, job config, queues and state, SQLite DB, HTTP API.
 ---
 
 # Jeeves Runner — Operational Guide
