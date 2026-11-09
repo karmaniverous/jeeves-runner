@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.0-0] - 2026-11-09
+
+### 💼 Other
+
+- Updated core
+
+### 📚 Documentation
+
+- *(skill)* Trim jeeves-runner skill description to 143 chars
+- CLI config resolution, path header and read-only dry run (#122, #123)
+- Warn that a relative dbPath resolves against the working directory (#122)
+
+### ⚙️ Miscellaneous Tasks
+
+- Require Node >=24.22.2 in every package, CI on Node 24 only (#132)
 ## [0.11.0] - 2026-10-14
 
 ### 🐛 Bug Fixes
@@ -37,6 +52,10 @@ Closes #119
 - docs: no-timeout applies to script jobs; session jobs keep the
   5-minute session default
 - Updated core
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner-openclaw v0.11.0
 ## [0.10.0] - 2026-10-13
 
 ### 💼 Other
