@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0-0] - 2026-11-09
+
+### ⚙️ Miscellaneous Tasks
+
+- Require Node >=24.22.2 in every package, CI on Node 24 only (#132)
 ## [0.5.0] - 2026-10-14
 
 ### 🐛 Bug Fixes
@@ -36,6 +41,10 @@ Closes #119
   the HTTP status (adds 502 test)
 - docs: no-timeout applies to script jobs; session jobs keep the
   5-minute session default
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner-core v0.5.0
 ## [0.4.0] - 2026-10-13
 
 ### 💼 Other
