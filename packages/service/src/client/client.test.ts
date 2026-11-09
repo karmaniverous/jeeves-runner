@@ -2,8 +2,8 @@
  * Tests for the runner client facade. Exercises client-specific behavior only:
  * connection management and delegation smoke tests.
  *
- * Exhaustive state/queue operation tests live in state-ops.test.ts and
- * queue-ops.test.ts (via routes.test.ts). This file intentionally avoids
+ * Exhaustive state/queue operation tests live in state-ops.test.ts,
+ * queue-ops.test.ts and queue-ops.concurrency.test.ts. This file intentionally avoids
  * re-testing those modules through the thin pass-through layer.
  */
 

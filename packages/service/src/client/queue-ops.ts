@@ -139,12 +139,17 @@ export function createQueueOps(db: DatabaseSync): QueueOps {
           updateStmt.run(row.id);
         }
 
-        db.exec('COMMIT');
-
-        return rows.map((row) => ({
+        // Parse before COMMIT: a corrupt payload rolls the whole claim back
+        // instead of leaving items claimed and ROLLBACK failing outside a
+        // transaction (which would also mask the parse error).
+        const items = rows.map((row) => ({
           id: row.id,
           payload: JSON.parse(row.payload) as unknown,
         }));
+
+        db.exec('COMMIT');
+
+        return items;
       } catch (err) {
         db.exec('ROLLBACK');
         throw err;
