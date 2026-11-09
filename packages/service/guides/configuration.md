@@ -18,7 +18,9 @@ Config files support a `$schema` pointer for IDE autocompletion:
 
 ## Config File Location
 
-The config file is located at `jeeves-runner/config.json` inside the platform config directory. Use `jeeves-runner init` to generate a starter config at the default location.
+The config file is located at `jeeves-runner/config.json` inside the platform config directory (`{configRoot}`). Use `jeeves-runner init` to generate a starter config at the default location.
+
+The CLI commands that open the database (`add-job`, `list-jobs`, `sync-jobs`) read `-c <path>` when given, otherwise `{configRoot}/jeeves-runner/config.json`, with `configRoot` from `--config-root`, `JEEVES_CONFIG_ROOT`, `core.configRoot` in `jeeves.config.json`, or `./config`. With no file there they exit 1 naming the path; they never fall back to the defaults below. See the [CLI Reference](./cli-reference.md#finding-the-config-and-database).
 
 Legacy config files named `jeeves-runner.config.json` are automatically migrated to the new path on startup.
 
@@ -58,7 +60,7 @@ Legacy config files named `jeeves-runner.config.json` are automatically migrated
 | --- | --- | --- | --- |
 | `port` | `number` | `1937` | HTTP server port for the runner API |
 | `host` | `string` | `"0.0.0.0"` | Bind address for the HTTP server |
-| `dbPath` | `string` | `"./data/runner.sqlite"` | Path to the SQLite database file |
+| `dbPath` | `string` | `"./data/runner.sqlite"` | Path to the SQLite database file. A relative path resolves against the process working directory (not the config file's directory), so prefer an absolute path; the CLI prints the resolved path as `Database:` |
 | `maxConcurrency` | `number` | `4` | Maximum number of concurrent job executions. A scheduled run at the limit is recorded as `skipped` and alerted, not retried |
 | `runRetentionDays` | `number` | `30` | Number of days to retain completed run records |
 | `stateCleanupIntervalMs` | `number` | `3600000` | Interval (ms) for expired state cleanup |

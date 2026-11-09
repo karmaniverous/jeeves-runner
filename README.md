@@ -132,7 +132,9 @@ Built with `createServiceCli(descriptor)` from core. Standard commands plus cust
 | `add-job` | Add a new job to the database |
 | `list-jobs` | List all configured jobs |
 | `trigger` | Manually trigger a job run (queries the HTTP API) |
-| `sync-jobs` | Sync jobs from jeeves-scripts (`--scripts-dir`) or legacy JSON files into the database |
+| `sync-jobs` | Sync jobs from jeeves-scripts (`--scripts-dir`) or legacy JSON files into the database (`--dry-run` is read-only) |
+
+`add-job`, `list-jobs` and `sync-jobs` open the database. They use `-c <path>` when given, otherwise `{configRoot}/jeeves-runner/config.json` (`configRoot` from `--config-root`, `JEEVES_CONFIG_ROOT`, `jeeves.config.json`, or `./config`), and exit 1 naming that path when there is no config there. Each prints the absolute `Config:` and `Database:` paths to stderr first. See the [CLI Reference](packages/service/guides/cli-reference.md).
 
 ## HTTP API
 

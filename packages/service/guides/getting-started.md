@@ -48,6 +48,8 @@ jeeves-runner add-job \
 
 This registers a job that runs every 5 minutes. The script must be an absolute path to an executable script.
 
+Without `-c`, the CLI looks for `{configRoot}/jeeves-runner/config.json` (where `init` writes it; `configRoot` from `--config-root`, `JEEVES_CONFIG_ROOT`, `jeeves.config.json`, or `./config`) and exits 1 naming that path if it is missing. It prints the absolute `Config:` and `Database:` paths to stderr before touching the database.
+
 ### Job Types
 
 | Type      | Description                                                  |
