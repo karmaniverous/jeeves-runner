@@ -8,7 +8,7 @@ This guide walks you through installing and configuring `jeeves-runner` from scr
 
 ## Prerequisites
 
-- **Node.js 22.13+** (the first release where `node:sqlite` works without a flag)
+- **Node.js 24.22.2+** (the floor for every Jeeves component; the built-in `node:sqlite` in Node 24.16.0–24.18.0 left WAL files un-checkpointed)
 - SQLite support is built-in via Node.js `node:sqlite`
 
 ## Installation

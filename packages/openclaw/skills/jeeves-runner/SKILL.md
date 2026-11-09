@@ -53,13 +53,13 @@ When the plugin loads and the runner service is NOT yet set up, drive the entire
 
 ### Step 1: Check Node.js
 
-Verify Node.js is installed and version ≥ 22.13 (required for `node:sqlite`):
+Verify Node.js is installed and version ≥ 24.22.2 (required for `node:sqlite`):
 
 ```bash
 node --version
 ```
 
-If missing or too old, guide the user to install Node.js 22.13+ from https://nodejs.org or via their package manager. Node.js 22.13 is the minimum because jeeves-runner uses `node:sqlite` (`DatabaseSync`), which older releases only provide behind the `--experimental-sqlite` flag.
+If missing or too old, guide the user to install Node.js 24.22.2+ from https://nodejs.org or via their package manager. Node.js 24.22.2 is the minimum for every Jeeves component: jeeves-runner uses the built-in `node:sqlite` (`DatabaseSync`), and Node 24.16.0–24.18.0 shipped a SQLite that left WAL files un-checkpointed.
 
 ### Step 2: Install jeeves-runner
 

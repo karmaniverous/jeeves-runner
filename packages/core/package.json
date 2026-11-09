@@ -30,7 +30,7 @@
   },
   "homepage": "https://github.com/karmaniverous/jeeves-runner#readme",
   "engines": {
-    "node": ">=22.13"
+    "node": ">=24.22.2"
   },
   "dependencies": {
     "@karmaniverous/jeeves": "0.7.0",
