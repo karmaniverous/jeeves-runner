@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.14.0-0] - 2026-11-09
+
+### 🐛 Bug Fixes
+
+- Open dequeue and applyPlan transactions with BEGIN IMMEDIATE (#126)
+- *(gateway)* Parse /tools/invoke results by their real shape with Zod (#125)
+- *(cli)* Find the standard runner config or refuse, print config and DB paths; read-only sync-jobs --dry-run (#122, #123)
+- *(queue)* Parse dequeued payloads before COMMIT; same-thread queue-ops tests
+
+### 💼 Other
+
+- Updated core
+
+### 🚜 Refactor
+
+- *(db)* Share the busy_timeout pragma; dry-run tests on a path with space, # and % (#123)
+
+### 📚 Documentation
+
+- CLI config resolution, path header and read-only dry run (#122, #123)
+- Warn that a relative dbPath resolves against the working directory (#122)
+
+### 🧪 Testing
+
+- *(cli)* Cover default stderr/stdout routing and the sync-jobs action exit (#122)
+
+### ⚙️ Miscellaneous Tasks
+
+- Require Node >=24.22.2 in every package, CI on Node 24 only (#132)
 ## [0.13.0] - 2026-10-14
 
 ### 🐛 Bug Fixes
@@ -37,6 +66,10 @@ Closes #119
 - docs: no-timeout applies to script jobs; session jobs keep the
   5-minute session default
 - Updated core
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner v0.13.0
 ## [0.12.0] - 2026-10-13
 
 ### 💼 Other
