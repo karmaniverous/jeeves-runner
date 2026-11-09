@@ -241,6 +241,37 @@ describe('resolveForCommand', () => {
     expect(existsSync(join(root, 'x'))).toBe(false);
   });
 
+  it('lets a malformed config fail loudly instead of reporting it missing', () => {
+    const config = join(root, 'broken.json');
+    writeFileSync(config, '{ not json');
+    const out = { error: vi.fn(), info: vi.fn() };
+
+    expect(() => resolveForCommand({ config }, out)).toThrow(SyntaxError);
+    expect(out.error).not.toHaveBeenCalled();
+  });
+
+  it('writes both diagnostics to stderr by default', () => {
+    const error = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    try {
+      expect(
+        resolveForCommand({ config: join(root, 'missing.json') }),
+      ).toBeUndefined();
+      const config = join(root, 'c.json');
+      writeFileSync(config, JSON.stringify({ dbPath: join(root, 'r.db') }));
+      resolveForCommand({ config });
+
+      expect(error.mock.calls.map(([m]) => String(m).split(':')[0])).toEqual([
+        'Config file not found',
+        'Config',
+        'Database',
+      ]);
+    } finally {
+      error.mockRestore();
+    }
+  });
+
   it('reports a missing config as an error and returns undefined', () => {
     const out = { error: vi.fn(), info: vi.fn() };
 
