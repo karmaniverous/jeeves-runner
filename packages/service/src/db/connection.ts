@@ -9,6 +9,9 @@ import { dirname } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { pathToFileURL } from 'node:url';
 
+/** How long a connection waits for a lock before SQLITE_BUSY. */
+const BUSY_TIMEOUT_PRAGMA = 'PRAGMA busy_timeout = 5000;';
+
 /**
  * Create and configure a SQLite database connection.
  * Ensures parent directories exist and enables WAL mode for better concurrency.
@@ -27,7 +30,7 @@ export function createConnection(dbPath: string): DatabaseSync {
 
   // Wait up to 5s for write lock instead of failing immediately (SQLITE_BUSY).
   // Multiple runner child processes share this DB file concurrently.
-  db.exec('PRAGMA busy_timeout = 5000;');
+  db.exec(BUSY_TIMEOUT_PRAGMA);
 
   return db;
 }
@@ -53,7 +56,7 @@ export function openReadOnlyConnection(dbPath: string): DatabaseSync {
 
   const db = new DatabaseSync(target, { readOnly: true });
   // Connection setting only; writes nothing to the file.
-  db.exec('PRAGMA busy_timeout = 5000;');
+  db.exec(BUSY_TIMEOUT_PRAGMA);
   return db;
 }
 

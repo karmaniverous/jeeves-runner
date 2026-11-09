@@ -68,7 +68,8 @@ describe('sync-jobs --dry-run', () => {
   });
 
   beforeEach(() => {
-    root = mkdtempSync(join(tmpdir(), 'dry-run-'));
+    // Space, '#' and '%' check the file: URI used for the immutable open.
+    root = mkdtempSync(join(tmpdir(), 'dry run #%20 '));
     out = {
       log: vi.fn<SyncOutput['log']>(),
       warn: vi.fn<SyncOutput['warn']>(),
