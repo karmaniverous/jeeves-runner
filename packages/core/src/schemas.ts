@@ -122,7 +122,7 @@ export type CreateJob = z.infer<typeof createJobSchema>;
 /**
  * Zod schema for job update request body (all fields optional, no id).
  *
- * Built from {@link jobFieldsBase} — a defaults-free shape — so
+ * Built from `jobFieldsBase` (module-private) — a defaults-free shape — so
  * `updateJobSchema.safeParse({})` parses to `{}`. Every field is
  * genuinely optional with no implicit default: omitted means "leave
  * unchanged" for both the HTTP `PATCH /jobs/:id` route and `sync-jobs`

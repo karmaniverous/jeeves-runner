@@ -99,6 +99,9 @@
       "releaseNotes": "npx git-cliff --tag service/${version} --unreleased --strip header"
     },
     "hooks": {
+      "before:init": [
+        "node ../../scripts/check-core-range.mjs"
+      ],
       "after:init": [
         "npm run lint",
         "npm run typecheck",
