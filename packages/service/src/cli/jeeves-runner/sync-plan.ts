@@ -183,7 +183,8 @@ function applyPlan(db: DatabaseSync, plan: SyncPlan): void {
     "UPDATE jobs SET enabled = 0, updated_at = datetime('now') WHERE id = ?",
   );
 
-  db.exec('BEGIN');
+  // IMMEDIATE: every runner-owned transaction takes the write lock first.
+  db.exec('BEGIN IMMEDIATE');
   try {
     for (const job of plan.inserts) {
       insert.run(

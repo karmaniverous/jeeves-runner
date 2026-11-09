@@ -110,8 +110,12 @@ export function createQueueOps(db: DatabaseSync): QueueOps {
     },
 
     dequeue(queue: string, count = 1): QueueItem[] {
-      // Wrap SELECT + UPDATE in a transaction for atomicity
-      db.exec('BEGIN');
+      // Take the write lock before the SELECT (BEGIN IMMEDIATE). A deferred
+      // BEGIN would read under a snapshot and then fail at once with
+      // SQLITE_BUSY_SNAPSHOT (517) if another connection commits before the
+      // UPDATE; IMMEDIATE turns that race into a busy_timeout wait. BEGIN
+      // stays outside the try so a failed BEGIN is not masked by ROLLBACK.
+      db.exec('BEGIN IMMEDIATE');
 
       try {
         // First, SELECT the items to claim (with correct ordering)
