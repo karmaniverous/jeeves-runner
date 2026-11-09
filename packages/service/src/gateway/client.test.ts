@@ -1,276 +1,279 @@
 /**
- * Tests for Gateway client with HTTP mocking.
+ * Tests for the Gateway client against responses captured from a live
+ * gateway (see `fixtures/README.md`). The mock gateway replays a fixture per
+ * tool; tests that need a variant derive it from a fixture so the
+ * surrounding structure stays real.
  */
 
-import { createServer as createHttpServer } from 'node:http';
-import type { AddressInfo } from 'node:net';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-
-import { createGatewayClient } from './client.js';
+import type { FixtureSessionRow, MockGateway } from '../test-utils/gateway.js';
+import {
+  gatewayFixture,
+  gatewaySessionRows,
+  startMockGateway,
+} from '../test-utils/gateway.js';
+import { createGatewayClient, type GatewayClient } from './client.js';
 
 describe('Gateway client', () => {
-  let server: ReturnType<typeof createHttpServer>;
-  let port: number;
-  let requestLog: Array<{
-    url: string;
-    headers: Record<string, unknown>;
-    body: string;
-  }> = [];
+  let gateway: MockGateway;
+  let client: GatewayClient;
 
-  beforeAll(
-    () =>
-      new Promise<void>((resolve) => {
-        server = createHttpServer((req, res) => {
-          let body = '';
-          req.on('data', (chunk: Buffer) => {
-            body += chunk.toString();
-          });
-          req.on('end', () => {
-            requestLog.push({
-              url: req.url ?? '',
-              headers: req.headers,
-              body,
-            });
-
-            const parsedBody = JSON.parse(body) as {
-              tool: string;
-              args: Record<string, unknown>;
-            };
-
-            // Mock responses based on tool
-            if (parsedBody.tool === 'sessions_spawn') {
-              // Simulate error when task contains 'spawn_error'
-              if (
-                typeof parsedBody.args.task === 'string' &&
-                parsedBody.args.task.includes('spawn_error')
-              ) {
-                res.writeHead(500, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ ok: false, error: 'spawn failed' }));
-                return;
-              }
-              res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(
-                JSON.stringify({
-                  ok: true,
-                  result: {
-                    details: {
-                      childSessionKey: 'test-session-123',
-                      runId: 'test-run-456',
-                    },
-                  },
-                }),
-              );
-            } else if (parsedBody.tool === 'sessions_history') {
-              res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(
-                JSON.stringify({
-                  ok: true,
-                  result: [
-                    { role: 'user', content: 'Hello' },
-                    {
-                      role: 'assistant',
-                      content: 'Hi',
-                      stopReason: 'end_turn',
-                    },
-                  ],
-                }),
-              );
-            } else if (parsedBody.tool === 'sessions_list') {
-              const sessions = [
-                {
-                  sessionKey: 'test-session-123',
-                  totalTokens: 1500,
-                  model: 'claude-3-sonnet',
-                  transcriptPath: '/path/to/transcript.jsonl',
-                  status: 'done',
-                },
-                {
-                  sessionKey: 'active-session',
-                  totalTokens: 200,
-                  model: 'claude-3-sonnet',
-                  status: 'running',
-                },
-                {
-                  sessionKey: 'other-session',
-                  totalTokens: 500,
-                  model: 'claude-3-opus',
-                },
-              ];
-              res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ ok: true, result: sessions }));
-            } else if (parsedBody.tool === 'spawn_error') {
-              res.writeHead(200, { 'Content-Type': 'application/json' });
-              res.end(JSON.stringify({ ok: false }));
-            } else if (parsedBody.tool === 'timeout_test') {
-              // Don't respond (simulate timeout)
-              return;
-            } else {
-              res.writeHead(404);
-              res.end('Not found');
-            }
-          });
-        });
-
-        server.listen(0, () => {
-          port = (server.address() as AddressInfo).port;
-          resolve();
-        });
-      }),
-  );
-
-  afterAll(
-    () =>
-      new Promise<void>((resolve) => {
-        server.close(() => {
-          resolve();
-        });
-      }),
-  );
-
-  beforeAll(() => {
-    requestLog = [];
+  beforeAll(async () => {
+    gateway = await startMockGateway();
+    client = createGatewayClient({
+      url: gateway.url,
+      token: 'test-token',
+      timeoutMs: 2000,
+    });
   });
 
-  it('should spawn a session successfully', async () => {
-    const client = createGatewayClient({
-      url: `http://127.0.0.1:${String(port)}`,
-      token: 'test-token',
-    });
+  afterAll(() => gateway.close());
 
-    const result = await client.spawnSession('Test task', {
-      label: 'test-label',
-      thinking: 'low',
-      runTimeoutSeconds: 300,
-    });
-
-    expect(result.sessionKey).toBe('test-session-123');
-    expect(result.runId).toBe('test-run-456');
-
-    const lastRequest = requestLog[requestLog.length - 1];
-    expect(lastRequest.headers.authorization).toBe('Bearer test-token');
-    const parsedBody = JSON.parse(lastRequest.body) as {
-      tool: string;
-      args: Record<string, unknown>;
-    };
-    expect(parsedBody.tool).toBe('sessions_spawn');
-    expect(parsedBody.args.task).toBe('Test task');
-    expect(parsedBody.args.label).toBe('test-label');
+  beforeEach(() => {
+    gateway.reset();
   });
 
-  it('should throw on spawn error', async () => {
-    const client = createGatewayClient({
-      url: `http://127.0.0.1:${String(port)}`,
-      token: 'test-token',
+  describe('spawnSession', () => {
+    it('returns childSessionKey and runId from result.details', async () => {
+      const { details } = gatewayFixture('sessions_spawn').result;
+
+      const result = await client.spawnSession('Test task', {
+        label: 'test-label',
+        thinking: 'low',
+        runTimeoutSeconds: 300,
+      });
+
+      expect(result).toEqual({
+        sessionKey: details.childSessionKey,
+        runId: details.runId,
+      });
+      expect(gateway.requests[0]).toMatchObject({
+        headers: { authorization: 'Bearer test-token' },
+        tool: 'sessions_spawn',
+        args: {
+          task: 'Test task',
+          label: 'test-label',
+          thinking: 'low',
+          runTimeoutSeconds: 300,
+        },
+      });
     });
 
-    await expect(
-      // Use a special tool name that triggers error response
-      client.spawnSession('spawn_error task'),
-    ).rejects.toThrow();
+    it('throws naming the tool when details report an error', async () => {
+      gateway.replies.sessions_spawn = {
+        status: 200,
+        body: gatewayFixture('sessions_history.not-found'),
+      };
+
+      await expect(client.spawnSession('x')).rejects.toThrow(
+        /^Gateway sessions_spawn failed: No session found/,
+      );
+    });
+
+    it('throws naming the tool and field when details lack the key', async () => {
+      const body = gatewayFixture('sessions_spawn');
+      delete body.result.details.childSessionKey;
+      gateway.replies.sessions_spawn = { status: 200, body };
+
+      await expect(client.spawnSession('x')).rejects.toThrow(
+        /^Gateway sessions_spawn returned an unexpected response: result\.details\.childSessionKey/,
+      );
+    });
+
+    it('rejects on a non-2xx gateway answer', async () => {
+      gateway.replies.sessions_spawn = undefined;
+
+      await expect(client.spawnSession('x')).rejects.toThrow(
+        /HTTP 404: .*Tool not available: sessions_spawn/,
+      );
+    });
+
+    it('rejects when the gateway is unreachable', async () => {
+      const unreachable = createGatewayClient({
+        url: 'http://127.0.0.1:1',
+        token: 'test-token',
+        timeoutMs: 1000,
+      });
+
+      await expect(unreachable.spawnSession('x')).rejects.toThrow();
+    });
   });
 
-  it('should retrieve session history', async () => {
-    const client = createGatewayClient({
-      url: `http://127.0.0.1:${String(port)}`,
-      token: 'test-token',
+  describe('getSessionHistory', () => {
+    it('returns result.details.messages', async () => {
+      const history = await client.getSessionHistory('any-key', 10);
+
+      expect(
+        history.map((m) => ({ role: m.role, stopReason: m.stopReason })),
+      ).toEqual([
+        { role: 'assistant', stopReason: 'toolUse' },
+        { role: 'assistant', stopReason: 'stop' },
+      ]);
+      expect(gateway.requests[0]?.args).toEqual({
+        sessionKey: 'any-key',
+        limit: 10,
+        includeTools: false,
+      });
     });
 
-    const history = await client.getSessionHistory('test-session-123', 10);
+    it('throws the gateway error for an unknown session', async () => {
+      gateway.replies.sessions_history = {
+        status: 200,
+        body: gatewayFixture('sessions_history.not-found'),
+      };
 
-    expect(history).toHaveLength(2);
-    expect(history[0]?.role).toBe('user');
-    expect(history[1]?.role).toBe('assistant');
+      await expect(client.getSessionHistory('gone')).rejects.toThrow(
+        /^Gateway sessions_history failed: No session found: agent:main:subagent:/,
+      );
+    });
+
+    it('throws on the array-shaped result the old client assumed', async () => {
+      gateway.replies.sessions_history = {
+        status: 200,
+        body: { ok: true, result: [{ role: 'assistant', stopReason: 'stop' }] },
+      };
+
+      await expect(client.getSessionHistory('k')).rejects.toThrow(
+        /^Gateway sessions_history returned an unexpected response: result:/,
+      );
+    });
   });
 
-  it('should retrieve session info when found', async () => {
-    const client = createGatewayClient({
-      url: `http://127.0.0.1:${String(port)}`,
-      token: 'test-token',
+  describe('getSessionInfo', () => {
+    it('finds the session by key in result.details.sessions (#125)', async () => {
+      const { doneWithTokens } = gatewaySessionRows();
+
+      const info = await client.getSessionInfo(doneWithTokens.key);
+
+      expect(info).toEqual({
+        totalTokens: doneWithTokens.totalTokens,
+        model: doneWithTokens.model,
+        status: 'done',
+      });
+      expect(gateway.requests[0]).toMatchObject({
+        tool: 'sessions_list',
+        args: { activeMinutes: 120, limit: 500 },
+      });
     });
 
-    const info = await client.getSessionInfo('test-session-123');
+    it('leaves totalTokens undefined when the gateway omits it', async () => {
+      const { doneNoTokens } = gatewaySessionRows();
 
-    expect(info).not.toBeNull();
-    expect(info?.totalTokens).toBe(1500);
-    expect(info?.model).toBe('claude-3-sonnet');
-    expect(info?.transcriptPath).toBe('/path/to/transcript.jsonl');
+      const info = await client.getSessionInfo(doneNoTokens.key);
+
+      expect(info).not.toBeNull();
+      expect(info?.totalTokens).toBeUndefined();
+    });
+
+    it('returns null for a session that is not listed', async () => {
+      expect(
+        await client.getSessionInfo('agent:main:subagent:none'),
+      ).toBeNull();
+    });
+
+    it('throws naming the tool when a row lacks its key', async () => {
+      const { list, rows } = gatewaySessionRows();
+      rows.forEach((r) => {
+        delete (r as Partial<FixtureSessionRow>).key;
+      });
+      gateway.replies.sessions_list = { status: 200, body: list };
+
+      await expect(client.getSessionInfo('k')).rejects.toThrow(
+        /^Gateway sessions_list returned an unexpected response: result\.details\.sessions\.0\.key/,
+      );
+    });
+
+    it('throws on the array-shaped result the old client assumed', async () => {
+      gateway.replies.sessions_list = {
+        status: 200,
+        body: { ok: true, result: [{ sessionKey: 'k', status: 'done' }] },
+      };
+
+      await expect(client.getSessionInfo('k')).rejects.toThrow(
+        /^Gateway sessions_list returned an unexpected response: result:/,
+      );
+    });
   });
 
-  it('should return null for missing session info', async () => {
-    const client = createGatewayClient({
-      url: `http://127.0.0.1:${String(port)}`,
-      token: 'test-token',
+  describe('isSessionComplete', () => {
+    it('is true for listed sessions that are done or timed out', async () => {
+      const { doneWithTokens, timedOut } = gatewaySessionRows();
+
+      expect(await client.isSessionComplete(doneWithTokens.key)).toBe(true);
+      expect(await client.isSessionComplete(timedOut.key)).toBe(true);
+      expect(gateway.requests.map((r) => r.tool)).toEqual([
+        'sessions_list',
+        'sessions_list',
+      ]);
     });
 
-    const info = await client.getSessionInfo('nonexistent-session');
+    it('is false for a listed running session', async () => {
+      const { running } = gatewaySessionRows();
 
-    expect(info).toBeNull();
-  });
-
-  it('should detect complete session via status', async () => {
-    const client = createGatewayClient({
-      url: `http://127.0.0.1:${String(port)}`,
-      token: 'test-token',
+      expect(await client.isSessionComplete(running.key)).toBe(false);
+      expect(gateway.requests.map((r) => r.tool)).toEqual(['sessions_list']);
     });
 
-    // test-session-123 has status: 'done'
-    const isComplete = await client.isSessionComplete('test-session-123');
-    expect(isComplete).toBe(true);
-  });
+    it.each(['failed', 'killed'])(
+      'is true for a listed session with status %s',
+      async (status) => {
+        const { list, running } = gatewaySessionRows();
+        running.status = status;
+        gateway.replies.sessions_list = { status: 200, body: list };
 
-  it('should detect incomplete session via status', async () => {
-    const client = createGatewayClient({
-      url: `http://127.0.0.1:${String(port)}`,
-      token: 'test-token',
+        expect(await client.isSessionComplete(running.key)).toBe(true);
+      },
+    );
+
+    it('is false for a listed session with status queued', async () => {
+      const { list, running } = gatewaySessionRows();
+      running.status = 'queued';
+      gateway.replies.sessions_list = { status: 200, body: list };
+
+      expect(await client.isSessionComplete(running.key)).toBe(false);
     });
 
-    // active-session has status: 'running'
-    const isComplete = await client.isSessionComplete('active-session');
-    expect(isComplete).toBe(false);
-  });
-
-  it('should capture status field in session info', async () => {
-    const client = createGatewayClient({
-      url: `http://127.0.0.1:${String(port)}`,
-      token: 'test-token',
+    it('falls back to history when not listed: last assistant turn stopped', async () => {
+      expect(await client.isSessionComplete('agent:main:subagent:aged')).toBe(
+        true,
+      );
+      expect(gateway.requests.map((r) => r.tool)).toEqual([
+        'sessions_list',
+        'sessions_history',
+      ]);
     });
 
-    const info = await client.getSessionInfo('test-session-123');
-    expect(info?.status).toBe('done');
-  });
+    it('falls back to history: an aborted last turn is complete', async () => {
+      gateway.replies.sessions_history = {
+        status: 200,
+        body: gatewayFixture('sessions_history.aborted'),
+      };
 
-  it('should handle connection refused', async () => {
-    const client = createGatewayClient({
-      url: 'http://127.0.0.1:1', // Invalid port
-      token: 'test-token',
-      timeoutMs: 1000,
+      expect(await client.isSessionComplete('agent:main:subagent:aged')).toBe(
+        true,
+      );
     });
 
-    await expect(client.spawnSession('Test')).rejects.toThrow();
-  });
+    it('falls back to history: a turn waiting on a tool is not complete', async () => {
+      const body = gatewayFixture('sessions_history.done');
+      const messages = body.result.details.messages as unknown[];
+      body.result.details.messages = messages.slice(0, 1); // stopReason toolUse
+      gateway.replies.sessions_history = { status: 200, body };
 
-  it('should handle timeout', async () => {
-    const _client = createGatewayClient({
-      url: `http://127.0.0.1:${String(port)}`,
-      token: 'test-token',
-      timeoutMs: 100,
+      expect(await client.isSessionComplete('agent:main:subagent:aged')).toBe(
+        false,
+      );
     });
 
-    // Use a special tool that doesn't respond
-    await expect(
-      (async () => {
-        const { fetchJson } = await import('@karmaniverous/jeeves');
-        return fetchJson(`http://127.0.0.1:${String(port)}/tools/invoke`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: 'Bearer test-token',
-          },
-          body: JSON.stringify({ tool: 'timeout_test', args: {} }),
-          signal: AbortSignal.timeout(100),
-        });
-      })(),
-    ).rejects.toThrow();
+    it('falls back to history: no messages yet is not complete', async () => {
+      const body = gatewayFixture('sessions_history.done');
+      body.result.details.messages = [];
+      gateway.replies.sessions_history = { status: 200, body };
+
+      expect(await client.isSessionComplete('agent:main:subagent:aged')).toBe(
+        false,
+      );
+    });
   });
 });

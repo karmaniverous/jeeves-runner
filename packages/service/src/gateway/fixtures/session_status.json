@@ -1,0 +1,28 @@
+{
+  "ok": true,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "[neutralised]"
+      }
+    ],
+    "details": {
+      "ok": true,
+      "sessionKey": "agent:main:subagent:00000000-0000-4000-8000-000000000002",
+      "agentId": "main",
+      "changedModel": false,
+      "stateVersion": 99031,
+      "statusText": "[neutralised status text]",
+      "origin": {
+        "provider": "slack",
+        "accountId": "[neutralised accountId]"
+      },
+      "deliveryContext": {
+        "channel": "slack",
+        "to": "[neutralised to]",
+        "accountId": "[neutralised accountId]"
+      }
+    }
+  }
+}

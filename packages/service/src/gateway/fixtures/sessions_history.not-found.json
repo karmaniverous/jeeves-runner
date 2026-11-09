@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\n  \"status\": \"error\",\n  \"error\": \"No session found: agent:main:subagent:00000000-0000-4000-8000-000000000000\"\n}"
+      }
+    ],
+    "details": {
+      "status": "error",
+      "error": "No session found: agent:main:subagent:00000000-0000-4000-8000-000000000000"
+    }
+  }
+}

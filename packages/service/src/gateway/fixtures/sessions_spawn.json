@@ -1,0 +1,24 @@
+{
+  "ok": true,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\n  \"status\": \"accepted\",\n  \"childSessionKey\": \"agent:main:subagent:00000000-0000-4000-8000-000000000014\",\n  \"runId\": \"00000000-0000-4000-8000-000000000015\",\n  \"mode\": \"run\",\n  \"expectsCompletionMessage\": true,\n  \"context\": \"isolated\",\n  \"taskName\": \"[neutralised taskName]\",\n  \"note\": \"[neutralised note]\",\n  \"resolvedModel\": \"anthropic/claude-opus-5-5\",\n  \"resolvedProvider\": \"anthropic\",\n  \"modelApplied\": true\n}"
+      }
+    ],
+    "details": {
+      "status": "accepted",
+      "childSessionKey": "agent:main:subagent:00000000-0000-4000-8000-000000000014",
+      "runId": "00000000-0000-4000-8000-000000000015",
+      "mode": "run",
+      "expectsCompletionMessage": true,
+      "context": "isolated",
+      "taskName": "[neutralised taskName]",
+      "note": "[neutralised note]",
+      "resolvedModel": "anthropic/claude-opus-5-5",
+      "resolvedProvider": "anthropic",
+      "modelApplied": true
+    }
+  }
+}

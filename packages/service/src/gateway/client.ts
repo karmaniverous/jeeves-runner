@@ -5,6 +5,15 @@
  */
 
 import { fetchJson } from '@karmaniverous/jeeves';
+import type { z } from 'zod';
+
+import {
+  sessionsHistoryDetailsSchema,
+  sessionsListDetailsSchema,
+  spawnDetailsSchema,
+  toolErrorDetailsSchema,
+  toolResponseEnvelopeSchema,
+} from './schemas.js';
 
 /** Default request timeout in milliseconds. */
 const DEFAULT_TIMEOUT_MS = 30000;
@@ -47,15 +56,21 @@ export interface SessionMessage {
 
 /** Session information from sessions_list. */
 export interface SessionInfo {
-  /** Total tokens used. */
-  totalTokens: number;
-  /** Model name. */
-  model: string;
-  /** Transcript file path (if available). */
-  transcriptPath?: string;
-  /** Session status from sessions_list (e.g. 'done', 'error', 'timeout'). */
+  /** Total tokens used; absent when the gateway has not reported usage. */
+  totalTokens?: number;
+  /** Model name, if reported. */
+  model?: string;
+  /** Run status from sessions_list (`queued`, `running`, `done`, `failed`, `killed`, `timeout`). */
   status?: string;
 }
+
+/** sessions_list statuses after which a session will not run again. */
+const TERMINAL_STATUSES: ReadonlySet<string> = new Set([
+  'done',
+  'failed',
+  'killed',
+  'timeout',
+]);
 
 /** Gateway client for invoking tools via /tools/invoke. */
 export interface GatewayClient {
@@ -73,6 +88,40 @@ export interface GatewayClient {
   getSessionInfo(sessionKey: string): Promise<SessionInfo | null>;
   /** Check if session is complete. */
   isSessionComplete(sessionKey: string): Promise<boolean>;
+}
+
+/**
+ * Validate a `/tools/invoke` response against a tool's details schema.
+ * A tool-level error (`details.status === 'error'`) and a shape mismatch
+ * both throw an error naming the tool.
+ */
+function parseToolResponse<T extends z.ZodType>(
+  tool: string,
+  response: unknown,
+  detailsSchema: T,
+): z.output<T> {
+  const unexpected = (error: z.ZodError, prefix: string[]) =>
+    new Error(
+      `Gateway ${tool} returned an unexpected response: ${error.issues
+        .map(
+          (i) =>
+            `${[...prefix, ...i.path.map(String)].join('.')}: ${i.message}`,
+        )
+        .join('; ')}`,
+    );
+
+  const envelope = toolResponseEnvelopeSchema.safeParse(response);
+  if (!envelope.success) throw unexpected(envelope.error, []);
+  const { details } = envelope.data.result;
+
+  const toolError = toolErrorDetailsSchema.safeParse(details);
+  if (toolError.success) {
+    throw new Error(`Gateway ${tool} failed: ${toolError.data.error}`);
+  }
+
+  const parsed = detailsSchema.safeParse(details);
+  if (!parsed.success) throw unexpected(parsed.error, ['result', 'details']);
+  return parsed.data;
 }
 
 /** Make an HTTP POST request to the Gateway /tools/invoke endpoint. */
@@ -105,106 +154,89 @@ export function createGatewayClient(
       task: string,
       opts?: SpawnSessionOptions,
     ): Promise<SpawnSessionResult> {
-      const response = (await invokeGateway(
-        url,
-        token,
+      const details = parseToolResponse(
         'sessions_spawn',
-        {
-          task,
-          label: opts?.label,
-          thinking: opts?.thinking,
-          runTimeoutSeconds: opts?.runTimeoutSeconds,
-        },
-        timeoutMs,
-      )) as {
-        ok: boolean;
-        result: { details: { childSessionKey: string; runId: string } };
-      };
+        await invokeGateway(
+          url,
+          token,
+          'sessions_spawn',
+          {
+            task,
+            label: opts?.label,
+            thinking: opts?.thinking,
+            runTimeoutSeconds: opts?.runTimeoutSeconds,
+          },
+          timeoutMs,
+        ),
+        spawnDetailsSchema,
+      );
 
-      if (!response.ok) {
-        throw new Error('Failed to spawn session');
-      }
-
-      return {
-        sessionKey: response.result.details.childSessionKey,
-        runId: response.result.details.runId,
-      };
+      return { sessionKey: details.childSessionKey, runId: details.runId };
     },
 
     async getSessionHistory(
       sessionKey: string,
       limit = 3,
     ): Promise<SessionMessage[]> {
-      const response = (await invokeGateway(
-        url,
-        token,
+      const details = parseToolResponse(
         'sessions_history',
-        { sessionKey, limit, includeTools: false },
-        timeoutMs,
-      )) as { ok: boolean; result: SessionMessage[] };
+        await invokeGateway(
+          url,
+          token,
+          'sessions_history',
+          { sessionKey, limit, includeTools: false },
+          timeoutMs,
+        ),
+        sessionsHistoryDetailsSchema,
+      );
 
-      if (!response.ok) {
-        throw new Error('Failed to get session history');
-      }
-
-      return response.result;
+      return details.messages;
     },
 
     async getSessionInfo(sessionKey: string): Promise<SessionInfo | null> {
-      // TODO: Replace with a direct session lookup when Gateway adds sessions_get.
-      // Currently fetches up to 500 sessions and searches client-side � O(n) and
-      // and search client-side. Consider using sessions_history with limit 1 as alternative,
-      // or request a sessions_get tool from Gateway for more efficient single-session lookup.
-      const response = (await invokeGateway(
-        url,
-        token,
+      // The gateway has no single-session lookup that reports usage, so list
+      // recently active sessions and search client-side (O(n), n <= 500).
+      const details = parseToolResponse(
         'sessions_list',
-        { activeMinutes: 120, limit: 500 }, // Increased from 100 to reduce false negatives
-        timeoutMs,
-      )) as {
-        ok: boolean;
-        result: Array<
-          { sessionKey: string; status?: string } & Omit<SessionInfo, 'status'>
-        >;
-      };
+        await invokeGateway(
+          url,
+          token,
+          'sessions_list',
+          { activeMinutes: 120, limit: 500 },
+          timeoutMs,
+        ),
+        sessionsListDetailsSchema,
+      );
 
-      if (!response.ok) {
-        throw new Error('Failed to list sessions');
-      }
-
-      const session = response.result.find((s) => s.sessionKey === sessionKey);
+      const session = details.sessions.find((s) => s.key === sessionKey);
       if (!session) return null;
 
       return {
         totalTokens: session.totalTokens,
         model: session.model,
-        transcriptPath: session.transcriptPath,
         status: session.status,
       };
     },
 
     async isSessionComplete(sessionKey: string): Promise<boolean> {
-      // Primary: check session status via sessions_list
+      // Primary: the session's run status in sessions_list.
       const info = await this.getSessionInfo(sessionKey);
       if (info) {
-        if (
-          info.status === 'done' ||
-          info.status === 'error' ||
-          info.status === 'timeout'
-        ) {
-          return true;
-        }
-        // Session found and still active
-        return false;
+        return info.status !== undefined && TERMINAL_STATUSES.has(info.status);
       }
 
-      // Fallback: session not found in sessions_list (may have aged out)
+      // Fallback: not listed (aged out of the active window). Complete when
+      // the last message is an assistant turn that ended for a reason other
+      // than a tool call (with includeTools: false, a turn that is waiting on
+      // a tool ends the history with stopReason 'toolUse').
       const history = await this.getSessionHistory(sessionKey, 3);
-      if (history.length === 0) return false;
+      const lastMessage = history.at(-1);
+      if (!lastMessage) return false;
 
-      const lastMessage = history[history.length - 1];
       return (
-        lastMessage.role === 'assistant' && lastMessage.stopReason !== undefined
+        lastMessage.role === 'assistant' &&
+        lastMessage.stopReason !== undefined &&
+        lastMessage.stopReason !== 'toolUse'
       );
     },
   };

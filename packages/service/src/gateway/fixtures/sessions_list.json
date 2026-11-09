@@ -1,0 +1,157 @@
+{
+  "ok": true,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\n  \"count\": 4,\n  \"sessions\": [\n    {\n      \"key\": \"agent:main:slack:channel:c0000000001\",\n      \"sessionId\": \"00000000-0000-4000-8000-000000000001\",\n      \"agentId\": \"main\",\n      \"kind\": \"group\",\n      \"channel\": \"slack\",\n      \"archived\": false,\n      \"pinned\": false,\n      \"createdActor\": {\n        \"type\": \"human\",\n        \"id\": \"[neutralised id]\",\n        \"identity\": {\n          \"type\": \"legacy\",\n          \"actorType\": \"human\",\n          \"source\": null,\n          \"id\": \"[neutralised id]\"\n        }\n      },\n      \"displayName\": \"[neutralised displayName]\",\n      \"updatedAt\": 1794219283334,\n      \"model\": \"claude-opus-5-5\",\n      \"contextTokens\": 1000000,\n      \"totalTokens\": 278480,\n      \"status\": \"running\",\n      \"abortedLastRun\": false\n    },\n    {\n      \"key\": \"agent:main:subagent:00000000-0000-4000-8000-000000000002\",\n      \"sessionId\": \"00000000-0000-4000-8000-000000000003\",\n      \"agentId\": \"main\",\n      \"kind\": \"other\",\n      \"channel\": \"slack\",\n      \"archived\": false,\n      \"pinned\": false,\n      \"label\": \"[neutralised label]\",\n      \"createdActor\": {\n        \"type\": \"agent\",\n        \"id\": \"[neutralised id]\",\n        \"identity\": {\n          \"type\": \"agent\",\n          \"id\": \"[neutralised id]\"\n        }\n      },\n      \"owner\": {\n        \"actor\": {\n          \"type\": \"agent\",\n          \"id\": \"[neutralised id]\",\n          \"identity\": {\n            \"type\": \"agent\",\n            \"id\": \"[neutralised id]\"\n          }\n        }\n      },\n      \"spawnedWorkspaceDir\": \"[neutralised spawnedWorkspaceDir]\",\n      \"workspaceDir\": \"[neutralised workspaceDir]\",\n      \"displayName\": \"[neutralised displayName]\",\n      \"parentSessionKey\": \"agent:main:slack:channel:c0000000002\",\n      \"updatedAt\": 1794217520054,\n      \"stateVersion\": 99031,\n      \"model\": \"claude-opus-5-5\",\n      \"contextTokens\": 1000000,\n      \"totalTokens\": 254994,\n      \"status\": \"done\"\n    },\n    {\n      \"key\": \"agent:main:subagent:00000000-0000-4000-8000-000000000004\",\n      \"sessionId\": \"00000000-0000-4000-8000-000000000005\",\n      \"agentId\": \"main\",\n      \"kind\": \"other\",\n      \"channel\": \"slack\",\n      \"archived\": false,\n      \"pinned\": false,\n      \"label\": \"[neutralised label]\",\n      \"createdActor\": {\n        \"type\": \"agent\",\n        \"id\": \"[neutralised id]\",\n        \"identity\": {\n          \"type\": \"agent\",\n          \"id\": \"[neutralised id]\"\n        }\n      },\n      \"owner\": {\n        \"actor\": {\n          \"type\": \"agent\",\n          \"id\": \"[neutralised id]\",\n          \"identity\": {\n            \"type\": \"agent\",\n            \"id\": \"[neutralised id]\"\n          }\n        }\n      },\n      \"spawnedWorkspaceDir\": \"[neutralised spawnedWorkspaceDir]\",\n      \"workspaceDir\": \"[neutralised workspaceDir]\",\n      \"displayName\": \"[neutralised displayName]\",\n      \"parentSessionKey\": \"agent:main:slack:channel:c0000000003\",\n      \"updatedAt\": 1794217595447,\n      \"stateVersion\": 99041,\n      \"model\": \"claude-opus-5-5\",\n      \"contextTokens\": 1000000,\n      \"status\": \"done\"\n    },\n    {\n      \"key\": \"agent:main:subagent:00000000-0000-4000-8000-000000000006\",\n      \"sessionId\": \"00000000-0000-4000-8000-000000000007\",\n      \"agentId\": \"main\",\n      \"kind\": \"other\",\n      \"channel\": \"slack\",\n      \"archived\": false,\n      \"pinned\": false,\n      \"label\": \"[neutralised label]\",\n      \"createdActor\": {\n        \"type\": \"agent\",\n        \"id\": \"[neutralised id]\",\n        \"identity\": {\n          \"type\": \"agent\",\n          \"id\": \"[neutralised id]\"\n        }\n      },\n      \"owner\": {\n        \"actor\": {\n          \"type\": \"agent\",\n          \"id\": \"[neutralised id]\",\n          \"identity\": {\n            \"type\": \"agent\",\n            \"id\": \"[neutralised id]\"\n          }\n        }\n      },\n      \"spawnedWorkspaceDir\": \"[neutralised spawnedWorkspaceDir]\",\n      \"workspaceDir\": \"[neutralised workspaceDir]\",\n      \"displayName\": \"[neutralised displayName]\",\n      \"parentSessionKey\": \"agent:main:slack:channel:c0000000001\",\n      \"updatedAt\": 1794213184180,\n      \"stateVersion\": 98744,\n      \"model\": \"claude-opus-5-5\",\n      \"contextTokens\": 1000000,\n      \"status\": \"timeout\",\n      \"abortedLastRun\": false\n    }\n  ],\n  \"hasMore\": false,\n  \"limitApplied\": 200\n}"
+      }
+    ],
+    "details": {
+      "count": 4,
+      "sessions": [
+        {
+          "key": "agent:main:slack:channel:c0000000001",
+          "sessionId": "00000000-0000-4000-8000-000000000001",
+          "agentId": "main",
+          "kind": "group",
+          "channel": "slack",
+          "archived": false,
+          "pinned": false,
+          "createdActor": {
+            "type": "human",
+            "id": "[neutralised id]",
+            "identity": {
+              "type": "legacy",
+              "actorType": "human",
+              "source": null,
+              "id": "[neutralised id]"
+            }
+          },
+          "displayName": "[neutralised displayName]",
+          "updatedAt": 1794219283334,
+          "model": "claude-opus-5-5",
+          "contextTokens": 1000000,
+          "totalTokens": 278480,
+          "status": "running",
+          "abortedLastRun": false
+        },
+        {
+          "key": "agent:main:subagent:00000000-0000-4000-8000-000000000002",
+          "sessionId": "00000000-0000-4000-8000-000000000003",
+          "agentId": "main",
+          "kind": "other",
+          "channel": "slack",
+          "archived": false,
+          "pinned": false,
+          "label": "[neutralised label]",
+          "createdActor": {
+            "type": "agent",
+            "id": "[neutralised id]",
+            "identity": {
+              "type": "agent",
+              "id": "[neutralised id]"
+            }
+          },
+          "owner": {
+            "actor": {
+              "type": "agent",
+              "id": "[neutralised id]",
+              "identity": {
+                "type": "agent",
+                "id": "[neutralised id]"
+              }
+            }
+          },
+          "spawnedWorkspaceDir": "[neutralised spawnedWorkspaceDir]",
+          "workspaceDir": "[neutralised workspaceDir]",
+          "displayName": "[neutralised displayName]",
+          "parentSessionKey": "agent:main:slack:channel:c0000000002",
+          "updatedAt": 1794217520054,
+          "stateVersion": 99031,
+          "model": "claude-opus-5-5",
+          "contextTokens": 1000000,
+          "totalTokens": 254994,
+          "status": "done"
+        },
+        {
+          "key": "agent:main:subagent:00000000-0000-4000-8000-000000000004",
+          "sessionId": "00000000-0000-4000-8000-000000000005",
+          "agentId": "main",
+          "kind": "other",
+          "channel": "slack",
+          "archived": false,
+          "pinned": false,
+          "label": "[neutralised label]",
+          "createdActor": {
+            "type": "agent",
+            "id": "[neutralised id]",
+            "identity": {
+              "type": "agent",
+              "id": "[neutralised id]"
+            }
+          },
+          "owner": {
+            "actor": {
+              "type": "agent",
+              "id": "[neutralised id]",
+              "identity": {
+                "type": "agent",
+                "id": "[neutralised id]"
+              }
+            }
+          },
+          "spawnedWorkspaceDir": "[neutralised spawnedWorkspaceDir]",
+          "workspaceDir": "[neutralised workspaceDir]",
+          "displayName": "[neutralised displayName]",
+          "parentSessionKey": "agent:main:slack:channel:c0000000003",
+          "updatedAt": 1794217595447,
+          "stateVersion": 99041,
+          "model": "claude-opus-5-5",
+          "contextTokens": 1000000,
+          "status": "done"
+        },
+        {
+          "key": "agent:main:subagent:00000000-0000-4000-8000-000000000006",
+          "sessionId": "00000000-0000-4000-8000-000000000007",
+          "agentId": "main",
+          "kind": "other",
+          "channel": "slack",
+          "archived": false,
+          "pinned": false,
+          "label": "[neutralised label]",
+          "createdActor": {
+            "type": "agent",
+            "id": "[neutralised id]",
+            "identity": {
+              "type": "agent",
+              "id": "[neutralised id]"
+            }
+          },
+          "owner": {
+            "actor": {
+              "type": "agent",
+              "id": "[neutralised id]",
+              "identity": {
+                "type": "agent",
+                "id": "[neutralised id]"
+              }
+            }
+          },
+          "spawnedWorkspaceDir": "[neutralised spawnedWorkspaceDir]",
+          "workspaceDir": "[neutralised workspaceDir]",
+          "displayName": "[neutralised displayName]",
+          "parentSessionKey": "agent:main:slack:channel:c0000000001",
+          "updatedAt": 1794213184180,
+          "stateVersion": 98744,
+          "model": "claude-opus-5-5",
+          "contextTokens": 1000000,
+          "status": "timeout",
+          "abortedLastRun": false
+        }
+      ],
+      "hasMore": false,
+      "limitApplied": 200
+    }
+  }
+}

@@ -1,0 +1,80 @@
+{
+  "ok": true,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\n  \"sessionKey\": \"agent:main:subagent:00000000-0000-4000-8000-000000000006\",\n  \"messages\": [\n    {\n      \"role\": \"assistant\",\n      \"content\": [\n        {\n          \"type\": \"toolCall\",\n          \"id\": \"[neutralised id]\",\n          \"name\": \"view_image\",\n          \"arguments\": {\n            \"path\": \"[neutralised path]\"\n          }\n        }\n      ],\n      \"api\": \"anthropic-messages\",\n      \"provider\": \"anthropic\",\n      \"model\": \"claude-opus-5-5\",\n      \"stopReason\": \"toolUse\",\n      \"timestamp\": 1794213174593,\n      \"responseId\": \"[neutralised responseId]\",\n      \"responseModel\": \"claude-opus-5-5\",\n      \"__openclaw\": {\n        \"runId\": \"00000000-0000-4000-8000-000000000011\",\n        \"id\": \"00000000-0000-4000-8000-000000000012\",\n        \"recordTimestampMs\": 1794213178119,\n        \"transcriptPosition\": {\n          \"source\": \"[neutralised source]\",\n          \"rawSeq\": 238\n        },\n        \"seq\": 162\n      }\n    },\n    {\n      \"role\": \"assistant\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"[neutralised text]\"\n        }\n      ],\n      \"api\": \"anthropic-messages\",\n      \"provider\": \"anthropic\",\n      \"model\": \"claude-opus-5-5\",\n      \"stopReason\": \"aborted\",\n      \"errorMessage\": \"[neutralised errorMessage]\",\n      \"timestamp\": 1794213183334,\n      \"__openclaw\": {\n        \"runId\": \"00000000-0000-4000-8000-000000000011\",\n        \"id\": \"00000000-0000-4000-8000-000000000013\",\n        \"recordTimestampMs\": 1794213183479,\n        \"transcriptPosition\": {\n          \"source\": \"[neutralised source]\",\n          \"rawSeq\": 242\n        },\n        \"seq\": 164\n      }\n    }\n  ],\n  \"truncated\": true,\n  \"droppedMessages\": false,\n  \"contentTruncated\": true,\n  \"contentRedacted\": false,\n  \"bytes\": 1112,\n  \"pendingInputs\": {\n    \"items\": [],\n    \"total\": 0\n  }\n}"
+      }
+    ],
+    "details": {
+      "sessionKey": "agent:main:subagent:00000000-0000-4000-8000-000000000006",
+      "messages": [
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "toolCall",
+              "id": "[neutralised id]",
+              "name": "view_image",
+              "arguments": {
+                "path": "[neutralised path]"
+              }
+            }
+          ],
+          "api": "anthropic-messages",
+          "provider": "anthropic",
+          "model": "claude-opus-5-5",
+          "stopReason": "toolUse",
+          "timestamp": 1794213174593,
+          "responseId": "[neutralised responseId]",
+          "responseModel": "claude-opus-5-5",
+          "__openclaw": {
+            "runId": "00000000-0000-4000-8000-000000000011",
+            "id": "00000000-0000-4000-8000-000000000012",
+            "recordTimestampMs": 1794213178119,
+            "transcriptPosition": {
+              "source": "[neutralised source]",
+              "rawSeq": 238
+            },
+            "seq": 162
+          }
+        },
+        {
+          "role": "assistant",
+          "content": [
+            {
+              "type": "text",
+              "text": "[neutralised text]"
+            }
+          ],
+          "api": "anthropic-messages",
+          "provider": "anthropic",
+          "model": "claude-opus-5-5",
+          "stopReason": "aborted",
+          "errorMessage": "[neutralised errorMessage]",
+          "timestamp": 1794213183334,
+          "__openclaw": {
+            "runId": "00000000-0000-4000-8000-000000000011",
+            "id": "00000000-0000-4000-8000-000000000013",
+            "recordTimestampMs": 1794213183479,
+            "transcriptPosition": {
+              "source": "[neutralised source]",
+              "rawSeq": 242
+            },
+            "seq": 164
+          }
+        }
+      ],
+      "truncated": true,
+      "droppedMessages": false,
+      "contentTruncated": true,
+      "contentRedacted": false,
+      "bytes": 1112,
+      "pendingInputs": {
+        "items": [],
+        "total": 0
+      }
+    }
+  }
+}

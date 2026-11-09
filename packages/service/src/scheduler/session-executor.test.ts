@@ -2,10 +2,95 @@
  * Tests for session executor.
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { GatewayClient } from '../gateway/client.js';
+import { createGatewayClient } from '../gateway/client.js';
+import type { MockGateway } from '../test-utils/gateway.js';
+import {
+  gatewayFixture,
+  gatewaySessionRows,
+  startMockGateway,
+} from '../test-utils/gateway.js';
 import { executeSession } from './session-executor.js';
+
+describe('Session executor on captured gateway responses (#125)', () => {
+  let gateway: MockGateway;
+
+  beforeEach(async () => {
+    gateway = await startMockGateway();
+  });
+
+  afterEach(() => gateway.close());
+
+  /** Spawn returns the key of a listed fixture row (real spawn shape). */
+  function spawnAs(key: string): void {
+    const body = gatewayFixture('sessions_spawn');
+    body.result.details.childSessionKey = key;
+    gateway.replies.sessions_spawn = { status: 200, body };
+  }
+
+  it('runs to ok and records the session tokens', async () => {
+    const { doneWithTokens } = gatewaySessionRows();
+    spawnAs(doneWithTokens.key);
+
+    const result = await executeSession({
+      script: 'Summarise the day',
+      jobId: 'session-job',
+      timeoutMs: 5000,
+      pollIntervalMs: 10,
+      gatewayClient: createGatewayClient({ url: gateway.url, token: 't' }),
+    });
+
+    expect(result).toMatchObject({
+      status: 'ok',
+      tokens: doneWithTokens.totalTokens,
+      resultMeta: doneWithTokens.key,
+      error: null,
+    });
+    expect(gateway.requests.map((r) => r.tool)).toEqual([
+      'sessions_spawn',
+      'sessions_list',
+      'sessions_list',
+    ]);
+  });
+
+  it('records null tokens when the gateway reports none', async () => {
+    const { doneNoTokens } = gatewaySessionRows();
+    spawnAs(doneNoTokens.key);
+
+    const result = await executeSession({
+      script: 'Summarise the day',
+      jobId: 'session-job',
+      timeoutMs: 5000,
+      pollIntervalMs: 10,
+      gatewayClient: createGatewayClient({ url: gateway.url, token: 't' }),
+    });
+
+    expect(result).toMatchObject({ status: 'ok', tokens: null });
+  });
+
+  it('fails with the gateway error when the session has vanished', async () => {
+    spawnAs('agent:main:subagent:vanished');
+    gateway.replies.sessions_history = {
+      status: 200,
+      body: gatewayFixture('sessions_history.not-found'),
+    };
+
+    const result = await executeSession({
+      script: 'Summarise the day',
+      jobId: 'session-job',
+      timeoutMs: 5000,
+      pollIntervalMs: 10,
+      gatewayClient: createGatewayClient({ url: gateway.url, token: 't' }),
+    });
+
+    expect(result.status).toBe('error');
+    expect(result.error).toMatch(
+      /^Gateway sessions_history failed: No session found/,
+    );
+  });
+});
 
 describe('Session executor', () => {
   beforeEach(() => {
