@@ -8,7 +8,8 @@
     "build": "npm run build --workspaces",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
-    "test": "npm run test --workspaces",
+    "test": "npm run test:scripts && npm run test --workspaces",
+    "test:scripts": "node --test scripts/*.test.mjs",
     "knip": "knip",
     "docs": "typedoc",
     "typecheck": "npm run typecheck --workspaces"
@@ -25,6 +26,7 @@
     "lefthook": "^2.2.2",
     "prettier": "^3.9.10",
     "rimraf": "^6.1.3",
+    "semver": "^7.8.6",
     "tsx": "^4.23.15",
     "typedoc": "^0.28.20",
     "typedoc-plugin-mdn-links": "^5.1.1",
@@ -33,7 +35,7 @@
     "typescript-eslint": "^8.71.2"
   },
   "engines": {
-    "node": ">=22.13"
+    "node": ">=24.22.2"
   },
   "allowScripts": {
     "esbuild": true,

@@ -3,7 +3,8 @@
  * conflicts, exit codes and the end-to-end jeeves-scripts path.
  */
 
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
 import {
@@ -17,7 +18,11 @@ import {
 } from 'vitest';
 
 import { createTestDb, type TestDb } from '../../test-utils/db.js';
-import { runSyncCommand, type SyncOutput } from './sync-command.js';
+import {
+  runSyncCommand,
+  syncJobsCommand,
+  type SyncOutput,
+} from './sync-command.js';
 import { SyncFatalError } from './sync-jobs.js';
 
 /** One `list --json` entry. */
@@ -33,6 +38,7 @@ describe('runSyncCommand', () => {
     log: Mock<SyncOutput['log']>;
     warn: Mock<SyncOutput['warn']>;
     error: Mock<SyncOutput['error']>;
+    info: Mock<SyncOutput['info']>;
   };
 
   /** Write a runner config next to the test DB; return its path. */
@@ -72,6 +78,7 @@ describe('runSyncCommand', () => {
       log: vi.fn<SyncOutput['log']>(),
       warn: vi.fn<SyncOutput['warn']>(),
       error: vi.fn<SyncOutput['error']>(),
+      info: vi.fn<SyncOutput['info']>(),
     };
   });
 
@@ -94,6 +101,10 @@ describe('runSyncCommand', () => {
     );
 
     expect(code).toBe(0);
+    expect(out.info.mock.calls).toEqual([
+      [`Config: ${join(root, 'runner.config.json')}`],
+      [`Database: ${testDb.dbPath}`],
+    ]);
     expect(jobIds()).toEqual(['e2e']);
     expect(out.log).toHaveBeenCalledWith(expect.stringContaining('+ e2e'));
     expect(out.warn).not.toHaveBeenCalled();
@@ -204,5 +215,72 @@ describe('runSyncCommand', () => {
     expect(out.log).toHaveBeenCalledWith(
       expect.stringContaining('DRY RUN: nothing written.'),
     );
+  });
+
+  it('writes the report to stdout and paths and warnings to stderr by default', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const error = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const jobsDir = join(root, 'jobs');
+    mkdirSync(jobsDir);
+
+    try {
+      expect(runSyncCommand({ config: writeConfig({ jobsDir }) })).toBe(0);
+      expect(error.mock.calls.slice(0, 2)).toEqual([
+        [`Config: ${join(root, 'runner.config.json')}`],
+        [`Database: ${testDb.dbPath}`],
+      ]);
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining('source is deprecated'),
+      );
+      expect(log).toHaveBeenCalled();
+    } finally {
+      vi.restoreAllMocks();
+    }
+  });
+});
+
+describe('syncJobsCommand', () => {
+  let root: string;
+
+  beforeEach(() => {
+    root = mkdtempSync(join(tmpdir(), 'sync-action-'));
+    vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  it('exits 1 when no config is found', () => {
+    const exit = vi
+      .spyOn(process, 'exit')
+      .mockImplementation(() => undefined as never);
+
+    syncJobsCommand({ config: join(root, 'missing.json') });
+
+    expect(exit).toHaveBeenCalledWith(1);
+  });
+
+  it('does not exit when the sync is clean', () => {
+    const exit = vi
+      .spyOn(process, 'exit')
+      .mockImplementation(() => undefined as never);
+    const jobsDir = join(root, 'jobs');
+    mkdirSync(jobsDir);
+    const config = join(root, 'config.json');
+    writeFileSync(
+      config,
+      JSON.stringify({ dbPath: join(root, 'runner.sqlite'), jobsDir }),
+    );
+
+    syncJobsCommand({ config });
+
+    expect(exit).not.toHaveBeenCalled();
   });
 });

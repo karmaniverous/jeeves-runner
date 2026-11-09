@@ -8,7 +8,7 @@ This guide walks you through installing and configuring `jeeves-runner` from scr
 
 ## Prerequisites
 
-- **Node.js 22.13+** (the first release where `node:sqlite` works without a flag)
+- **Node.js 24.22.2+** (the floor for every Jeeves component; the built-in `node:sqlite` in Node 24.16.0–24.18.0 left WAL files un-checkpointed)
 - SQLite support is built-in via Node.js `node:sqlite`
 
 ## Installation
@@ -47,6 +47,8 @@ jeeves-runner add-job \
 ```
 
 This registers a job that runs every 5 minutes. The script must be an absolute path to an executable script.
+
+Without `-c`, the CLI looks for `{configRoot}/jeeves-runner/config.json` (where `init` writes it; `configRoot` from `--config-root`, `JEEVES_CONFIG_ROOT`, `jeeves.config.json`, or `./config`) and exits 1 naming that path if it is missing. It prints the absolute `Config:` and `Database:` paths to stderr before touching the database.
 
 ### Job Types
 

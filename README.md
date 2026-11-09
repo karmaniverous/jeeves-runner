@@ -6,12 +6,13 @@ Graph-aware job execution engine with SQLite state. Part of the [Jeeves platform
 
 ## Monorepo Structure
 
-This repository is a monorepo containing two packages:
+This repository is a monorepo containing three packages:
 
 | Package | npm | Description |
 | --- | --- | --- |
-| [`packages/service`](packages/service) | [`@karmaniverous/jeeves-runner`](https://www.npmjs.com/package/@karmaniverous/jeeves-runner) v0.7.4 | Job execution engine |
-| [`packages/openclaw`](packages/openclaw) | [`@karmaniverous/jeeves-runner-openclaw`](https://www.npmjs.com/package/@karmaniverous/jeeves-runner-openclaw) v0.5.1 | OpenClaw plugin |
+| [`packages/core`](packages/core) | [`@karmaniverous/jeeves-runner-core`](https://www.npmjs.com/package/@karmaniverous/jeeves-runner-core) | Shared config schema, contracts and types |
+| [`packages/service`](packages/service) | [`@karmaniverous/jeeves-runner`](https://www.npmjs.com/package/@karmaniverous/jeeves-runner) | Job execution engine |
+| [`packages/openclaw`](packages/openclaw) | [`@karmaniverous/jeeves-runner-openclaw`](https://www.npmjs.com/package/@karmaniverous/jeeves-runner-openclaw) | OpenClaw plugin |
 
 ## What It Does
 
@@ -32,7 +33,7 @@ jeeves-runner schedules and executes jobs, tracks their state in SQLite, and exp
 
 | Component         | Technology                                     |
 | ----------------- | ---------------------------------------------- |
-| Runtime           | Node.js v24+ (uses built-in `node:sqlite`)     |
+| Runtime           | Node.js 24.22.2+ (uses built-in `node:sqlite`) |
 | Scheduler         | [croner](https://www.npmjs.com/package/croner) |
 | Database          | SQLite via `node:sqlite`                       |
 | Process isolation | `child_process.spawn`                          |
@@ -46,7 +47,7 @@ jeeves-runner schedules and executes jobs, tracks their state in SQLite, and exp
 npm install @karmaniverous/jeeves-runner
 ```
 
-Requires Node.js 22.13+ (`node:sqlite` needs no flag from that version).
+Requires Node.js 24.22.2+ (built-in `node:sqlite`; Node 24.16.0–24.18.0 left WAL files un-checkpointed, so every Jeeves component sets this floor).
 
 ## Quick Start
 
@@ -131,7 +132,9 @@ Built with `createServiceCli(descriptor)` from core. Standard commands plus cust
 | `add-job` | Add a new job to the database |
 | `list-jobs` | List all configured jobs |
 | `trigger` | Manually trigger a job run (queries the HTTP API) |
-| `sync-jobs` | Sync jobs from jeeves-scripts (`--scripts-dir`) or legacy JSON files into the database |
+| `sync-jobs` | Sync jobs from jeeves-scripts (`--scripts-dir`) or legacy JSON files into the database (`--dry-run` is read-only) |
+
+`add-job`, `list-jobs` and `sync-jobs` open the database. They use `-c <path>` when given, otherwise `{configRoot}/jeeves-runner/config.json` (`configRoot` from `--config-root`, `JEEVES_CONFIG_ROOT`, `jeeves.config.json`, or `./config`), and exit 1 naming that path when there is no config there. Each prints the absolute `Config:` and `Database:` paths to stderr first. See the [CLI Reference](packages/service/guides/cli-reference.md).
 
 ## HTTP API
 
@@ -380,7 +383,7 @@ Config file: `jeeves-runner/config.json` (legacy `jeeves-runner.config.json` is 
 | --- | --- | --- | --- |
 | `port` | number | `1937` | HTTP API port |
 | `host` | string | `0.0.0.0` | Bind address for the HTTP server |
-| `dbPath` | string | `./data/runner.sqlite` | SQLite database path |
+| `dbPath` | string | `./data/runner.sqlite` | SQLite database path. A relative path resolves against the working directory, not the config file's directory, so prefer an absolute path; the CLI prints the resolved path as `Database:` |
 | `maxConcurrency` | number | `4` | Max concurrent jobs |
 | `runRetentionDays` | number | `30` | Days to keep run history |
 | `stateCleanupIntervalMs` | number | `3600000` | State cleanup interval (ms) |
@@ -462,11 +465,15 @@ npm install
 npx lefthook install
 
 npm run lint        # ESLint + Prettier
-npm run test        # Vitest
+npm run test        # node --test (scripts/) + Vitest
 npm run knip        # Unused code detection
 npm run build       # Rollup (ESM + types + CLI)
 npm run typecheck   # TypeScript (noEmit)
 ```
+
+## Releasing
+
+Each package is released on its own with `npm run release` from its directory, in dependency order: **core first** (`packages/core`), then `packages/service`, then `packages/openclaw`. The service and plugin depend on `@karmaniverous/jeeves-runner-core` by range, and their `release-it` `before:init` hook runs `scripts/check-core-range.mjs`, which stops the release before any bump if that range does not admit the workspace core version. When core gets a new minor, raise the dependents' range (e.g. `^0.6.0`) after core is published, then release them.
 
 ## License
 

@@ -67,7 +67,7 @@ describe('sync-jobs command', () => {
 
     const result = execSync(
       `${CLI} sync-jobs --config "${configPath}" --jobs-dir "${jobsDir}"`,
-      { encoding: 'utf-8' },
+      { encoding: 'utf-8', stdio: 'pipe' },
     );
 
     expect(result).toContain('2 added');
@@ -125,7 +125,7 @@ describe('sync-jobs command', () => {
 
     const result = execSync(
       `${CLI} sync-jobs --config "${configPath}" --scripts-dir "${scriptsDir}" --dry-run --reset-enabled --prune`,
-      { encoding: 'utf-8' },
+      { encoding: 'utf-8', stdio: 'pipe' },
     );
 
     expect(result).toContain('DRY RUN: nothing written.');

@@ -53,13 +53,13 @@ When the plugin loads and the runner service is NOT yet set up, drive the entire
 
 ### Step 1: Check Node.js
 
-Verify Node.js is installed and version ≥ 22.13 (required for `node:sqlite`):
+Verify Node.js is installed and version ≥ 24.22.2 (required for `node:sqlite`):
 
 ```bash
 node --version
 ```
 
-If missing or too old, guide the user to install Node.js 22.13+ from https://nodejs.org or via their package manager. Node.js 22.13 is the minimum because jeeves-runner uses `node:sqlite` (`DatabaseSync`), which older releases only provide behind the `--experimental-sqlite` flag.
+If missing or too old, guide the user to install Node.js 24.22.2+ from https://nodejs.org or via their package manager. Node.js 24.22.2 is the minimum for every Jeeves component: jeeves-runner uses the built-in `node:sqlite` (`DatabaseSync`), and Node 24.16.0–24.18.0 shipped a SQLite that left WAL files un-checkpointed.
 
 ### Step 2: Install jeeves-runner
 
@@ -79,7 +79,7 @@ jeeves-runner --version
 
 Ask the user these questions to build the config:
 
-1. **Where should the database live?** (default: `./data/runner.sqlite` relative to working directory)
+1. **Where should the database live?** (default: `./data/runner.sqlite`, resolved against the working directory of whatever process opens it, not the config file's directory; always set an absolute `dbPath`)
    - Suggest a stable, backed-up location (e.g., `/var/lib/jeeves-runner/runner.sqlite` on Linux, `C:\ProgramData\jeeves-runner\runner.sqlite` on Windows)
 2. **What port for the API?** (default: 1937)
 3. **Do you want Slack notifications for job failures?**
@@ -580,9 +580,11 @@ For script authoring patterns (repo setup, TypeScript execution, script structur
 Script projects are jeeves-scripts instances (start one with `npx @karmaniverous/jeeves-scripts-core init`). The runner registers their jobs from the instance itself:
 
 ```bash
-jeeves-runner sync-jobs --scripts-dir J:/jeeves-scripts --dry-run   # review
-jeeves-runner sync-jobs --scripts-dir J:/jeeves-scripts             # apply
+jeeves-runner sync-jobs -c J:/config/jeeves-runner/config.json --scripts-dir J:/jeeves-scripts --dry-run   # review
+jeeves-runner sync-jobs -c J:/config/jeeves-runner/config.json --scripts-dir J:/jeeves-scripts             # apply
 ```
+
+**Always name the runner config: pass `-c <path>` (or `--config-root <dir>`, or set `JEEVES_CONFIG_ROOT`).** Without `-c`, `add-job`, `list-jobs` and `sync-jobs` look for `{configRoot}/jeeves-runner/config.json` (configRoot from `--config-root`, then `JEEVES_CONFIG_ROOT`, then `core.configRoot` in the workspace's `jeeves.config.json`, then `./config`) and refuse with exit 1, naming the path they tried, if there is no file there. Each prints the absolute `Config:` and `Database:` paths it uses to stderr first: check them. A relative `dbPath` in the config still resolves against the current directory, so run from the directory the service runs in, or use an absolute `dbPath`. `--dry-run` opens the database read-only: it never creates or migrates one, and exits 1 if the database is missing or needs migrations.
 
 Or set `scriptsDir` in the runner config and run `sync-jobs` with no source flag. `sync-jobs` runs `jeeves-scripts list --json` and registers each runnable with a manifest (`script` = the launcher, `args` = `["run", <id>, ...]`). It never changes `enabled` on existing jobs unless `--reset-enabled` (drift is reported), always applies the manifest schedule, prints each job's `prerequisite` when adding it, and disables jobs no longer listed only with `--prune`. Use `--dry-run` to check for drift. The launcher cold-starts in about 7 s, so leave timeouts room for it. A script job whose manifest has no `timeout_seconds` gets no timeout, as in jeeves-scripts itself (a `session` job falls back to the 5-minute session default); set `timeout_seconds` to bound a job.
 
@@ -702,9 +704,9 @@ If tools are unavailable (plugin not loaded in this session):
 **CLI Fallbacks:**
 
 - `jeeves-runner status` — check if the service is running (probes GET /status)
-- `jeeves-runner list-jobs -c <config>` — list registered jobs
-- `jeeves-runner trigger -i <job-id>` — trigger a job (uses `getServiceUrl('runner')` for dynamic URL resolution; supports `--config-root` and `--workspace`)
+- `jeeves-runner list-jobs -c <config>` — list registered jobs (without `-c`: `{configRoot}/jeeves-runner/config.json`, or exit 1 naming that path)
+- `jeeves-runner trigger -i <job-id>` — trigger a job (uses `getServiceUrl('runner')` for dynamic URL resolution; supports `--config-root` and `--workspace`, falling back to `JEEVES_CONFIG_ROOT`/`JEEVES_WORKSPACE` and `jeeves.config.json`; needs no runner config file)
 - `jeeves-runner config validate -c <config>` — validate config file
 - `jeeves-runner config apply -f <patch.json>` — apply config patch
 - `jeeves-runner service start|stop|restart|status` — manage system service
-- `jeeves-runner sync-jobs --scripts-dir <dir> [--dry-run] [--reset-enabled] [--prune]` — register jobs from a jeeves-scripts instance
+- `jeeves-runner sync-jobs -c <config> --scripts-dir <dir> [--dry-run] [--reset-enabled] [--prune]` — register jobs from a jeeves-scripts instance (`--dry-run` is read-only and never creates or migrates the database)

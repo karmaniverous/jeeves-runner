@@ -144,6 +144,25 @@ jeeves-runner service status [-n <name>]
 
 ## Custom Commands
 
+### Finding the config and database
+
+`add-job`, `list-jobs` and `sync-jobs` open the runner database, so they need the runner config (DD#81):
+
+- `-c, --config <path>` given: that file (a missing file is an error).
+- Otherwise `{configRoot}/jeeves-runner/config.json`, the file `jeeves-runner init` writes. `configRoot` comes from `--config-root`, then `JEEVES_CONFIG_ROOT`, then `core.configRoot` in `jeeves.config.json` in the workspace (`-w, --workspace`, then `JEEVES_WORKSPACE`, then `.`), then `./config`.
+- No file there: the command exits 1 without touching any database, naming the path it tried, where `configRoot` came from, and the fixes (`-c`, `--config-root`/`JEEVES_CONFIG_ROOT`, or `jeeves-runner init`). Commands never fall back to schema defaults.
+
+Before doing anything else they print the absolute paths to **stderr** (stdout stays the command's output):
+
+```text
+Config: J:\config\jeeves-runner\config.json
+Database: J:\state\runner\runner.sqlite
+```
+
+A relative `dbPath` is resolved against the current directory, as the service does, so check the `Database:` line or use an absolute `dbPath`.
+
+All four custom commands take `-w, --workspace <path>` and `--config-root <path>`. `trigger` uses them only to find the service URL and never needs a runner config file.
+
 ### `add-job`
 
 Register a new job in the database.
@@ -175,7 +194,9 @@ jeeves-runner add-job \
 | `--overlap <policy>` | No | `skip` | Overlap policy: `skip` or `allow` |
 | `--on-failure <channel>` | No | — | Slack channel ID for failure alerts |
 | `--on-success <channel>` | No | — | Slack channel ID for success alerts |
-| `-c, --config <path>` | No | — | Config file (for database path) |
+| `-c, --config <path>` | No | `{configRoot}/jeeves-runner/config.json` | Runner config (for the database path); see [Finding the config and database](#finding-the-config-and-database) |
+| `-w, --workspace <path>` | No | env, then `.` | Workspace root (for `jeeves.config.json`) |
+| `--config-root <path>` | No | env, `jeeves.config.json`, then `./config` | Platform config root |
 
 ---
 
@@ -184,10 +205,10 @@ jeeves-runner add-job \
 List all registered jobs.
 
 ```bash
-jeeves-runner list-jobs -c <path>
+jeeves-runner list-jobs [-c <path>] [-w <path>] [--config-root <path>]
 ```
 
-Output shows enabled/disabled status, job ID, schedule, and name.
+Output shows enabled/disabled status, job ID, schedule, and name. The config is found as described in [Finding the config and database](#finding-the-config-and-database).
 
 ---
 
@@ -196,15 +217,16 @@ Output shows enabled/disabled status, job ID, schedule, and name.
 Manually trigger a job via the API.
 
 ```bash
-jeeves-runner trigger -i <id> -c <path>
+jeeves-runner trigger -i <id> [-w <path>] [--config-root <path>]
 ```
 
-| Flag                  | Required | Description            |
-| --------------------- | -------- | ---------------------- |
-| `-i, --id <id>`       | Yes      | Job ID to trigger      |
-| `-c, --config <path>` | No       | Config file (for port) |
+| Flag | Required | Description |
+| --- | --- | --- |
+| `-i, --id <id>` | Yes | Job ID to trigger |
+| `-w, --workspace <path>` | No | Workspace root (default: `JEEVES_WORKSPACE`, then `.`) |
+| `--config-root <path>` | No | Platform config root (default: `JEEVES_CONFIG_ROOT`, `jeeves.config.json`, then `./config`) |
 
-Calls `POST /jobs/:id/run` and prints the result.
+Resolves the service URL with `getServiceUrl('runner')` from the config root, calls `POST /jobs/:id/run` and prints the result. It needs no runner config file.
 
 ---
 
@@ -213,15 +235,19 @@ Calls `POST /jobs/:id/run` and prints the result.
 Sync job definitions into the database.
 
 ```bash
-jeeves-runner sync-jobs [--scripts-dir <dir> | --jobs-dir <dir>] [--dry-run] [--reset-enabled] [--prune] [-c <path>]
+jeeves-runner sync-jobs [-c <path>] [--scripts-dir <dir> | --jobs-dir <dir>] [--dry-run] [--reset-enabled] [--prune] [-w <path>] [--config-root <path>]
 ```
+
+Pass `-c` (or make sure `{configRoot}/jeeves-runner/config.json` is the instance's config): see [Finding the config and database](#finding-the-config-and-database).
 
 | Flag | Description |
 | --- | --- |
-| `-c, --config <path>` | Config file path |
+| `-c, --config <path>` | Runner config (default: `{configRoot}/jeeves-runner/config.json`) |
+| `-w, --workspace <path>` | Workspace root (for `jeeves.config.json`) |
+| `--config-root <path>` | Platform config root |
 | `--scripts-dir <dir>` | jeeves-scripts repo dir (overrides config `scriptsDir`) |
 | `--jobs-dir <dir>` | Legacy JSON jobs dir (deprecated; overrides config `jobsDir`) |
-| `--dry-run` | Report what would change; write nothing |
+| `--dry-run` | Report what would change; open the database read-only |
 | `--reset-enabled` | Overwrite `enabled` on existing jobs with the source value |
 | `--prune` | Disable launcher jobs no longer listed (scripts source only; never deletes) |
 
@@ -235,4 +261,6 @@ jeeves-runner sync-jobs [--scripts-dir <dir> | --jobs-dir <dir>] [--dry-run] [--
 - The manifest schedule is applied on every sync, and each schedule it reverts is listed. **Schedule changes made through the API or `runner_update_job` on launcher jobs don't last**; change them in `jeeves-scripts.json`.
 - Launcher jobs no longer listed are reported as **Orphans**, and disabled only with `--prune`. Jobs from other sources are never touched. Paths are compared after normalisation (absolute, separators, case-insensitive on Windows).
 
-**Exit codes.** 0 when clean; 1 when any entry is skipped for an error or the sync is aborted.
+**Dry run.** `--dry-run` opens the database read-only (DD#82): it never creates the file or its directory, never migrates, and leaves the database and its `-wal`/`-shm` files as they were. A missing database exits 1 (`Cannot open the database read-only at <path>`); a database with pending migrations exits 1, reporting its schema version and the pending ones (run without `--dry-run`, or start the runner, to migrate).
+
+**Exit codes.** 0 when clean; 1 when any entry is skipped for an error, the sync is aborted, no config is found, or a dry run finds the database missing or unmigrated.

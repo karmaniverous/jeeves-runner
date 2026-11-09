@@ -88,7 +88,7 @@ launchctl load ~/Library/LaunchAgents/com.karmaniverous.jeeves-runner.plist
 
 ### Database Location
 
-Default: `./data/runner.sqlite` (relative to working directory). Configure via `dbPath` in config.
+Default: `./data/runner.sqlite`. Configure via `dbPath` in config, and use an absolute path: a relative `dbPath` resolves against the working directory of the process that opens it (service or CLI), not the config file's directory, so the service and a CLI run from another folder can open different databases. The CLI prints the resolved path as `Database:`.
 
 ### Automatic Cleanup
 

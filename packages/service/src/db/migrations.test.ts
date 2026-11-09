@@ -6,11 +6,13 @@
  * that uses createTestDb() � no need to assert schema shape here.
  */
 
+import { DatabaseSync } from 'node:sqlite';
+
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { TestDb } from '../test-utils/db.js';
 import { createTestDb } from '../test-utils/db.js';
-import { runMigrations } from './migrations.js';
+import { getPendingMigrations, runMigrations } from './migrations.js';
 
 describe('Migrations', () => {
   let testDb: TestDb;
@@ -53,6 +55,35 @@ describe('Migrations', () => {
       .prepare('SELECT MAX(version) as v FROM schema_version')
       .get() as { v: number };
     expect(row.v).toBe(6);
+  });
+
+  it('reports nothing pending on a migrated database', () => {
+    expect(getPendingMigrations(testDb.db)).toEqual({
+      current: 6,
+      pending: [],
+    });
+  });
+
+  it('reports every migration pending on an empty database, without writing', () => {
+    const db = new DatabaseSync(':memory:');
+
+    expect(getPendingMigrations(db)).toEqual({
+      current: 0,
+      pending: [1, 2, 3, 4, 5, 6],
+    });
+    expect(
+      db.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all(),
+    ).toEqual([]);
+    db.close();
+  });
+
+  it('reports the versions above the applied one', () => {
+    testDb.db.exec('DELETE FROM schema_version WHERE version > 4');
+
+    expect(getPendingMigrations(testDb.db)).toEqual({
+      current: 4,
+      pending: [5, 6],
+    });
   });
 
   it('should preserve existing data across re-migration', () => {

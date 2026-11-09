@@ -38,7 +38,7 @@
     "job-scheduler"
   ],
   "engines": {
-    "node": ">=22.13"
+    "node": ">=24.22.2"
   },
   "openclaw": {
     "extensions": [
@@ -86,6 +86,9 @@
       "releaseNotes": "npx git-cliff --tag openclaw/${version} --unreleased --strip header"
     },
     "hooks": {
+      "before:init": [
+        "node ../../scripts/check-core-range.mjs"
+      ],
       "after:init": [
         "npm run lint",
         "npm run typecheck",
