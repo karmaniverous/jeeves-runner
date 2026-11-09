@@ -79,7 +79,7 @@ jeeves-runner --version
 
 Ask the user these questions to build the config:
 
-1. **Where should the database live?** (default: `./data/runner.sqlite` relative to working directory)
+1. **Where should the database live?** (default: `./data/runner.sqlite`, resolved against the working directory of whatever process opens it, not the config file's directory; always set an absolute `dbPath`)
    - Suggest a stable, backed-up location (e.g., `/var/lib/jeeves-runner/runner.sqlite` on Linux, `C:\ProgramData\jeeves-runner\runner.sqlite` on Windows)
 2. **What port for the API?** (default: 1937)
 3. **Do you want Slack notifications for job failures?**

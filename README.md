@@ -383,7 +383,7 @@ Config file: `jeeves-runner/config.json` (legacy `jeeves-runner.config.json` is 
 | --- | --- | --- | --- |
 | `port` | number | `1937` | HTTP API port |
 | `host` | string | `0.0.0.0` | Bind address for the HTTP server |
-| `dbPath` | string | `./data/runner.sqlite` | SQLite database path |
+| `dbPath` | string | `./data/runner.sqlite` | SQLite database path. A relative path resolves against the working directory, not the config file's directory, so prefer an absolute path; the CLI prints the resolved path as `Database:` |
 | `maxConcurrency` | number | `4` | Max concurrent jobs |
 | `runRetentionDays` | number | `30` | Days to keep run history |
 | `stateCleanupIntervalMs` | number | `3600000` | State cleanup interval (ms) |
