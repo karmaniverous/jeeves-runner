@@ -167,6 +167,38 @@ const MIGRATIONS: Record<number, string> = {
   6: MIGRATION_006,
 };
 
+/** A database's schema version and the migrations it still needs. */
+export interface MigrationStatus {
+  /** Highest applied version; 0 when nothing has been applied. */
+  current: number;
+  /** Versions not yet applied, ascending. */
+  pending: number[];
+}
+
+/**
+ * Report the schema version and pending migrations without writing, so it
+ * works on a read-only connection (a missing `schema_version` table means
+ * nothing has been applied).
+ */
+export function getPendingMigrations(db: DatabaseSync): MigrationStatus {
+  const hasTable = db
+    .prepare(
+      "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'schema_version'",
+    )
+    .get();
+  const row = hasTable
+    ? (db
+        .prepare('SELECT MAX(version) as version FROM schema_version')
+        .get() as { version: number | null } | undefined)
+    : undefined;
+  const current = row?.version ?? 0;
+  const pending = Object.keys(MIGRATIONS)
+    .map(Number)
+    .filter((v) => v > current)
+    .sort((a, b) => a - b);
+  return { current, pending };
+}
+
 /**
  * Run all pending migrations. Creates schema_version table if needed, applies migrations in order.
  */
@@ -179,19 +211,7 @@ export function runMigrations(db: DatabaseSync): void {
     );
   `);
 
-  // Get current version
-  const currentVersionRow = db
-    .prepare('SELECT MAX(version) as version FROM schema_version')
-    .get() as { version: number | null } | undefined;
-  const currentVersion = currentVersionRow?.version ?? 0;
-
-  // Apply pending migrations
-  const pendingVersions = Object.keys(MIGRATIONS)
-    .map(Number)
-    .filter((v) => v > currentVersion)
-    .sort((a, b) => a - b);
-
-  for (const version of pendingVersions) {
+  for (const version of getPendingMigrations(db).pending) {
     db.exec(MIGRATIONS[version]);
     db.prepare('INSERT INTO schema_version (version) VALUES (?)').run(version);
   }

@@ -5,22 +5,49 @@
  * (start, status, config, init, service). Adds custom commands for
  * job management (add-job, list-jobs, trigger, sync-jobs).
  *
+ * All four take `-w/--workspace` and `--config-root` without commander
+ * defaults, so an absent flag falls through to env and
+ * `jeeves.config.json` (DD#81). The DB-touching ones (add-job, list-jobs,
+ * sync-jobs) refuse when no config file is found.
+ *
  * @module
  */
 
 import { resolve } from 'node:path';
 
-import {
-  createServiceCli,
-  getServiceUrl,
-  init,
-  WORKSPACE_CONFIG_DEFAULTS,
-} from '@karmaniverous/jeeves';
+import { createServiceCli, getServiceUrl } from '@karmaniverous/jeeves';
 
 import { createRunnerDescriptor } from '../../descriptor.js';
 import { validateSchedule } from '../../scheduler/schedule-utils.js';
-import { loadConfig, withDb } from './config-helpers.js';
+import { withDb } from './config-helpers.js';
+import {
+  type ConfigOptions,
+  initRoots,
+  resolveForCommand,
+  type RootOptions,
+} from './resolve-config.js';
 import { syncJobsCommand } from './sync-command.js';
+
+/** Shared root flags; no defaults, so env and jeeves.config.json apply. */
+const WORKSPACE_OPTION = [
+  '-w, --workspace <path>',
+  'Workspace root path (default: JEEVES_WORKSPACE, jeeves.config.json, or .)',
+] as const;
+const CONFIG_ROOT_OPTION = [
+  '--config-root <path>',
+  'Platform config root path (default: JEEVES_CONFIG_ROOT, jeeves.config.json, or ./config)',
+] as const;
+const CONFIG_OPTION = [
+  '-c, --config <path>',
+  'Path to config file (default: {configRoot}/jeeves-runner/config.json)',
+] as const;
+
+/** Resolve the config for a DB-touching command, or exit 1. */
+function configOrExit(options: ConfigOptions) {
+  const resolved = resolveForCommand(options);
+  if (!resolved) process.exit(1);
+  return resolved;
+}
 
 const descriptor = createRunnerDescriptor({
   customCliCommands: (program) => {
@@ -37,22 +64,24 @@ const descriptor = createRunnerDescriptor({
       .option('--overlap <policy>', 'Overlap policy (skip|allow)', 'skip')
       .option('--on-failure <channel>', 'Slack channel for failure alerts')
       .option('--on-success <channel>', 'Slack channel for success alerts')
-      .option('-c, --config <path>', 'Path to config file')
+      .option(...CONFIG_OPTION)
+      .option(...WORKSPACE_OPTION)
+      .option(...CONFIG_ROOT_OPTION)
       .action(
-        (options: {
-          id: string;
-          name: string;
-          schedule: string;
-          script: string;
-          type: string;
-          description?: string;
-          timeout?: string;
-          overlap: string;
-          config?: string;
-          onFailure?: string;
-          onSuccess?: string;
-        }) => {
-          const config = loadConfig(options.config);
+        (
+          options: ConfigOptions & {
+            id: string;
+            name: string;
+            schedule: string;
+            script: string;
+            type: string;
+            description?: string;
+            timeout?: string;
+            overlap: string;
+            onFailure?: string;
+            onSuccess?: string;
+          },
+        ) => {
           const scheduleResult = validateSchedule(options.schedule);
           if (!scheduleResult.valid) {
             console.error(`Invalid schedule: ${scheduleResult.error}`);
@@ -71,7 +100,8 @@ const descriptor = createRunnerDescriptor({
             process.exit(1);
           }
 
-          withDb(config.dbPath, (db) => {
+          const { dbPath } = configOrExit(options);
+          withDb(dbPath, (db) => {
             db.prepare(
               `INSERT INTO jobs (id, name, schedule, script, type, description, timeout_ms, overlap_policy, on_failure, on_success)
                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
@@ -95,10 +125,12 @@ const descriptor = createRunnerDescriptor({
     program
       .command('list-jobs')
       .description('List all jobs')
-      .option('-c, --config <path>', 'Path to config file')
-      .action((options: { config?: string }) => {
-        const config = loadConfig(options.config);
-        withDb(config.dbPath, (db) => {
+      .option(...CONFIG_OPTION)
+      .option(...WORKSPACE_OPTION)
+      .option(...CONFIG_ROOT_OPTION)
+      .action((options: ConfigOptions) => {
+        const { dbPath } = configOrExit(options);
+        withDb(dbPath, (db) => {
           const rows = db
             .prepare('SELECT id, name, schedule, enabled FROM jobs')
             .all() as Array<{
@@ -122,53 +154,41 @@ const descriptor = createRunnerDescriptor({
       .command('trigger')
       .description('Manually trigger a job')
       .requiredOption('-i, --id <id>', 'Job ID to trigger')
-      .option(
-        '-w, --workspace <path>',
-        'Workspace root path',
-        WORKSPACE_CONFIG_DEFAULTS.core.workspace,
-      )
-      .option(
-        '--config-root <path>',
-        'Platform config root path',
-        WORKSPACE_CONFIG_DEFAULTS.core.configRoot,
-      )
-      .action(
-        (options: { id: string; workspace: string; configRoot: string }) => {
-          init({
-            workspacePath: options.workspace,
-            configRoot: options.configRoot,
-          });
-          const url = getServiceUrl('runner');
-          void (async () => {
-            try {
-              const resp = await fetch(`${url}/jobs/${options.id}/run`, {
-                method: 'POST',
-              });
-              const text = await resp.text();
-              if (!resp.ok) {
-                // 404 unknown job, 409 at maxConcurrency, 500 other (#118).
-                // The body may be empty or non-JSON; report it verbatim.
-                console.error(
-                  `Trigger failed (HTTP ${String(resp.status)}): ${text}`,
-                );
-                process.exit(1);
-              }
-              const result = JSON.parse(text) as Record<string, unknown>;
-              console.log(JSON.stringify(result, null, 2));
-            } catch {
-              console.error(`Runner not reachable at ${url}. Is it running?`);
+      .option(...WORKSPACE_OPTION)
+      .option(...CONFIG_ROOT_OPTION)
+      .action((options: RootOptions & { id: string }) => {
+        // HTTP only: needs the roots for getServiceUrl, never a config file.
+        initRoots(options);
+        const url = getServiceUrl('runner');
+        void (async () => {
+          try {
+            const resp = await fetch(`${url}/jobs/${options.id}/run`, {
+              method: 'POST',
+            });
+            const text = await resp.text();
+            if (!resp.ok) {
+              // 404 unknown job, 409 at maxConcurrency, 500 other (#118).
+              // The body may be empty or non-JSON; report it verbatim.
+              console.error(
+                `Trigger failed (HTTP ${String(resp.status)}): ${text}`,
+              );
               process.exit(1);
             }
-          })();
-        },
-      );
+            const result = JSON.parse(text) as Record<string, unknown>;
+            console.log(JSON.stringify(result, null, 2));
+          } catch {
+            console.error(`Runner not reachable at ${url}. Is it running?`);
+            process.exit(1);
+          }
+        })();
+      });
 
     program
       .command('sync-jobs')
       .description(
         'Sync job definitions from jeeves-scripts (list --json) or legacy JSON files into the database',
       )
-      .option('-c, --config <path>', 'Path to config file')
+      .option(...CONFIG_OPTION)
       .option(
         '--scripts-dir <dir>',
         'jeeves-scripts repo dir (overrides config scriptsDir)',
@@ -186,16 +206,8 @@ const descriptor = createRunnerDescriptor({
         '--prune',
         'Disable launcher jobs no longer listed (never deletes)',
       )
-      .option(
-        '-w, --workspace <path>',
-        'Workspace root path',
-        WORKSPACE_CONFIG_DEFAULTS.core.workspace,
-      )
-      .option(
-        '--config-root <path>',
-        'Platform config root path',
-        WORKSPACE_CONFIG_DEFAULTS.core.configRoot,
-      )
+      .option(...WORKSPACE_OPTION)
+      .option(...CONFIG_ROOT_OPTION)
       .action(syncJobsCommand);
   },
 });

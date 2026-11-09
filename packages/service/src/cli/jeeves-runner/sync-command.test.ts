@@ -33,6 +33,7 @@ describe('runSyncCommand', () => {
     log: Mock<SyncOutput['log']>;
     warn: Mock<SyncOutput['warn']>;
     error: Mock<SyncOutput['error']>;
+    info: Mock<SyncOutput['info']>;
   };
 
   /** Write a runner config next to the test DB; return its path. */
@@ -72,6 +73,7 @@ describe('runSyncCommand', () => {
       log: vi.fn<SyncOutput['log']>(),
       warn: vi.fn<SyncOutput['warn']>(),
       error: vi.fn<SyncOutput['error']>(),
+      info: vi.fn<SyncOutput['info']>(),
     };
   });
 
@@ -94,6 +96,10 @@ describe('runSyncCommand', () => {
     );
 
     expect(code).toBe(0);
+    expect(out.info.mock.calls).toEqual([
+      [`Config: ${join(root, 'runner.config.json')}`],
+      [`Database: ${testDb.dbPath}`],
+    ]);
     expect(jobIds()).toEqual(['e2e']);
     expect(out.log).toHaveBeenCalledWith(expect.stringContaining('+ e2e'));
     expect(out.warn).not.toHaveBeenCalled();

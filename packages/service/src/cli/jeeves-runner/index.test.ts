@@ -2,8 +2,14 @@
  * Tests for CLI commands (actual behavior, not just croner).
  */
 
-import { exec, execSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, unlinkSync, writeFileSync } from 'node:fs';
+import { exec, execSync, spawnSync } from 'node:child_process';
+import {
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  unlinkSync,
+  writeFileSync,
+} from 'node:fs';
 import { createServer } from 'node:http';
 import type { AddressInfo, Server } from 'node:net';
 import { tmpdir } from 'node:os';
@@ -21,6 +27,86 @@ import { createTestDb } from '../../test-utils/db.js';
  * source as well.
  */
 const CLI = `"${process.execPath}" --import tsx src/cli/jeeves-runner/index.ts`;
+
+/** The environment without jeeves root variables, plus `extra`. */
+function cliEnv(extra: Record<string, string> = {}): NodeJS.ProcessEnv {
+  const env = { ...process.env, ...extra };
+  for (const name of ['JEEVES_CONFIG_ROOT', 'JEEVES_WORKSPACE']) {
+    if (!(name in extra)) Reflect.deleteProperty(env, name);
+  }
+  return env;
+}
+
+/** Run the CLI, capturing exit status, stdout and stderr separately. */
+function runCli(args: string, extraEnv: Record<string, string> = {}) {
+  const res = spawnSync(`${CLI} ${args}`, {
+    shell: true,
+    encoding: 'utf-8',
+    env: cliEnv(extraEnv),
+  });
+  return { status: res.status, stdout: res.stdout, stderr: res.stderr };
+}
+
+describe('CLI config resolution (#122)', () => {
+  vi.setConfig({ testTimeout: 15000 });
+  let testDb: TestDb;
+
+  beforeEach(() => {
+    testDb = createTestDb();
+  });
+
+  afterEach(() => {
+    testDb.cleanup();
+  });
+
+  it('prints the absolute config and database paths to stderr only', () => {
+    const configPath = `${testDb.dbPath}.config.json`;
+    writeFileSync(configPath, JSON.stringify({ dbPath: testDb.dbPath }));
+
+    const res = runCli(`list-jobs -c "${configPath}"`);
+
+    expect(res.status).toBe(0);
+    expect(res.stdout).toBe('No jobs configured.\n');
+    expect(res.stderr).toContain(`Config: ${configPath}`);
+    expect(res.stderr).toContain(`Database: ${testDb.dbPath}`);
+  });
+
+  it('finds {configRoot}/jeeves-runner/config.json through JEEVES_CONFIG_ROOT', () => {
+    const configRoot = mkdtempSync(join(tmpdir(), 'cli-root-'));
+    mkdirSync(join(configRoot, 'jeeves-runner'));
+    writeFileSync(
+      join(configRoot, 'jeeves-runner', 'config.json'),
+      JSON.stringify({ dbPath: testDb.dbPath }),
+    );
+
+    const res = runCli(
+      'add-job --id env-job --name "Env Job" --schedule "0 0 * * *" --script x.js',
+      { JEEVES_CONFIG_ROOT: configRoot },
+    );
+
+    expect(res.status).toBe(0);
+    expect(testDb.db.prepare('SELECT id FROM jobs').all()).toEqual([
+      { id: 'env-job' },
+    ]);
+  });
+
+  it.each(['list-jobs', 'sync-jobs --dry-run'])(
+    '%s refuses without a config, naming the path, creating nothing',
+    (command) => {
+      const configRoot = mkdtempSync(join(tmpdir(), 'cli-empty-'));
+
+      const res = runCli(`${command} --config-root "${configRoot}"`);
+
+      expect(res.status).toBe(1);
+      expect(res.stdout).toBe('');
+      expect(res.stderr).toContain(
+        `No jeeves-runner config found at ${join(configRoot, 'jeeves-runner', 'config.json')}.`,
+      );
+      expect(res.stderr).toContain('came from the --config-root flag.');
+      expect(readdirSync(configRoot)).toEqual([]);
+    },
+  );
+});
 
 describe('CLI', () => {
   vi.setConfig({ testTimeout: 15000 });
@@ -51,6 +137,7 @@ describe('CLI', () => {
   it('should list jobs when database is empty', () => {
     const result = execSync(`${CLI} list-jobs --config "${configPath}"`, {
       encoding: 'utf-8',
+      stdio: 'pipe',
     });
     expect(result).toContain('No jobs configured');
   });
@@ -58,7 +145,7 @@ describe('CLI', () => {
   it('should add a valid job', () => {
     const result = execSync(
       `${CLI} add-job --config "${configPath}" --id test-job --name "Test Job" --schedule "0 0 * * *" --script "echo test"`,
-      { encoding: 'utf-8' },
+      { encoding: 'utf-8', stdio: 'pipe' },
     );
     expect(result).toContain("Job 'test-job' added");
 
@@ -101,10 +188,12 @@ describe('CLI', () => {
   it('should list jobs after adding one', { timeout: 15000 }, () => {
     execSync(
       `${CLI} add-job --config "${configPath}" --id test-job --name "Test Job" --schedule "0 0 * * *" --script "echo test"`,
+      { stdio: 'pipe' },
     );
 
     const result = execSync(`${CLI} list-jobs --config "${configPath}"`, {
       encoding: 'utf-8',
+      stdio: 'pipe',
     });
     expect(result).toContain('test-job');
     expect(result).toContain('Test Job');
@@ -121,6 +210,7 @@ describe('trigger command', () => {
   async function triggerAgainst(
     status: number,
     body: unknown,
+    via: 'flag' | 'env' = 'flag',
   ): Promise<{ method: string; path: string; stdout: string }> {
     let receivedPath = '';
     let receivedMethod = '';
@@ -151,9 +241,16 @@ describe('trigger command', () => {
         }),
       );
 
+      // No jeeves-runner/config.json here: trigger needs none (DD#81).
       const { stdout } = await execAsync(
-        `${CLI} trigger --id my-job --config-root "${configRoot}"`,
-        { encoding: 'utf-8', timeout: 10000 },
+        via === 'flag'
+          ? `${CLI} trigger --id my-job --config-root "${configRoot}"`
+          : `${CLI} trigger --id my-job`,
+        {
+          encoding: 'utf-8',
+          timeout: 10000,
+          env: cliEnv(via === 'env' ? { JEEVES_CONFIG_ROOT: configRoot } : {}),
+        },
       );
       return { method: receivedMethod, path: receivedPath, stdout };
     } finally {
@@ -173,6 +270,12 @@ describe('trigger command', () => {
     expect(method).toBe('POST');
     expect(path).toBe('/jobs/my-job/run');
     expect(stdout).toContain('triggered');
+  }, 15000);
+
+  it('resolves configRoot from JEEVES_CONFIG_ROOT when the flag is absent (#122)', async () => {
+    const { path } = await triggerAgainst(200, { status: 'triggered' }, 'env');
+
+    expect(path).toBe('/jobs/my-job/run');
   }, 15000);
 
   it('exits non-zero and reports the status when the runner refuses (#118)', async () => {
@@ -207,10 +310,18 @@ describe('removed commands', () => {
 });
 
 describe('shared CLI config flags', () => {
-  it('trigger accepts --workspace and --config-root without error', () => {
-    // Using --help to avoid actual execution; flags must be recognized.
-    const result = execSync(`${CLI} trigger --help`, { encoding: 'utf-8' });
-    expect(result).toContain('--workspace');
-    expect(result).toContain('--config-root');
-  });
+  it.each(['add-job', 'list-jobs', 'trigger', 'sync-jobs'])(
+    '%s takes --workspace and --config-root without commander defaults',
+    (command) => {
+      // --help avoids execution; the flags must be recognised, and a
+      // commander default would hide env and jeeves.config.json (DD#81).
+      const result = execSync(`${CLI} ${command} --help`, {
+        encoding: 'utf-8',
+      });
+      expect(result).toContain('-w, --workspace <path>');
+      expect(result).toContain('--config-root <path>');
+      expect(result).not.toContain('(default: "./config")');
+      expect(result).not.toContain('(default: ".")');
+    },
+  );
 });

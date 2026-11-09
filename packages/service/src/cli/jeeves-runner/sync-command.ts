@@ -6,17 +6,28 @@
  * default `configDir/scripts/jobs`. The legacy source prints a deprecation
  * warning (DD#64).
  *
+ * The config is found by {@link resolveForCommand} (DD#81): `-c`, else
+ * `{configRoot}/jeeves-runner/config.json`; no config means exit 1. A dry
+ * run opens the database read-only and never creates or migrates it
+ * (DD#82).
+ *
  * Exit codes: 0 when clean (non-null prerequisites included, DD#76);
- * 1 when any entry is skipped for an error or the sync is fatal (DD#63).
+ * 1 when any entry is skipped for an error, the sync is fatal (DD#63), no
+ * config is found, or a dry run finds no usable database.
  *
  * @module
  */
 
-import { dirname, join, resolve } from 'node:path';
+import { dirname, join } from 'node:path';
 
-import { getComponentConfigDir, init } from '@karmaniverous/jeeves';
-
-import { loadConfig, withDb } from './config-helpers.js';
+import { ReadOnlyDbError, withDb, withReadOnlyDb } from './config-helpers.js';
+import {
+  type CommandDiagnostics,
+  type ConfigOptions,
+  type ResolvedRunnerConfig,
+  resolveForCommand,
+  stderrDiagnostics,
+} from './resolve-config.js';
 import {
   formatSyncReport,
   type ScriptsSyncOptions,
@@ -26,9 +37,7 @@ import {
 } from './sync-jobs.js';
 
 /** Parsed `sync-jobs` options. */
-export interface SyncCommandOptions {
-  /** Path to the runner config file. */
-  config?: string;
+export interface SyncCommandOptions extends ConfigOptions {
   /** jeeves-scripts repo dir (overrides config). */
   scriptsDir?: string;
   /** Legacy jobs dir (overrides config; deprecated). */
@@ -41,23 +50,23 @@ export interface SyncCommandOptions {
   prune?: boolean;
 }
 
-/** Commander options for the `sync-jobs` action. */
-interface SyncActionOptions extends SyncCommandOptions {
-  /** Workspace root path. */
-  workspace: string;
-  /** Platform config root path. */
-  configRoot: string;
-}
-
-/** Console-like output sink (injectable for tests). */
-export interface SyncOutput {
+/** Output sink (injectable for tests): stdout for the report, stderr for the rest. */
+export interface SyncOutput extends CommandDiagnostics {
   /** Normal output. */
   log: (message: string) => void;
   /** Warnings. */
   warn: (message: string) => void;
-  /** Errors. */
-  error: (message: string) => void;
 }
+
+const defaultOut: SyncOutput = {
+  ...stderrDiagnostics,
+  log: (message) => {
+    console.log(message);
+  },
+  warn: (message) => {
+    console.warn(message);
+  },
+};
 
 /** Test seams for {@link runSyncCommand}. */
 export interface SyncCommandDeps {
@@ -74,7 +83,7 @@ type SyncSource =
 /** Pick the sync source, or return an error message. */
 function selectSource(
   options: SyncCommandOptions,
-  config: ReturnType<typeof loadConfig>,
+  { config, configPath }: ResolvedRunnerConfig,
 ): SyncSource | string {
   if (options.scriptsDir && options.jobsDir) {
     return '--scripts-dir and --jobs-dir cannot be used together';
@@ -83,12 +92,9 @@ function selectSource(
   if (options.jobsDir) return { kind: 'legacy', dir: options.jobsDir };
   if (config.scriptsDir) return { kind: 'scripts', dir: config.scriptsDir };
 
-  const configDir = options.config
-    ? dirname(resolve(options.config))
-    : getComponentConfigDir('runner');
   return {
     kind: 'legacy',
-    dir: config.jobsDir ?? join(configDir, 'scripts/jobs'),
+    dir: config.jobsDir ?? join(dirname(configPath), 'scripts/jobs'),
   };
 }
 
@@ -101,9 +107,10 @@ export function runSyncCommand(
   options: SyncCommandOptions,
   deps: SyncCommandDeps = {},
 ): number {
-  const out = deps.out ?? console;
-  const config = loadConfig(options.config);
-  const source = selectSource(options, config);
+  const out = deps.out ?? defaultOut;
+  const resolved = resolveForCommand(options, out);
+  if (!resolved) return 1;
+  const source = selectSource(options, resolved);
   if (typeof source === 'string') {
     out.error(source);
     return 1;
@@ -125,8 +132,11 @@ export function runSyncCommand(
     prune: options.prune === true,
   };
 
+  // A dry run must not create, migrate or write the database (DD#82).
+  const open = syncOptions.dryRun ? withReadOnlyDb : withDb;
+
   try {
-    const result = withDb(config.dbPath, (db) =>
+    const result = open(resolved.dbPath, (db) =>
       source.kind === 'scripts'
         ? syncJobsFromScriptsDir(db, source.dir, {
             ...syncOptions,
@@ -141,13 +151,16 @@ export function runSyncCommand(
       out.error(`Sync aborted, nothing written: ${err.message}`);
       return 1;
     }
+    if (err instanceof ReadOnlyDbError) {
+      out.error(err.message);
+      return 1;
+    }
     throw err;
   }
 }
 
 /** Commander action for `sync-jobs`. */
-export function syncJobsCommand(options: SyncActionOptions): void {
-  init({ workspacePath: options.workspace, configRoot: options.configRoot });
+export function syncJobsCommand(options: SyncCommandOptions): void {
   const code = runSyncCommand(options);
   if (code !== 0) process.exit(code);
 }
