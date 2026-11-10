@@ -309,6 +309,21 @@
     "contentType": "application/json; charset=utf-8",
     "body": "{\"runs\":[{\"id\":2,\"job_id\":\"alpha\",\"status\":\"error\",\"started_at\":\"2026-01-05 10:00:00\",\"finished_at\":\"2026-01-05 10:00:01\",\"duration_ms\":1000,\"exit_code\":1,\"tokens\":12,\"result_meta\":\"meta\",\"error\":\"boom\",\"stdout_tail\":\"\",\"stderr_tail\":\"boom\",\"trigger\":\"manual\"}]}"
   },
+  "jobRuns limit empty": {
+    "status": 500,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"statusCode\":500,\"code\":\"ERR_SQLITE_ERROR\",\"error\":\"Internal Server Error\",\"message\":\"datatype mismatch\"}"
+  },
+  "jobRuns repeated limit": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"runs\":[{\"id\":2,\"job_id\":\"alpha\",\"status\":\"error\",\"started_at\":\"2026-01-05 10:00:00\",\"finished_at\":\"2026-01-05 10:00:01\",\"duration_ms\":1000,\"exit_code\":1,\"tokens\":12,\"result_meta\":\"meta\",\"error\":\"boom\",\"stdout_tail\":\"\",\"stderr_tail\":\"boom\",\"trigger\":\"manual\"}]}"
+  },
+  "jobRuns unknown query key": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"runs\":[{\"id\":2,\"job_id\":\"alpha\",\"status\":\"error\",\"started_at\":\"2026-01-05 10:00:00\",\"finished_at\":\"2026-01-05 10:00:01\",\"duration_ms\":1000,\"exit_code\":1,\"tokens\":12,\"result_meta\":\"meta\",\"error\":\"boom\",\"stdout_tail\":\"\",\"stderr_tail\":\"boom\",\"trigger\":\"manual\"},{\"id\":1,\"job_id\":\"alpha\",\"status\":\"ok\",\"started_at\":\"2026-01-04 10:00:00\",\"finished_at\":\"2026-01-04 10:00:05\",\"duration_ms\":5000,\"exit_code\":0,\"tokens\":null,\"result_meta\":null,\"error\":null,\"stdout_tail\":\"done\",\"stderr_tail\":\"\",\"trigger\":\"schedule\"}]}"
+  },
   "jobRuns unknown job": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
@@ -354,6 +369,16 @@
     "contentType": "application/json; charset=utf-8",
     "body": "{\"statusCode\":500,\"code\":\"ERR_SQLITE_ERROR\",\"error\":\"Internal Server Error\",\"message\":\"datatype mismatch\"}"
   },
+  "queuePeek limit empty": {
+    "status": 500,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"statusCode\":500,\"code\":\"ERR_SQLITE_ERROR\",\"error\":\"Internal Server Error\",\"message\":\"datatype mismatch\"}"
+  },
+  "queuePeek limit zero": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"items\":[]}"
+  },
   "queuePeek string payload": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
@@ -393,6 +418,11 @@
     "status": 200,
     "contentType": "application/json; charset=utf-8",
     "body": "{\"result\":[null,\"2026-01-01T00:00:00Z\",\"scalar\"],\"count\":3}"
+  },
+  "queryState jsonpath no match": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"result\":[],\"count\":0}"
   },
   "queryState invalid jsonpath": {
     "status": 500,
@@ -448,6 +478,16 @@
     "status": 200,
     "contentType": "application/json; charset=utf-8",
     "body": "{\"result\":[\"scalar\"],\"count\":1}"
+  },
+  "queryCollection jsonpath no match": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"result\":[],\"count\":0}"
+  },
+  "queryCollection empty path": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"value\":\"scalar\",\"items\":[{\"itemKey\":\"t3\",\"value\":\"plain\",\"updatedAt\":\"2026-01-01 00:00:03\"},{\"itemKey\":\"t2\",\"value\":null,\"updatedAt\":\"2026-01-01 00:00:02\"},{\"itemKey\":\"t1\",\"value\":\"{\\\"subject\\\":\\\"a\\\"}\",\"updatedAt\":\"2026-01-01 00:00:01\"}],\"count\":3}"
   },
   "queryCollection all query fields": {
     "status": 200,

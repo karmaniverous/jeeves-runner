@@ -18,6 +18,8 @@ export const SCENARIOS_INSPECT: readonly WireScenario[] = [
   get('queuePeek', '/queues/work/peek'),
   get('queuePeek limit', '/queues/work/peek?limit=1'),
   get('queuePeek limit not a number', '/queues/work/peek?limit=abc'),
+  get('queuePeek limit empty', '/queues/work/peek?limit='),
+  get('queuePeek limit zero', '/queues/work/peek?limit=0'),
   get('queuePeek string payload', '/queues/other/peek', {
     setup: (db) => {
       db.exec(
@@ -36,6 +38,7 @@ export const SCENARIOS_INSPECT: readonly WireScenario[] = [
   get('queryState', '/state/email'),
   get('queryState jsonpath', '/state/email?path=%24.lastPoll'),
   get('queryState jsonpath all', '/state/email?path=%24.*'),
+  get('queryState jsonpath no match', '/state/email?path=%24.nope'),
   get('queryState invalid jsonpath', '/state/email?path=%24%5B((('),
   get('queryState unknown namespace', '/state/nope'),
   get('queryState keys named result and count', '/state/odd', {
@@ -56,6 +59,11 @@ export const SCENARIOS_INSPECT: readonly WireScenario[] = [
     '/state/email/threads?path=%24.items%5B*%5D.itemKey',
   ),
   get('queryCollection jsonpath scalar', '/state/email/threads?path=%24.value'),
+  get(
+    'queryCollection jsonpath no match',
+    '/state/email/threads?path=%24.nope',
+  ),
+  get('queryCollection empty path', '/state/email/threads?path='),
   get(
     'queryCollection all query fields',
     '/state/email/threads?limit=1&order=asc&path=%24.count',

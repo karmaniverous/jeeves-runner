@@ -66,7 +66,9 @@ const run = (
     env: { ...process.env, ...env },
   };
   if (process.platform === 'win32')
-    execSync([cmd, ...args].map((a) => `"${a}"`).join(' '), options);
+    // The command name stays unquoted: a quoted `.cmd` shim resolves its own
+    // directory (%~dp0) against the cwd.
+    execSync([cmd, ...args.map((a) => `"${a}"`)].join(' '), options);
   else execFileSync(cmd, args, options);
 };
 

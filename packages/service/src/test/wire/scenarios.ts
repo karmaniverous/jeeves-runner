@@ -171,6 +171,9 @@ const JOBS: WireScenario[] = [
   get('jobRuns limit not a number', '/jobs/alpha/runs?limit=abc'),
   get('jobRuns limit fraction', '/jobs/alpha/runs?limit=1.5'),
   get('jobRuns limit trailing text', '/jobs/alpha/runs?limit=1abc'),
+  get('jobRuns limit empty', '/jobs/alpha/runs?limit='),
+  get('jobRuns repeated limit', '/jobs/alpha/runs?limit=1&limit=2'),
+  get('jobRuns unknown query key', '/jobs/alpha/runs?colour=red'),
   get('jobRuns unknown job', '/jobs/nope/runs'),
   get('unknown route', '/nope'),
 ];

@@ -40,13 +40,15 @@ export const jobIdParamsSchema = z.object({
 });
 
 /**
- * An optional integer `limit` query field.
+ * An optional positive integer `limit` query field. Positive, so an empty
+ * `limit=` (coerced to 0) is refused with the uniform 400 rather than read as
+ * "no rows" (it was a 500 before; DD#87 item a).
  *
  * @param description - Field description (names the default).
  * @returns The schema.
  */
 export const limitQuery = (description: string) =>
-  z.coerce.number().int().optional().describe(description);
+  z.coerce.number().int().positive().optional().describe(description);
 
 /** An optional JSONPath `path` query field. */
 export const pathQuery = () =>

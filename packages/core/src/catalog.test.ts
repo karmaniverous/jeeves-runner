@@ -103,13 +103,12 @@ describe('request schemas', () => {
       QUERIES[name].safeParse(input);
 
   it.each(['jobRuns', 'queuePeek', 'queryCollection'] as const)(
-    '%s coerces an integer limit and rejects anything else',
+    '%s coerces a positive integer limit and rejects anything else',
     (name) => {
       const parse = query(name);
       expect(parse({ limit: '5' })).toMatchObject({ data: { limit: 5 } });
-      expect(parse({ limit: '-1' })).toMatchObject({ data: { limit: -1 } });
       expect(parse({})).toMatchObject({ success: true, data: {} });
-      for (const limit of ['abc', '1.5', '1abc']) {
+      for (const limit of ['abc', '1.5', '1abc', '', '0', '-1']) {
         expect(parse({ limit }).success).toBe(false);
       }
     },

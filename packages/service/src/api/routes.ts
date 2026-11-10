@@ -1,8 +1,11 @@
 /**
- * Fastify API routes for job management and monitoring.
+ * The runner's HTTP API: every route of `RUNNER_CATALOG`, registered by jeeves `registerCatalogRoutes` with request and response validation (DD#87), plus `GET /openapi.json` (no auth; DD#93).
  *
- * Provides endpoints for job CRUD, run history, manual triggers,
- * system stats, config queries, and config apply.
+ * @remarks
+ * `registerRoutes` stays synchronous: the catalog routes go in a child
+ * plugin, so a registration error surfaces from `ready()`/`listen()`.
+ * Responses are validated `strict`ly: a body that does not match its schema
+ * is logged and answered 500 (DD#87 item c).
  *
  * @module routes
  */
@@ -15,15 +18,25 @@ import {
   createStatusHandler,
   type JeevesComponentDescriptor,
 } from '@karmaniverous/jeeves';
-import { RUNNER_CATALOG } from '@karmaniverous/jeeves-runner-core';
+import {
+  registerCatalogRoutes,
+  registerOpenApiRoute,
+  standardHandlers,
+} from '@karmaniverous/jeeves/fastify';
+import {
+  RUNNER_CATALOG,
+  RUNNER_OPENAPI_DOCUMENT,
+  type RunnerHealth,
+} from '@karmaniverous/jeeves-runner-core';
 import type { FastifyInstance } from 'fastify';
 
-import { JobNotFoundError, MaxConcurrencyError } from '../scheduler/errors.js';
 import type { Scheduler } from '../scheduler/scheduler.js';
 import type { RunnerConfig } from '../schemas/config.js';
-import { registerJobRoutes } from './job-routes.js';
-import { registerQueueRoutes } from './queue-routes.js';
-import { registerStateRoutes } from './state-routes.js';
+import { fastifyDefaultErrorHandler } from './error-handler.js';
+import type { RunnerHandlers } from './handler-utils.js';
+import { createInspectHandlers } from './inspect-handlers.js';
+import { createJobHandlers } from './job-handlers.js';
+import { createRunHandlers } from './run-handlers.js';
 
 /** Route dependencies. */
 interface RouteDeps {
@@ -42,141 +55,68 @@ interface RouteDeps {
 }
 
 /**
+ * The runner's `health` block for `GET /status`.
+ *
+ * @param db - Runner database.
+ * @param scheduler - Scheduler (running jobs, failed registrations).
+ * @returns Job and run counts.
+ */
+function readHealth(db: DatabaseSync, scheduler: Scheduler): RunnerHealth {
+  const count = (sql: string) =>
+    (db.prepare(sql).get() as { count: number }).count;
+  return {
+    totalJobs: count('SELECT COUNT(*) as count FROM jobs'),
+    running: scheduler.getRunningJobs().length,
+    failedRegistrations: scheduler.getFailedRegistrations().length,
+    okLastHour: count(
+      `SELECT COUNT(*) as count FROM runs
+       WHERE status = 'ok' AND started_at > datetime('now', '-1 hour')`,
+    ),
+    errorsLastHour: count(
+      `SELECT COUNT(*) as count FROM runs
+       WHERE status IN ('error', 'timeout') AND started_at > datetime('now', '-1 hour')`,
+    ),
+  };
+}
+
+/**
+ * One handler per catalog entry: jeeves' standard handlers for `status`,
+ * `config` and `configApply`, the runner's own for the rest.
+ *
+ * @param deps - Route dependencies.
+ * @returns The handlers.
+ */
+export function createRunnerHandlers(deps: RouteDeps): RunnerHandlers {
+  const { db, scheduler, getConfig, descriptor, configPath } = deps;
+  return {
+    ...standardHandlers({
+      status: createStatusHandler({
+        name: 'runner',
+        version: descriptor.version,
+        getHealth: () => Promise.resolve(readHealth(db, scheduler)),
+      }),
+      config: createConfigQueryHandler(getConfig),
+      configApply: createConfigApplyHandler(descriptor, configPath),
+    }),
+    ...createRunHandlers({ db, scheduler }),
+    ...createJobHandlers({ db, scheduler }),
+    ...createInspectHandlers({ db }),
+  };
+}
+
+/**
  * Register all API routes on the Fastify instance.
+ *
+ * @param app - Fastify app.
+ * @param deps - Route dependencies.
  */
 export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
-  const { db, scheduler, getConfig, descriptor, configPath } = deps;
-
-  // --- GET /status (factory-produced) ---
-  const statusHandler = createStatusHandler({
-    name: 'runner',
-    version: descriptor.version,
-    getHealth: () => {
-      const totalJobs = db
-        .prepare('SELECT COUNT(*) as count FROM jobs')
-        .get() as { count: number };
-      const runningCount = scheduler.getRunningJobs().length;
-      const failedCount = scheduler.getFailedRegistrations().length;
-      const okLastHour = db
-        .prepare(
-          `SELECT COUNT(*) as count FROM runs
-           WHERE status = 'ok' AND started_at > datetime('now', '-1 hour')`,
-        )
-        .get() as { count: number };
-      const errorsLastHour = db
-        .prepare(
-          `SELECT COUNT(*) as count FROM runs
-           WHERE status IN ('error', 'timeout') AND started_at > datetime('now', '-1 hour')`,
-        )
-        .get() as { count: number };
-
-      return Promise.resolve({
-        totalJobs: totalJobs.count,
-        running: runningCount,
-        failedRegistrations: failedCount,
-        okLastHour: okLastHour.count,
-        errorsLastHour: errorsLastHour.count,
-      });
-    },
+  const handlers = createRunnerHandlers(deps);
+  app.setErrorHandler(fastifyDefaultErrorHandler);
+  void app.register(async (child) => {
+    await registerCatalogRoutes(child, RUNNER_CATALOG, handlers, {
+      responseValidation: 'strict',
+    });
   });
-
-  // Route paths reference RUNNER_ENDPOINTS catalog for consistency.
-  app.get(RUNNER_CATALOG.byName('status').path, async (_request, reply) => {
-    const result = await statusHandler();
-    return reply.status(result.status).send(result.body);
-  });
-
-  // --- POST /config/apply (factory-produced) ---
-  const configApplyHandler = createConfigApplyHandler(descriptor, configPath);
-
-  app.post<{ Body: { patch: Record<string, unknown>; replace?: boolean } }>(
-    '/config/apply',
-    async (request, reply) => {
-      const result = await configApplyHandler({
-        patch: request.body.patch,
-        replace: request.body.replace,
-      });
-      return reply.status(result.status).send(result.body);
-    },
-  );
-
-  // --- GET /jobs ---
-  app.get(RUNNER_CATALOG.byName('listJobs').path, () => {
-    const rows = db
-      .prepare(
-        `SELECT j.*,
-          (SELECT status FROM runs WHERE job_id = j.id ORDER BY started_at DESC LIMIT 1) as last_status,
-          (SELECT started_at FROM runs WHERE job_id = j.id ORDER BY started_at DESC LIMIT 1) as last_run
-         FROM jobs j`,
-      )
-      .all();
-    return { jobs: rows };
-  });
-
-  // --- GET /jobs/:id ---
-  app.get<{ Params: { id: string } }>('/jobs/:id', (request, reply) => {
-    const job = db
-      .prepare('SELECT * FROM jobs WHERE id = ?')
-      .get(request.params.id);
-    if (!job) {
-      reply.code(404);
-      return { error: 'Job not found' };
-    }
-    return { job };
-  });
-
-  // --- GET /jobs/:id/runs ---
-  app.get<{ Params: { id: string }; Querystring: { limit?: string } }>(
-    '/jobs/:id/runs',
-    (request) => {
-      const limit = parseInt(request.query.limit ?? '50', 10);
-      const runs = db
-        .prepare(
-          'SELECT * FROM runs WHERE job_id = ? ORDER BY started_at DESC LIMIT ?',
-        )
-        .all(request.params.id, limit);
-      return { runs };
-    },
-  );
-
-  // --- POST /jobs/:id/run ---
-  app.post<{ Params: { id: string } }>(
-    '/jobs/:id/run',
-    async (request, reply) => {
-      try {
-        const result = await scheduler.triggerJob(request.params.id);
-        return { result };
-      } catch (err) {
-        // 404 unknown job; 409 refused at maxConcurrency (not recorded as
-        // a run: the caller gets the refusal directly); 500 otherwise (#118).
-        reply.code(
-          err instanceof JobNotFoundError
-            ? 404
-            : err instanceof MaxConcurrencyError
-              ? 409
-              : 500,
-        );
-        return { error: err instanceof Error ? err.message : 'Unknown error' };
-      }
-    },
-  );
-
-  // --- GET /config ---
-  const configHandler = createConfigQueryHandler(getConfig);
-  app.get<{ Querystring: { path?: string } }>(
-    '/config',
-    async (request, reply) => {
-      const result = await configHandler({
-        path: request.query.path,
-      });
-      return reply.status(result.status).send(result.body);
-    },
-  );
-
-  // Register job CRUD routes (POST, PATCH, DELETE, PATCH enable/disable, PUT script)
-  registerJobRoutes(app, { db, scheduler });
-
-  // Register queue and state inspection routes
-  registerQueueRoutes(app, { db });
-  registerStateRoutes(app, { db });
+  registerOpenApiRoute(app, RUNNER_OPENAPI_DOCUMENT);
 }
