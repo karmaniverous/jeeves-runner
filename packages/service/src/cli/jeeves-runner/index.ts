@@ -27,6 +27,7 @@ import {
   type RootOptions,
 } from './resolve-config.js';
 import { syncJobsCommand } from './sync-command.js';
+import { triggerCommand } from './trigger-command.js';
 
 /** Shared root flags; no defaults, so env and jeeves.config.json apply. */
 const WORKSPACE_OPTION = [
@@ -160,27 +161,9 @@ const descriptor = createRunnerDescriptor({
         // HTTP only: needs the roots for getServiceUrl, never a config file.
         initRoots(options);
         const url = getServiceUrl('runner');
-        void (async () => {
-          try {
-            const resp = await fetch(`${url}/jobs/${options.id}/run`, {
-              method: 'POST',
-            });
-            const text = await resp.text();
-            if (!resp.ok) {
-              // 404 unknown job, 409 at maxConcurrency, 500 other (#118).
-              // The body may be empty or non-JSON; report it verbatim.
-              console.error(
-                `Trigger failed (HTTP ${String(resp.status)}): ${text}`,
-              );
-              process.exit(1);
-            }
-            const result = JSON.parse(text) as Record<string, unknown>;
-            console.log(JSON.stringify(result, null, 2));
-          } catch {
-            console.error(`Runner not reachable at ${url}. Is it running?`);
-            process.exit(1);
-          }
-        })();
+        void triggerCommand({ url, id: options.id }).then((code) => {
+          if (code !== 0) process.exit(code);
+        });
       });
 
     program

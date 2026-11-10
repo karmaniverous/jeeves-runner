@@ -226,7 +226,14 @@ jeeves-runner trigger -i <id> [-w <path>] [--config-root <path>]
 | `-w, --workspace <path>` | No | Workspace root (default: `JEEVES_WORKSPACE`, then `.`) |
 | `--config-root <path>` | No | Platform config root (default: `JEEVES_CONFIG_ROOT`, `jeeves.config.json`, then `./config`) |
 
-Resolves the service URL with `getServiceUrl('runner')` from the config root, calls `POST /jobs/:id/run` and prints the result. It needs no runner config file.
+Resolves the service URL with `getServiceUrl('runner')` from the config root, calls `POST /jobs/:id/run` through `@karmaniverous/jeeves-runner-sdk` (the job id URL-encoded) and prints the result. It needs no runner config file. The call waits up to 30 minutes for the job to finish; a longer job keeps running on the runner.
+
+| Outcome | Output | Exit |
+| --- | --- | --- |
+| Job ran | the response body (`{ result: { status, exitCode, durationMs, ... } }`) on stdout | 0 |
+| Non-2xx (404 unknown job, 409 at `maxConcurrency`, 500 other) | `Trigger failed (HTTP <status>): <body as received>` | 1 |
+| Runner not running or URL unusable | `Runner not reachable at <url>. Is it running?` | 1 |
+| Timeout, or a 2xx that is not a run result | `Trigger failed: <reason>` | 1 |
 
 ---
 
