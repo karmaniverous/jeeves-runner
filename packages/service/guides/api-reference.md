@@ -6,6 +6,14 @@ title: API Reference
 
 jeeves-runner exposes a Fastify HTTP API for job management and monitoring. Default port: **1937**, default bind address: **0.0.0.0**.
 
+Every route is an entry of the runner's endpoint catalog, `RUNNER_CATALOG` in `@karmaniverous/jeeves-runner-core`, registered with jeeves `registerCatalogRoutes`:
+
+- **Requests are validated** against the entry's params, query and body schemas. A request that fails gets `400` with `{ "error": "Request validation failed", "issues": [{ "slot", "path", "code", "message" }] }`; the handler never runs. Unknown body and query fields are ignored.
+- **Responses are validated** against the entry's response schema; a body that does not match is logged and answered `500 { "code": "internal_error", "error": "Response validation failed" }`.
+- An unexpected error inside a handler is answered as Fastify answers it: `500 { "statusCode", "code"?, "error", "message" }`.
+- **`GET /openapi.json`** serves the OpenAPI 3.1 document generated from the catalog (no auth). The same document ships as `@karmaniverous/jeeves-runner-core/openapi.json`.
+- From TypeScript, call the API with `@karmaniverous/jeeves-runner-sdk` (`createRunnerClient({ baseUrl })`): one typed method per entry, named as in the entry headings below.
+
 ---
 
 ## Service Status
@@ -156,9 +164,9 @@ Get run history for a job.
 
 **Query Parameters:**
 
-| Parameter | Type     | Default | Description                      |
-| --------- | -------- | ------- | -------------------------------- |
-| `limit`   | `number` | `50`    | Maximum number of runs to return |
+| Parameter | Type             | Default | Description                      |
+| --------- | ---------------- | ------- | -------------------------------- |
+| `limit`   | positive integer | `50`    | Maximum number of runs to return |
 
 **Example:** `GET /jobs/sync-email/runs?limit=10`
 
@@ -188,7 +196,7 @@ Get run history for a job.
 
 ### `POST /jobs/:id/run`
 
-Manually trigger a job run. Blocks until the job completes.
+Manually trigger a job run. Blocks until the job completes (the SDK and the plugin wait up to 30 minutes; a client that gives up never stops the job).
 
 **Response (200):**
 
@@ -196,21 +204,26 @@ Manually trigger a job run. Blocks until the job completes.
 {
   "result": {
     "status": "ok",
-    "exit_code": 0,
-    "duration_ms": 5432,
-    "stdout": "Done",
-    "stderr": ""
+    "exitCode": 0,
+    "durationMs": 5432,
+    "tokens": null,
+    "resultMeta": null,
+    "stdoutTail": "Done",
+    "stderrTail": "",
+    "error": null
   }
 }
 ```
 
-**Response (404):**
+`status` is `ok`, `error` or `timeout`.
 
-```json
-{
-  "error": "Job 'nonexistent' not found"
-}
-```
+**Errors:**
+
+| Status | Body | When |
+| --- | --- | --- |
+| `404` | `{ "error": "Job not found: nonexistent" }` | No job with that id |
+| `409` | `{ "error": "Max concurrency reached" }` | The runner is at `maxConcurrency`; the trigger is refused and not recorded as a run |
+| `500` | `{ "error": "<message>" }` | Any other failure |
 
 ### `POST /jobs`
 
@@ -329,9 +342,9 @@ Non-claiming read of pending items.
 
 **Query Parameters:**
 
-| Parameter | Type     | Default | Description             |
-| --------- | -------- | ------- | ----------------------- |
-| `limit`   | `number` | `10`    | Maximum items to return |
+| Parameter | Type             | Default | Description             |
+| --------- | ---------------- | ------- | ----------------------- |
+| `limit`   | positive integer | `10`    | Maximum items to return |
 
 **Response:**
 
@@ -379,7 +392,15 @@ Read scalar state for a namespace as a key-value map. Supports optional `?path=`
 
 ### `GET /state/:namespace/:key`
 
-Read a scalar value and its collection items. Supports optional `?path=` JSONPath filtering.
+Read a scalar value and its collection items.
+
+**Query Parameters:**
+
+| Parameter | Type | Default | Description |
+| --- | --- | --- | --- |
+| `limit` | positive integer | `100` | Maximum items to return |
+| `order` | `asc` or `desc` | `desc` | Sort by last update |
+| `path` | string | - | JSONPath over the body; the response is then `{ "result": [...], "count": n }` |
 
 **Response:**
 

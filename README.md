@@ -6,11 +6,12 @@ Graph-aware job execution engine with SQLite state. Part of the [Jeeves platform
 
 ## Monorepo Structure
 
-This repository is a monorepo containing three packages:
+This repository is a monorepo containing four packages:
 
 | Package | npm | Description |
 | --- | --- | --- |
-| [`packages/core`](packages/core) | [`@karmaniverous/jeeves-runner-core`](https://www.npmjs.com/package/@karmaniverous/jeeves-runner-core) | Shared config schema, contracts and types |
+| [`packages/core`](packages/core) | [`@karmaniverous/jeeves-runner-core`](https://www.npmjs.com/package/@karmaniverous/jeeves-runner-core) | Endpoint catalog (`RUNNER_CATALOG`), OpenAPI document, config schema and types |
+| [`packages/sdk`](packages/sdk) | [`@karmaniverous/jeeves-runner-sdk`](https://www.npmjs.com/package/@karmaniverous/jeeves-runner-sdk) | Typed client for the HTTP API |
 | [`packages/service`](packages/service) | [`@karmaniverous/jeeves-runner`](https://www.npmjs.com/package/@karmaniverous/jeeves-runner) | Job execution engine |
 | [`packages/openclaw`](packages/openclaw) | [`@karmaniverous/jeeves-runner-openclaw`](https://www.npmjs.com/package/@karmaniverous/jeeves-runner-openclaw) | OpenClaw plugin |
 
@@ -160,7 +161,17 @@ The runner exposes a REST API. Default bind address: `0.0.0.0` (all interfaces),
 | `GET` | `/queues/:name/peek` | Non-claiming read of pending items |
 | `GET` | `/state` | List all state namespaces |
 | `GET` | `/state/:namespace` | Read scalar state (optional `?path=` JSONPath) |
-| `GET` | `/state/:namespace/:key` | Read collection items |
+| `GET` | `/state/:namespace/:key` | Read collection items (`?limit=N`, `?order=asc` or `desc`, `?path=` JSONPath) |
+| `GET` | `/openapi.json` | OpenAPI 3.1 document of the API (no auth) |
+
+Every route comes from the runner's endpoint catalog (`RUNNER_CATALOG` in `@karmaniverous/jeeves-runner-core`), which validates requests and responses. A request that fails validation gets `400 { error: 'Request validation failed', issues: [...] }`. `POST /jobs/:id/run` answers `404` for an unknown job, `409` at `maxConcurrency` and `500` for other failures. From TypeScript, call the API with [`@karmaniverous/jeeves-runner-sdk`](packages/sdk):
+
+```typescript
+import { createRunnerClient } from '@karmaniverous/jeeves-runner-sdk';
+
+const runner = createRunnerClient({ baseUrl: 'http://127.0.0.1:1937' });
+const { result } = await runner.triggerJob({ id: 'poll-email' });
+```
 
 ### Example response
 
@@ -471,7 +482,7 @@ npm run typecheck   # TypeScript (noEmit)
 
 ## Releasing
 
-Each package is released on its own with `npm run release` from its directory, in dependency order: **core first** (`packages/core`), then `packages/service`, then `packages/openclaw`. The service and plugin depend on `@karmaniverous/jeeves-runner-core` by range, and their `release-it` `before:init` hook runs `scripts/check-core-range.mjs`, which stops the release before any bump if that range does not admit the workspace core version. When core gets a new minor, raise the dependents' range (e.g. `^0.6.0`) after core is published, then release them.
+Each package is released on its own with `npm run release` from its directory, in dependency order: **core first** (`packages/core`), then `packages/sdk`, then `packages/service`, then `packages/openclaw`. The SDK, service and plugin depend on `@karmaniverous/jeeves-runner-core` by range, and the service and plugin also depend on `@karmaniverous/jeeves-runner-sdk` by range. Their `release-it` `before:init` hooks run `scripts/check-core-range.mjs` once per range (`--core ../sdk/package.json` for the SDK range), which stops the release before any bump if a range does not admit the workspace version. When core or the SDK gets a new version the range does not admit, raise the dependents' range (e.g. `^0.6.0`) after it is published, then release them.
 
 ## License
 
