@@ -172,6 +172,18 @@ const JOBS: WireScenario[] = [
   get('jobRuns limit fraction', '/jobs/alpha/runs?limit=1.5'),
   get('jobRuns limit trailing text', '/jobs/alpha/runs?limit=1abc'),
   get('jobRuns limit empty', '/jobs/alpha/runs?limit='),
+  get('jobRuns limit zero', '/jobs/alpha/runs?limit=0'),
+  get('jobRuns limit exponent', '/jobs/alpha/runs?limit=1e1'),
+  get('jobRuns fractional tokens and duration', '/jobs/alpha/runs', {
+    setup: (db) => {
+      db.exec('UPDATE runs SET tokens = 12.5, duration_ms = 10.5');
+    },
+  }),
+  get('jobDetail fractional timeout', '/jobs/alpha', {
+    setup: (db) => {
+      db.exec("UPDATE jobs SET timeout_ms = 1000.1 WHERE id = 'alpha'");
+    },
+  }),
   get('jobRuns repeated limit', '/jobs/alpha/runs?limit=1&limit=2'),
   get('jobRuns unknown query key', '/jobs/alpha/runs?colour=red'),
   get('jobRuns unknown job', '/jobs/nope/runs'),

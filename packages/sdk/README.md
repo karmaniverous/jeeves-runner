@@ -59,7 +59,7 @@ Every method is named after its catalog entry and takes one input object holding
 | `queryState` | `GET /state/:namespace` | `{ namespace, path? }` |
 | `queryCollection` | `GET /state/:namespace/:key` | `{ namespace, key, limit?, order?, path? }` |
 
-Responses are the bodies the routes send: job and run rows are SQLite rows (snake_case, `enabled` as `0`/`1`, `env`/`args` as JSON text). The request and response types are exported (`RunnerInput<'createJob'>`, `RunnerResponse<'listJobs'>`, `JobRow`, `RunRow`, `RunResult`, ...).
+Responses are the bodies the routes send: job and run rows are SQLite rows (snake_case, `enabled` as `0`/`1`, `env`/`args` as JSON text). The request and response types are exported (`RunnerInput<'createJob'>`, `RunnerResponse<'listJobs'>`, `JobRow`, `RunRow`, `RunResult`, ...). Responses are parsed against the schemas of the runner-core version the SDK was built with: fields a newer runner adds are dropped until you upgrade the SDK.
 
 ## Timeouts
 

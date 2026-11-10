@@ -1,6 +1,6 @@
 /**
  * @module api/wireBaseline.test
- * Wire freeze (DD#87): every scenario in `test/wire/scenarios` is replayed through the real server and must match, byte for byte, what 0.14.0-0 sent (`test/wire/wire-0.14.0-0.json`), except the approved departures in `test/wire/departures` (requests that fail a catalog schema now get jeeves' uniform 400).
+ * Wire freeze (DD#87): every scenario in `test/wire/scenarios` is replayed through the real server and must match, byte for byte, what 0.14.0-0 sent (`test/wire/wire-0.14.0-0.json`), except the approved departures in `test/wire/departures` (requests that fail a catalog schema now get jeeves' uniform 400; two `limit` spellings `parseInt` misread are now read as numbers).
  */
 
 import { readFileSync } from 'node:fs';
@@ -57,25 +57,37 @@ describe('routes keep the 0.14.0-0 wire format', () => {
   );
 });
 
-describe.skipIf(departing.length === 0)(
-  'approved departures (DD#87 item a)',
-  () => {
-    it.each(departing)(
-      '%s: uniform request-validation 400',
-      async (name, scenario, departure) => {
-        const received = await runScenario(wire, scenario);
-        // Still a change, or the departure is stale and must be removed.
-        expect(received).not.toEqual(baseline[name]);
-        expect(received.status).toBe(400);
-        expect(received.contentType).toBe('application/json; charset=utf-8');
-        const body = JSON.parse(received.body) as {
-          error: string;
-          issues: { slot: string; path: string[] }[];
-        };
-        expect(Object.keys(body)).toEqual(['error', 'issues']);
-        expect(body.error).toBe('Request validation failed');
-        expect(body.issues[0]).toMatchObject(departure.issue);
-      },
-    );
-  },
-);
+describe('approved departures (DD#87 item a)', () => {
+  const rereads = departing.filter(([, , d]) => !d.issue);
+  const refusals = departing.flatMap(([name, scenario, d]) =>
+    d.issue ? [[name, scenario, d.issue] as const] : [],
+  );
+
+  it.each(rereads)(
+    '%s: limit read by number coercion, still 200',
+    async (name, scenario) => {
+      const received = await runScenario(wire, scenario);
+      expect(received).not.toEqual(baseline[name]);
+      expect(received.status).toBe(200);
+      expect(baseline[name].status).toBe(200);
+    },
+  );
+
+  it.each(refusals)(
+    '%s: uniform request-validation 400',
+    async (name, scenario, issue) => {
+      const received = await runScenario(wire, scenario);
+      // Still a change, or the departure is stale and must be removed.
+      expect(received).not.toEqual(baseline[name]);
+      expect(received.status).toBe(400);
+      expect(received.contentType).toBe('application/json; charset=utf-8');
+      const body = JSON.parse(received.body) as {
+        error: string;
+        issues: { slot: string; path: string[] }[];
+      };
+      expect(Object.keys(body)).toEqual(['error', 'issues']);
+      expect(body.error).toBe('Request validation failed');
+      expect(body.issues[0]).toMatchObject(issue);
+    },
+  );
+});

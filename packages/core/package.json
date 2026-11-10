@@ -85,6 +85,7 @@
       "after:bump": [
         "npm install --package-lock-only --ignore-scripts",
         "npm run openapi",
+        "npm run build",
         "git add ../../package-lock.json openapi.json"
       ],
       "before:npm:release": [

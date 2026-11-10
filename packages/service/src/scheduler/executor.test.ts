@@ -83,6 +83,31 @@ describe('executeJob', () => {
     expect(result.tokens).toBe(42);
   });
 
+  it.each([
+    [{ tokens: 12.5, meta: 'm' }, 12.5, 'm'],
+    [{ tokens: '5', meta: 7 }, null, null],
+    [{ tokens: null, meta: { a: 1 } }, null, null],
+  ])(
+    'keeps only a numeric JR_RESULT token count and string meta (%j)',
+    async (payload, tokens, meta) => {
+      const script = join(testDir, 'typed-result.js');
+      writeFileSync(
+        script,
+        `console.log("JR_RESULT:" + ${JSON.stringify(JSON.stringify(payload))});`,
+      );
+
+      const result = await executeJob({
+        script,
+        dbPath: ':memory:',
+        jobId: 'test',
+        runId: 1,
+      });
+
+      expect(result.tokens).toBe(tokens);
+      expect(result.resultMeta).toBe(meta);
+    },
+  );
+
   it('should pass env vars to child process', async () => {
     const script = join(testDir, 'env.js');
     writeFileSync(

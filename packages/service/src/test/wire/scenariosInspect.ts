@@ -20,6 +20,14 @@ export const SCENARIOS_INSPECT: readonly WireScenario[] = [
   get('queuePeek limit not a number', '/queues/work/peek?limit=abc'),
   get('queuePeek limit empty', '/queues/work/peek?limit='),
   get('queuePeek limit zero', '/queues/work/peek?limit=0'),
+  get('queuePeek limit hex', '/queues/work/peek?limit=0x1'),
+  get('queuePeek fractional priority', '/queues/work/peek', {
+    setup: (db) => {
+      db.exec(
+        'UPDATE queue_items SET priority = 0.5 WHERE payload = \'{"n":1}\'',
+      );
+    },
+  }),
   get('queuePeek string payload', '/queues/other/peek', {
     setup: (db) => {
       db.exec(
@@ -54,6 +62,8 @@ export const SCENARIOS_INSPECT: readonly WireScenario[] = [
   get('queryCollection order other', '/state/email/threads?order=sideways'),
   get('queryCollection limit', '/state/email/threads?limit=2'),
   get('queryCollection limit not a number', '/state/email/threads?limit=x'),
+  get('queryCollection limit zero', '/state/email/threads?limit=0'),
+  get('queryCollection limit negative', '/state/email/threads?limit=-1'),
   get(
     'queryCollection jsonpath',
     '/state/email/threads?path=%24.items%5B*%5D.itemKey',

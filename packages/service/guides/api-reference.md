@@ -196,7 +196,7 @@ Get run history for a job.
 
 ### `POST /jobs/:id/run`
 
-Manually trigger a job run. Blocks until the job completes (the SDK and the plugin wait up to 30 minutes; a client that gives up never stops the job).
+Manually trigger a job run. Blocks until the job completes (the SDK's `triggerJob`, the plugin's `runner_trigger` and the CLI `trigger` wait up to 30 minutes, every other SDK call and tool 120 s; a client that gives up never stops the job).
 
 **Response (200):**
 

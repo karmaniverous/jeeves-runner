@@ -99,9 +99,15 @@ describe('package.json', () => {
     expect(pkg.exports['./openapi.json']).toBe('./openapi.json');
   });
 
-  it('regenerates openapi.json after each release bump', () => {
+  it('regenerates openapi.json after each release bump, then rebuilds', () => {
     expect(pkg.scripts.openapi).toBe('tsx scripts/write-openapi.ts');
-    expect(pkg['release-it'].hooks['after:bump']).toContain('npm run openapi');
+    const hooks = pkg['release-it'].hooks['after:bump'];
+    // dist inlines the document, so it must be rebuilt after regeneration
+    // or the published RUNNER_OPENAPI_DOCUMENT carries the old version.
+    expect(hooks.indexOf('npm run build')).toBeGreaterThan(
+      hooks.indexOf('npm run openapi'),
+    );
+    expect(hooks.indexOf('npm run openapi')).toBeGreaterThanOrEqual(0);
   });
 
   it('keeps runner-core free of Fastify and zod-openapi at runtime', () => {

@@ -103,6 +103,45 @@ describe('updateJob', () => {
   });
 });
 
+describe('rows SQLite stores as REAL still answer 200', () => {
+  it('a fractional timeout_seconds, then GET /jobs and /jobs/:id', async () => {
+    const created = await app.inject({
+      method: 'POST',
+      url: '/jobs',
+      payload: {
+        id: 'f',
+        name: 'F',
+        schedule: '0 * * * *',
+        script: '/s.js',
+        timeout_seconds: 1.0001,
+      },
+    });
+    expect(created.statusCode).toBe(201);
+    const list = await app.inject({ method: 'GET', url: '/jobs' });
+    expect(list.statusCode).toBe(200);
+    const detail = await app.inject({ method: 'GET', url: '/jobs/f' });
+    expect(detail.statusCode).toBe(200);
+    expect(
+      (JSON.parse(detail.body) as { job: { timeout_ms: number } }).job
+        .timeout_ms,
+    ).toBeCloseTo(1000.1);
+  });
+
+  it('fractional tokens and durations in run history, and a fractional priority', async () => {
+    testDb.db.exec(`
+      INSERT INTO jobs (id, name, schedule, script) VALUES ('r', 'R', '0 * * * *', '/s.js');
+      INSERT INTO runs (job_id, status, duration_ms, tokens, trigger) VALUES ('r', 'ok', 10.5, 12.5, 'manual');
+      INSERT INTO queue_items (queue_id, payload, status, priority) VALUES ('q', '1', 'pending', 0.5);
+    `);
+    const runs = await app.inject({ method: 'GET', url: '/jobs/r/runs' });
+    expect(runs.statusCode).toBe(200);
+    expect(runs.body).toContain('"tokens":12.5');
+    const peek = await app.inject({ method: 'GET', url: '/queues/q/peek' });
+    expect(peek.statusCode).toBe(200);
+    expect(peek.body).toContain('"priority":0.5');
+  });
+});
+
 describe('strict response validation (DD#87 item c)', () => {
   it('answers 500 when a row does not match its schema', async () => {
     // SQLite stores whatever it is given: a text `enabled` breaks the row

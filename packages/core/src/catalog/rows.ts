@@ -8,8 +8,14 @@ import { z } from 'zod';
 
 /** A nullable SQLite TEXT column. */
 const text = () => z.string().nullable();
-/** A nullable SQLite INTEGER column. */
+/** A nullable SQLite INTEGER column holding whole numbers (ids, flags, exit codes). */
 const integer = () => z.number().int().nullable();
+/**
+ * A nullable SQLite INTEGER column that can hold a fraction: SQLite keeps a
+ * non-integer number as REAL (e.g. `timeout_seconds: 1.5` stores 1500.0,
+ * a fractional queue priority stays fractional).
+ */
+const numeric = () => z.number().nullable();
 
 /** A `jobs` row as sent by `GET /jobs/:id` (column order). */
 export const jobRowSchema = z.object({
@@ -28,7 +34,7 @@ export const jobRowSchema = z.object({
   /** 1 enabled, 0 disabled. */
   enabled: integer(),
   /** Timeout in milliseconds. */
-  timeout_ms: integer(),
+  timeout_ms: numeric(),
   /** `skip` or `allow`. */
   overlap_policy: text(),
   /** Slack channel for failure alerts. */
@@ -70,11 +76,11 @@ export const runRowSchema = z.object({
   /** SQLite timestamp. */
   finished_at: text(),
   /** Duration in milliseconds. */
-  duration_ms: integer(),
+  duration_ms: numeric(),
   /** Process exit code. */
   exit_code: integer(),
-  /** Token count (session jobs). */
-  tokens: integer(),
+  /** Token count (session jobs, or `JR_RESULT`). */
+  tokens: numeric(),
   /** Result metadata. */
   result_meta: text(),
   /** Error message. */
@@ -139,7 +145,7 @@ export const queuePeekItemSchema = z.object({
   /** Parsed JSON payload. */
   payload: z.unknown(),
   /** Priority (higher first). */
-  priority: integer(),
+  priority: numeric(),
   /** SQLite timestamp. */
   createdAt: text(),
 });

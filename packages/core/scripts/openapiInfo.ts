@@ -27,6 +27,6 @@ export function openApiInfo(): OpenApiInfo {
     title: 'jeeves-runner',
     version: pkg.version,
     description:
-      'HTTP API of the jeeves-runner service: the routes in its endpoint catalog (RUNNER_CATALOG). The runner has no authentication; it binds to localhost by default.',
+      'HTTP API of the jeeves-runner service: the routes in its endpoint catalog (RUNNER_CATALOG). The API has no authentication and binds to all interfaces (0.0.0.0) by default: restrict `host` or firewall the port.',
   };
 }

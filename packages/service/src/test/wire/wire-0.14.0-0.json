@@ -314,6 +314,26 @@
     "contentType": "application/json; charset=utf-8",
     "body": "{\"statusCode\":500,\"code\":\"ERR_SQLITE_ERROR\",\"error\":\"Internal Server Error\",\"message\":\"datatype mismatch\"}"
   },
+  "jobRuns limit zero": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"runs\":[]}"
+  },
+  "jobRuns limit exponent": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"runs\":[{\"id\":2,\"job_id\":\"alpha\",\"status\":\"error\",\"started_at\":\"2026-01-05 10:00:00\",\"finished_at\":\"2026-01-05 10:00:01\",\"duration_ms\":1000,\"exit_code\":1,\"tokens\":12,\"result_meta\":\"meta\",\"error\":\"boom\",\"stdout_tail\":\"\",\"stderr_tail\":\"boom\",\"trigger\":\"manual\"}]}"
+  },
+  "jobRuns fractional tokens and duration": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"runs\":[{\"id\":2,\"job_id\":\"alpha\",\"status\":\"error\",\"started_at\":\"2026-01-05 10:00:00\",\"finished_at\":\"2026-01-05 10:00:01\",\"duration_ms\":10.5,\"exit_code\":1,\"tokens\":12.5,\"result_meta\":\"meta\",\"error\":\"boom\",\"stdout_tail\":\"\",\"stderr_tail\":\"boom\",\"trigger\":\"manual\"},{\"id\":1,\"job_id\":\"alpha\",\"status\":\"ok\",\"started_at\":\"2026-01-04 10:00:00\",\"finished_at\":\"2026-01-04 10:00:05\",\"duration_ms\":10.5,\"exit_code\":0,\"tokens\":12.5,\"result_meta\":null,\"error\":null,\"stdout_tail\":\"done\",\"stderr_tail\":\"\",\"trigger\":\"schedule\"}]}"
+  },
+  "jobDetail fractional timeout": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"job\":{\"id\":\"alpha\",\"name\":\"Alpha job\",\"schedule\":\"0 * * * *\",\"script\":\"/scripts/alpha.js\",\"type\":\"script\",\"description\":\"First job\",\"enabled\":1,\"timeout_ms\":1000.1,\"overlap_policy\":\"skip\",\"on_failure\":\"C-FAIL\",\"on_success\":null,\"created_at\":\"2026-01-01 00:00:00\",\"updated_at\":\"2026-01-02 00:00:00\",\"source_type\":\"path\",\"output_channel\":null,\"env\":\"{\\\"MODE\\\":\\\"wire\\\"}\",\"args\":\"[\\\"--fast\\\"]\"}}"
+  },
   "jobRuns repeated limit": {
     "status": 200,
     "contentType": "application/json; charset=utf-8",
@@ -378,6 +398,16 @@
     "status": 200,
     "contentType": "application/json; charset=utf-8",
     "body": "{\"items\":[]}"
+  },
+  "queuePeek limit hex": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"items\":[]}"
+  },
+  "queuePeek fractional priority": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"items\":[{\"id\":2,\"payload\":{\"n\":2},\"priority\":5,\"createdAt\":\"2026-01-02 00:00:00\"},{\"id\":1,\"payload\":{\"n\":1},\"priority\":0.5,\"createdAt\":\"2026-01-01 00:00:00\"}]}"
   },
   "queuePeek string payload": {
     "status": 200,
@@ -468,6 +498,16 @@
     "status": 500,
     "contentType": "application/json; charset=utf-8",
     "body": "{\"statusCode\":500,\"code\":\"ERR_SQLITE_ERROR\",\"error\":\"Internal Server Error\",\"message\":\"datatype mismatch\"}"
+  },
+  "queryCollection limit zero": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"value\":\"scalar\",\"items\":[],\"count\":0}"
+  },
+  "queryCollection limit negative": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"value\":\"scalar\",\"items\":[{\"itemKey\":\"t3\",\"value\":\"plain\",\"updatedAt\":\"2026-01-01 00:00:03\"},{\"itemKey\":\"t2\",\"value\":null,\"updatedAt\":\"2026-01-01 00:00:02\"},{\"itemKey\":\"t1\",\"value\":\"{\\\"subject\\\":\\\"a\\\"}\",\"updatedAt\":\"2026-01-01 00:00:01\"}],\"count\":3}"
   },
   "queryCollection jsonpath": {
     "status": 200,

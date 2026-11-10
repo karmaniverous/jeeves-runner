@@ -3,7 +3,7 @@
   "info": {
     "title": "jeeves-runner",
     "version": "0.6.0-0",
-    "description": "HTTP API of the jeeves-runner service: the routes in its endpoint catalog (RUNNER_CATALOG). The runner has no authentication; it binds to localhost by default."
+    "description": "HTTP API of the jeeves-runner service: the routes in its endpoint catalog (RUNNER_CATALOG). The API has no authentication and binds to all interfaces (0.0.0.0) by default: restrict `host` or firewall the port."
   },
   "paths": {
     "/status": {
@@ -299,15 +299,9 @@
                             ]
                           },
                           "timeout_ms": {
-                            "anyOf": [
-                              {
-                                "type": "integer",
-                                "minimum": -9007199254740991,
-                                "maximum": 9007199254740991
-                              },
-                              {
-                                "type": "null"
-                              }
+                            "type": [
+                              "number",
+                              "null"
                             ]
                           },
                           "overlap_policy": {
@@ -645,15 +639,9 @@
                           ]
                         },
                         "timeout_ms": {
-                          "anyOf": [
-                            {
-                              "type": "integer",
-                              "minimum": -9007199254740991,
-                              "maximum": 9007199254740991
-                            },
-                            {
-                              "type": "null"
-                            }
+                          "type": [
+                            "number",
+                            "null"
                           ]
                         },
                         "overlap_policy": {
@@ -1308,15 +1296,9 @@
                             ]
                           },
                           "duration_ms": {
-                            "anyOf": [
-                              {
-                                "type": "integer",
-                                "minimum": -9007199254740991,
-                                "maximum": 9007199254740991
-                              },
-                              {
-                                "type": "null"
-                              }
+                            "type": [
+                              "number",
+                              "null"
                             ]
                           },
                           "exit_code": {
@@ -1332,15 +1314,9 @@
                             ]
                           },
                           "tokens": {
-                            "anyOf": [
-                              {
-                                "type": "integer",
-                                "minimum": -9007199254740991,
-                                "maximum": 9007199254740991
-                              },
-                              {
-                                "type": "null"
-                              }
+                            "type": [
+                              "number",
+                              "null"
                             ]
                           },
                           "result_meta": {
@@ -1577,15 +1553,9 @@
                           },
                           "payload": {},
                           "priority": {
-                            "anyOf": [
-                              {
-                                "type": "integer",
-                                "minimum": -9007199254740991,
-                                "maximum": 9007199254740991
-                              },
-                              {
-                                "type": "null"
-                              }
+                            "type": [
+                              "number",
+                              "null"
                             ]
                           },
                           "createdAt": {
