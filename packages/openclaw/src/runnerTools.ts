@@ -15,11 +15,8 @@ import { registerInspectionTools } from './inspectionTools.js';
 import { registerManagementTools } from './managementTools.js';
 import {
   type BaseUrl,
-  JOB_ID_PARAM,
-  jobInput,
-  NO_PARAMS,
-  pick,
-  registerRunnerTool,
+  JOB_ID_ALIAS,
+  registerRunnerTools,
   type RunnerToolConfig,
 } from './toolHelpers.js';
 
@@ -32,52 +29,17 @@ export { TRIGGER_TIMEOUT_MS };
 
 /** Job listing, trigger, runs, detail, enable and disable tools. */
 const CORE_TOOLS: readonly RunnerToolConfig[] = [
-  {
-    name: 'runner_jobs',
-    entry: 'listJobs',
-    parameters: NO_PARAMS,
-    toInput: () => ({}),
-  },
+  { name: 'runner_jobs', entry: 'listJobs' },
   {
     name: 'runner_trigger',
     entry: 'triggerJob',
-    parameters: JOB_ID_PARAM,
-    toInput: jobInput,
+    aliases: JOB_ID_ALIAS,
     timeoutMs: TRIGGER_TIMEOUT_MS,
   },
-  {
-    name: 'runner_runs',
-    entry: 'jobRuns',
-    parameters: {
-      ...JOB_ID_PARAM,
-      properties: {
-        ...JOB_ID_PARAM.properties,
-        limit: {
-          type: 'number',
-          description: 'Maximum number of runs to return (default 50).',
-        },
-      },
-    },
-    toInput: (params) => ({ ...jobInput(params), ...pick(params, ['limit']) }),
-  },
-  {
-    name: 'runner_job_detail',
-    entry: 'jobDetail',
-    parameters: JOB_ID_PARAM,
-    toInput: jobInput,
-  },
-  {
-    name: 'runner_enable',
-    entry: 'enableJob',
-    parameters: JOB_ID_PARAM,
-    toInput: jobInput,
-  },
-  {
-    name: 'runner_disable',
-    entry: 'disableJob',
-    parameters: JOB_ID_PARAM,
-    toInput: jobInput,
-  },
+  { name: 'runner_runs', entry: 'jobRuns', aliases: JOB_ID_ALIAS },
+  { name: 'runner_job_detail', entry: 'jobDetail', aliases: JOB_ID_ALIAS },
+  { name: 'runner_enable', entry: 'enableJob', aliases: JOB_ID_ALIAS },
+  { name: 'runner_disable', entry: 'disableJob', aliases: JOB_ID_ALIAS },
 ];
 
 /**
@@ -90,7 +52,7 @@ export function registerRunnerCustomTools(
   api: PluginApi,
   baseUrl: BaseUrl,
 ): void {
-  for (const tool of CORE_TOOLS) registerRunnerTool(api, baseUrl, tool);
+  registerRunnerTools(api, baseUrl, CORE_TOOLS);
   registerManagementTools(api, baseUrl);
   registerInspectionTools(api, baseUrl);
 }

@@ -8,7 +8,13 @@ import type { PluginApi, ToolDescriptor } from '@karmaniverous/jeeves';
 import { RunnerError } from '@karmaniverous/jeeves-runner-sdk';
 import { describe, expect, it } from 'vitest';
 
-import { pick, registerRunnerTool, toolError } from './toolHelpers.js';
+import {
+  JOB_ID_ALIAS,
+  registerRunnerTool,
+  toolError,
+  toolInput,
+  toolParameters,
+} from './toolHelpers.js';
 
 describe('toolError', () => {
   it('passes anything but a RunnerError through fail()', () => {
@@ -64,8 +70,6 @@ describe('registerRunnerTool', () => {
     registerRunnerTool(api, () => 'not a url', {
       name: 'runner_jobs',
       entry: 'listJobs',
-      parameters: {},
-      toInput: () => ({}),
     });
     const result = await tool!.execute('t', {});
     expect(result).toEqual({
@@ -80,8 +84,51 @@ describe('registerRunnerTool', () => {
   });
 });
 
-describe('pick', () => {
-  it('copies only the defined parameters among the keys', () => {
-    expect(pick({ a: 1, b: undefined, c: 3 }, ['a', 'b'])).toEqual({ a: 1 });
+describe('toolParameters', () => {
+  it('requires only the fields a caller must send (not defaulted ones)', () => {
+    const params = toolParameters('createJob') as {
+      required: string[];
+      properties: { source_type: { default?: unknown } };
+    };
+    expect(params.required).toEqual(['id', 'name', 'schedule', 'script']);
+    expect(params.properties.source_type.default).toBe('path');
+  });
+
+  it('exposes aliased fields under the tool parameter name', () => {
+    const params = toolParameters('jobRuns', JOB_ID_ALIAS) as {
+      required: string[];
+      properties: { jobId: unknown; limit: { type?: string } };
+      additionalProperties: boolean;
+    };
+    expect(Object.keys(params.properties)).toEqual(['jobId', 'limit']);
+    expect(params.required).toEqual(['jobId']);
+    expect(params.properties.limit.type).toBe('integer');
+    expect(params.additionalProperties).toBe(false);
+  });
+
+  it('omits required when nothing is', () => {
+    expect(toolParameters('listJobs')).not.toHaveProperty('required');
+  });
+});
+
+describe('toolInput', () => {
+  it('reads aliased parameters and drops undefined and unknown ones', () => {
+    expect(
+      toolInput('jobRuns', JOB_ID_ALIAS, {
+        jobId: 'a',
+        limit: undefined,
+        colour: 'red',
+      }),
+    ).toEqual({ id: 'a' });
+  });
+
+  it('passes body fields through by name', () => {
+    expect(
+      toolInput('updateScript', JOB_ID_ALIAS, {
+        jobId: 'a',
+        script: 'x',
+        source_type: 'inline',
+      }),
+    ).toEqual({ id: 'a', script: 'x', source_type: 'inline' });
   });
 });

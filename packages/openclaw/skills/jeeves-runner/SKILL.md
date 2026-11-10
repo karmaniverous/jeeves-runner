@@ -367,7 +367,7 @@ Manually trigger a job by ID. Blocks until the job completes and returns the run
 Get recent run history for a job.
 
 - `jobId` (string, required)
-- `limit` (number, optional) — Max results, default 50
+- `limit` (positive integer, optional) — Max results, default 50
 
 #### `runner_job_detail`
 
@@ -448,7 +448,7 @@ Get queue depth, claimed count, failed count, and oldest item age.
 Non-claiming read of pending queue items (does not consume them).
 
 - `queueName` (string, required)
-- `limit` (number, optional) — Max items, default 10
+- `limit` (positive integer, optional) — Max items, default 10
 
 #### `runner_list_namespaces`
 
@@ -467,6 +467,9 @@ Read collection items for a state key within a namespace.
 
 - `namespace` (string, required)
 - `key` (string, required)
+- `limit` (positive integer, optional) - Max items, default 100
+- `order` (`asc` or `desc`, optional) - Sort by last update, default `desc`
+- `path` (string, optional) - JSONPath over the result
 
 ## RRStack Scheduling
 

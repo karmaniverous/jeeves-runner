@@ -1,5 +1,11 @@
 /**
- * Plugin baseline (DD#91, spec 4B.5 B7): the 16 runner tools keep the 0.12.0-0 names, descriptions and parameters, and every call sends the same requests and returns the same result text, errors included (`test/tools-0.12.0-0.json`, recorded against the 0.12.0-0 tools).
+ * Plugin baseline (DD#91, spec 4B.5 B7): the 16 runner tools keep the 0.12.0-0 names, descriptions, parameter names and required parameters, and every call sends the same requests and returns the same result text, errors included (`test/tools-0.12.0-0.json`, recorded against the 0.12.0-0 tools).
+ *
+ * Parameter schemas now come from the catalog (`catalogToolDefinition`), so
+ * they are stricter than the hand-written 0.12.0-0 ones (types, enums,
+ * `additionalProperties: false`, ...), and `runner_query_collection` gains
+ * the entry's `limit`, `order` and `path`: the approved deltas in
+ * {@link ADDED_PARAMETERS} and the PR.
  *
  * One request delta: `runner_trigger`, `runner_enable` and `runner_disable`
  * sent an empty JSON body `{}`; the SDK sends none, as their catalog entries
@@ -52,10 +58,47 @@ function expected(tool: string, record: ToolRecord | undefined): ToolRecord {
   };
 }
 
+/** Parameters a tool gains from its catalog entry (approved in the PR). */
+const ADDED_PARAMETERS: Readonly<Record<string, readonly string[]>> = {
+  runner_query_collection: ['limit', 'order', 'path'],
+};
+
+interface ParameterSchema {
+  properties: Record<string, unknown>;
+  required?: string[];
+}
+
 describe('runner tools keep the 0.12.0-0 surface', () => {
-  it('registers the same 16 tools with the same descriptions and parameters', () => {
-    expect(toolDefinitions()).toEqual(baseline.definitions);
+  const current = toolDefinitions();
+
+  it('registers the same 16 tools, in order, with the same descriptions', () => {
+    expect(
+      current.map(({ name, description }) => ({ name, description })),
+    ).toEqual(
+      baseline.definitions.map(({ name, description }) => ({
+        name,
+        description,
+      })),
+    );
   });
+
+  it.each(baseline.definitions.map((d) => [d.name, d] as const))(
+    '%s keeps its parameter names and required parameters',
+    (name, before) => {
+      const now = current.find((d) => d.name === name);
+      const was = before.parameters as ParameterSchema;
+      const is = now?.parameters as ParameterSchema;
+      expect(Object.keys(is.properties).sort()).toEqual(
+        [
+          ...Object.keys(was.properties),
+          ...(ADDED_PARAMETERS[name] ?? []),
+        ].sort(),
+      );
+      expect([...(is.required ?? [])].sort()).toEqual(
+        [...(was.required ?? [])].sort(),
+      );
+    },
+  );
 
   it('has a baseline for every scenario and no stale ones', () => {
     expect(Object.keys(baseline.records).sort()).toEqual(

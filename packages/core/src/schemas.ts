@@ -22,10 +22,7 @@ export const jobSchema = z.object({
   /** Script path or command to execute. */
   script: z.string(),
   /** Job execution type (script or session). */
-  type: z
-    .enum(['script', 'session'])
-    .default('script')
-    .describe('Job type: "script" (default) or "session".'),
+  type: z.enum(['script', 'session']).default('script'),
   /** Optional job description. */
   description: z.string().optional(),
   /** Whether the job is enabled for scheduling. */
@@ -146,7 +143,10 @@ export const createJobSchema = z.object({
     .enum(['path', 'inline'])
     .default('path')
     .describe('Script source: "path" (default) or "inline".'),
-  type: z.enum(['script', 'session']).default('script'),
+  type: z
+    .enum(['script', 'session'])
+    .default('script')
+    .describe('Job type: "script" (default) or "session".'),
   overlap_policy: z
     .enum(['skip', 'allow'])
     .default('skip')
