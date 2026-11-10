@@ -294,35 +294,33 @@ The runner parses this and stores the data in the `runs` table.
 
 ### Client library
 
-Job scripts use the `runScript()` wrapper and `getRunnerClient()` for lifecycle management and API access:
+Job scripts combine two packages: the runner exports `getRunnerClient()` (the SQLite state and queue API; reads `JR_DB_PATH`, which the executor sets) and the session dispatch helpers; the platform core, `@karmaniverous/jeeves`, exports `runScript()` and the general script utilities.
 
 ```typescript
-import { getRunnerClient, runScript } from '@karmaniverous/jeeves-runner';
+import { runScript } from '@karmaniverous/jeeves';
+import { getRunnerClient } from '@karmaniverous/jeeves-runner';
 
-await runScript(import.meta, async () => {
-  const client = getRunnerClient(); // HTTP client pointed at the running runner
-
-  // Use state API
-  await client.setState('my-namespace', 'lastRun', new Date().toISOString());
-
-  // Use queue API
-  await client.enqueue('my-queue', { url: 'https://example.com' });
+runScript('my-domain/my-script', () => {
+  const client = getRunnerClient();
+  try {
+    client.setState('my-namespace', 'lastRun', new Date().toISOString());
+    client.enqueue('my-queue', { url: 'https://example.com' });
+  } finally {
+    client.close();
+  }
 });
 ```
 
-The package exports a full suite of script helper utilities. See the [Script Helper Utilities Guide](packages/service/guides/script-helpers.md) for detailed API documentation and examples.
+See the [Script Helper Utilities Guide](packages/service/guides/script-helpers.md) for both sets of helpers.
 
-**Highlights:**
-
-| Module | Exports | Purpose |
+| Package | Exports | Purpose |
 | --- | --- | --- |
-| `run-script` | `runScript` | Crash-handling entry point wrapper |
-| `runner-client` | `getRunnerClient` | SQLite client factory (state + queue API) |
-| `fs-utils` | `readJson`, `writeJsonAtomic`, `appendJsonl`, `sleepMs`, `uuid`, ... | Filesystem, time, process, CLI utilities |
-| `shell` | `run`, `runWithRetry` | Synchronous command execution with retry |
-| `google-auth` | `createGoogleAuth` | OAuth refresh + service account impersonation |
-| `spawn-worker` | `dispatchSession`, `runDispatcher` | OpenClaw Gateway LLM session dispatch |
-| `slack-workspace` | `getChannelWorkspace`, `saveSlackWorkspaceCache` | Slack channel → workspace resolution |
+| `@karmaniverous/jeeves-runner` | `getRunnerClient` | SQLite client factory (state + queue API) |
+| `@karmaniverous/jeeves-runner` | `dispatchSession`, `runDispatcher` | OpenClaw Gateway LLM session dispatch |
+| `@karmaniverous/jeeves` | `runScript` | Crash-handling entry point wrapper |
+| `@karmaniverous/jeeves` | `readJson`, `writeJsonAtomic`, `appendJsonl`, `sleepMs`, `uuid`, ... | Filesystem, time, process, environment utilities |
+| `@karmaniverous/jeeves` | `run`, `runWithRetry` | Synchronous command execution with retry |
+| `@karmaniverous/jeeves` | `createGoogleAuth` | OAuth refresh + service account impersonation |
 
 ## Job Lifecycle
 

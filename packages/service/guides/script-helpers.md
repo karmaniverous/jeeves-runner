@@ -4,21 +4,20 @@ title: Script Helper Utilities
 
 # Script Helper Utilities
 
-`@karmaniverous/jeeves-runner` exports a suite of helper utilities designed for use in runner job scripts. These were hoisted from the scripts template repo so every scripts project can import them from the runner package directly.
+Runner job scripts use two packages:
 
-All utilities are exported from the package root:
+- **`@karmaniverous/jeeves-runner`** exports the runner-specific helpers: `getRunnerClient` (state and queue API), `dispatchSession` and `runDispatcher` (LLM session dispatch).
+- **`@karmaniverous/jeeves`** (the platform core) exports the general script utilities: `runScript`, the filesystem, process and environment helpers, `run`/`runWithRetry` and `createGoogleAuth`. They moved there from the runner; the runner does not re-export them.
 
 ```typescript
 import {
-  runScript,
-  getRunnerClient,
-  readJson,
-  writeJsonAtomic,
-  run,
   createGoogleAuth,
-  dispatchSession,
-  getChannelWorkspace,
-} from '@karmaniverous/jeeves-runner';
+  readJson,
+  run,
+  runScript,
+  writeJsonAtomic,
+} from '@karmaniverous/jeeves';
+import { dispatchSession, getRunnerClient } from '@karmaniverous/jeeves-runner';
 ```
 
 ---
@@ -30,7 +29,8 @@ import {
 Wrap your script's entry point with crash handling. On uncaught errors, appends a timestamped entry to `_crash.log` in `crashDir` and exits with code 1.
 
 ```typescript
-import { runScript, getRunnerClient } from '@karmaniverous/jeeves-runner';
+import { runScript } from '@karmaniverous/jeeves';
+import { getRunnerClient } from '@karmaniverous/jeeves-runner';
 
 runScript('email/poll-inbox', async () => {
   const jr = getRunnerClient();
@@ -67,7 +67,7 @@ Returns a `RunnerClient` with the full state/queue API (`getState`, `setState`, 
 
 ## Filesystem Utilities
 
-All from `fs-utils`:
+All from `@karmaniverous/jeeves`:
 
 ### Time & UUID
 
@@ -88,11 +88,7 @@ All from `fs-utils`:
 | `writeJsonl(path, entries)` | `void` | Overwrite file with array as JSONL |
 
 ```typescript
-import {
-  readJson,
-  writeJsonAtomic,
-  appendJsonl,
-} from '@karmaniverous/jeeves-runner';
+import { readJson, writeJsonAtomic, appendJsonl } from '@karmaniverous/jeeves';
 
 const cache = readJson('/path/to/cache.json', { items: [] });
 cache.items.push({ id: 'new', ts: Date.now() });
@@ -113,8 +109,9 @@ appendJsonl('/path/to/audit.jsonl', { action: 'poll', ts: Date.now() });
 | Function | Signature | Description |
 | --- | --- | --- |
 | `loadEnvFile(path)` | `void` | Load `.env`-style key=value into `process.env` |
-| `parseArgs(argv?)` | `Record<string, string>` | Parse `--key=value` args |
-| `getArg(argv, name, default)` | `string` | Get value following a named flag |
+| `parseRunnableArgs(argv, spec)` | `ParsedArgs` | Parse a script's command-line flags against a spec |
+
+jeeves' older `parseArgs` and `getArg` are deprecated (removed in jeeves 4.0.0); use `parseRunnableArgs`.
 
 ---
 
@@ -125,7 +122,7 @@ appendJsonl('/path/to/audit.jsonl', { action: 'poll', ts: Date.now() });
 Run a command synchronously and return trimmed stdout. Throws on non-zero exit.
 
 ```typescript
-import { run } from '@karmaniverous/jeeves-runner';
+import { run } from '@karmaniverous/jeeves';
 
 const output = run('git', ['log', '--oneline', '-5']);
 ```
@@ -137,7 +134,7 @@ const output = run('git', ['log', '--oneline', '-5']);
 Run with automatic retries on transient failures. Uses exponential backoff.
 
 ```typescript
-import { runWithRetry } from '@karmaniverous/jeeves-runner';
+import { runWithRetry } from '@karmaniverous/jeeves';
 
 const result = runWithRetry('curl', ['-s', 'https://api.example.com/data'], {
   retries: 3,
@@ -156,8 +153,8 @@ const result = runWithRetry('curl', ['-s', 'https://api.example.com/data'], {
 Create a Google API auth helper that supports both OAuth refresh tokens and service account impersonation (domain-wide delegation).
 
 ```typescript
-import { createGoogleAuth } from '@karmaniverous/jeeves-runner';
-import type { AccountConfig } from '@karmaniverous/jeeves-runner';
+import { createGoogleAuth } from '@karmaniverous/jeeves';
+import type { AccountConfig } from '@karmaniverous/jeeves';
 
 const auth = createGoogleAuth({
   clientCredentialsPath: '/config/credentials/google/client.json',
@@ -240,48 +237,13 @@ runDispatcher(
 
 ---
 
-## Slack Workspace Resolution
-
-### `getChannelWorkspace(channelId, token, options)`
-
-Resolve which Slack workspace owns a channel. Queries `conversations.info` and caches results to disk.
-
-```typescript
-import {
-  getChannelWorkspace,
-  saveSlackWorkspaceCache,
-} from '@karmaniverous/jeeves-runner';
-
-const teamId = await getChannelWorkspace('C0AGP3C8L2H', slackToken, {
-  cachePath: '/state/runner/slack-workspace-cache.json',
-  defaultWorkspace: 'T0AAD79ER2B',
-});
-
-// Flush cache to disk at end of script
-saveSlackWorkspaceCache();
-```
-
-**`SlackWorkspaceOptions` fields:**
-
-| Field              | Type     | Description                 |
-| ------------------ | -------- | --------------------------- |
-| `cachePath`        | `string` | Path to the cache JSON file |
-| `defaultWorkspace` | `string` | Fallback team ID            |
-
----
-
 ## Standard Script Pattern
 
 Putting it all together — a typical runner job script:
 
 ```typescript
-import {
-  getRunnerClient,
-  readJson,
-  run,
-  runScript,
-  writeJsonAtomic,
-} from '@karmaniverous/jeeves-runner';
+import { run, runScript, writeJsonAtomic } from '@karmaniverous/jeeves';
+import { getRunnerClient } from '@karmaniverous/jeeves-runner';
 
 runScript('domain/my-script', async () => {
   const jr = getRunnerClient();

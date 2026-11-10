@@ -46,7 +46,7 @@
     "node": ">=24.22.2"
   },
   "dependencies": {
-    "@karmaniverous/jeeves": "0.7.0",
+    "@karmaniverous/jeeves": "0.9.2",
     "@karmaniverous/jeeves-runner-core": "^0.6.0-0",
     "@karmaniverous/rrstack": "^0.17.1",
     "croner": "^10.0.1",
