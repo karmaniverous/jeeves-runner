@@ -9,89 +9,88 @@
  */
 
 import type { PluginApi } from '@karmaniverous/jeeves';
+import { TRIGGER_TIMEOUT_MS } from '@karmaniverous/jeeves-runner-sdk';
 
 import { registerInspectionTools } from './inspectionTools.js';
 import { registerManagementTools } from './managementTools.js';
 import {
-  catalogTool,
+  type BaseUrl,
   JOB_ID_PARAM,
-  jobPath,
-  registerApiTool,
+  jobInput,
+  NO_PARAMS,
+  pick,
+  registerRunnerTool,
+  type RunnerToolConfig,
 } from './toolHelpers.js';
 
 /**
- * Client timeout for `runner_trigger`. `POST /jobs/:id/run` answers only
- * when the job finishes, so the 2-minute fetch default would abort long
- * jobs client-side while they keep running. 30 minutes covers the
- * longest registered jobs; the job itself keeps its own timeout.
+ * Client timeout for `runner_trigger` (the SDK's `triggerJob` default, 30
+ * minutes, DD#79). `POST /jobs/:id/run` answers only when the job finishes;
+ * the job itself keeps its own timeout.
  */
-export const TRIGGER_TIMEOUT_MS = 30 * 60_000;
+export { TRIGGER_TIMEOUT_MS };
 
-/** Register the 16 custom runner_* tools (excludes runner_status). */
-export function registerRunnerCustomTools(
-  api: PluginApi,
-  baseUrl: string,
-): void {
-  const coreTools = [
-    catalogTool(
-      'listJobs',
-      'runner_jobs',
-      {
-        type: 'object',
-        properties: {},
-      },
-      () => ['/jobs'],
-    ),
-
-    {
-      ...catalogTool('triggerJob', 'runner_trigger', JOB_ID_PARAM, (params) => [
-        jobPath(params, '/run'),
-        {},
-      ]),
-      timeoutMs: TRIGGER_TIMEOUT_MS,
-    },
-
-    catalogTool(
-      'jobRuns',
-      'runner_runs',
-      {
-        ...JOB_ID_PARAM,
-        properties: {
-          ...JOB_ID_PARAM.properties,
-          limit: {
-            type: 'number',
-            description: 'Maximum number of runs to return (default 50).',
-          },
+/** Job listing, trigger, runs, detail, enable and disable tools. */
+const CORE_TOOLS: readonly RunnerToolConfig[] = [
+  {
+    name: 'runner_jobs',
+    entry: 'listJobs',
+    parameters: NO_PARAMS,
+    toInput: () => ({}),
+  },
+  {
+    name: 'runner_trigger',
+    entry: 'triggerJob',
+    parameters: JOB_ID_PARAM,
+    toInput: jobInput,
+    timeoutMs: TRIGGER_TIMEOUT_MS,
+  },
+  {
+    name: 'runner_runs',
+    entry: 'jobRuns',
+    parameters: {
+      ...JOB_ID_PARAM,
+      properties: {
+        ...JOB_ID_PARAM.properties,
+        limit: {
+          type: 'number',
+          description: 'Maximum number of runs to return (default 50).',
         },
       },
-      (params) => {
-        const query =
-          params.limit !== undefined
-            ? `?limit=${String(Number(params.limit))}`
-            : '';
-        return [jobPath(params, `/runs${query}`)];
-      },
-    ),
+    },
+    toInput: (params) => ({ ...jobInput(params), ...pick(params, ['limit']) }),
+  },
+  {
+    name: 'runner_job_detail',
+    entry: 'jobDetail',
+    parameters: JOB_ID_PARAM,
+    toInput: jobInput,
+  },
+  {
+    name: 'runner_enable',
+    entry: 'enableJob',
+    parameters: JOB_ID_PARAM,
+    toInput: jobInput,
+  },
+  {
+    name: 'runner_disable',
+    entry: 'disableJob',
+    parameters: JOB_ID_PARAM,
+    toInput: jobInput,
+  },
+];
 
-    catalogTool('jobDetail', 'runner_job_detail', JOB_ID_PARAM, (params) => [
-      jobPath(params),
-    ]),
-
-    catalogTool('enableJob', 'runner_enable', JOB_ID_PARAM, (params) => [
-      jobPath(params, '/enable'),
-      {},
-    ]),
-
-    catalogTool('disableJob', 'runner_disable', JOB_ID_PARAM, (params) => [
-      jobPath(params, '/disable'),
-      {},
-    ]),
-  ];
-
-  for (const tool of coreTools) {
-    registerApiTool(api, baseUrl, tool);
-  }
-
+/**
+ * Register the 16 custom runner_* tools (excludes runner_status).
+ *
+ * @param api - Plugin API.
+ * @param baseUrl - Runner URL, or a getter resolved on every call.
+ */
+export function registerRunnerCustomTools(
+  api: PluginApi,
+  baseUrl: BaseUrl,
+): void {
+  for (const tool of CORE_TOOLS) registerRunnerTool(api, baseUrl, tool);
   registerManagementTools(api, baseUrl);
   registerInspectionTools(api, baseUrl);
 }

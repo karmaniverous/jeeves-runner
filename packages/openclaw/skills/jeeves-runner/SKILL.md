@@ -321,7 +321,12 @@ On sessions after bootstrap is complete:
 | `GET` | `/queues/:name/peek` | Non-claiming read of pending items |
 | `GET` | `/state` | List all state namespaces |
 | `GET` | `/state/:namespace` | Read scalar state (optional `?path=` JSONPath) |
-| `GET` | `/state/:namespace/:key` | Read collection items |
+| `GET` | `/state/:namespace/:key` | Read collection items (`?limit=N` default 100, `?order=asc` or `desc`, `?path=` JSONPath) |
+| `GET` | `/openapi.json` | OpenAPI 3.1 document of every route above (no auth) |
+
+Every route is declared in the runner's endpoint catalog (`RUNNER_CATALOG` in `@karmaniverous/jeeves-runner-core`), which validates requests and responses. A request that fails validation (missing or malformed body field, a `limit` that is not a positive integer, an `order` other than `asc`/`desc`) gets `400 { error: 'Request validation failed', issues: [...] }`. `POST /jobs/:id/run` answers `404` for an unknown job, `409` when the runner is at `maxConcurrency` (refused, not recorded as a run) and `500` for any other failure.
+
+TypeScript code should call the API through `@karmaniverous/jeeves-runner-sdk` (`createRunnerClient({ baseUrl })`): typed methods named after the catalog entries, input validated before sending, every failure a `RunnerError` carrying the HTTP status. The plugin's tools and the CLI's `trigger` use it.
 
 ## Tools
 
@@ -353,7 +358,7 @@ List all jobs with enabled state, schedule, last run status, and last run time.
 
 #### `runner_trigger`
 
-Manually trigger a job by ID. Blocks until the job completes and returns the run result (status, duration, exit code).
+Manually trigger a job by ID. Blocks until the job completes and returns the run result (status, duration, exit code). The tool waits up to 30 minutes; a longer job keeps running to its own timeout. Failures come back as `Error: HTTP 404: ...` (unknown job), `Error: HTTP 409: ...` (runner at `maxConcurrency`; try later) or `Error: HTTP 500: ...`.
 
 - `jobId` (string, required)
 
@@ -612,19 +617,22 @@ Every script uses the `runScript()` wrapper from core for lifecycle management:
 import { runScript } from '@karmaniverous/jeeves';
 import { getRunnerClient } from '@karmaniverous/jeeves-runner';
 
-await runScript(import.meta, async () => {
+runScript('my-domain/my-script', () => {
   const client = getRunnerClient();
+  try {
+    // Use state API
+    client.setState('my-namespace', 'lastRun', new Date().toISOString());
 
-  // Use state API
-  await client.setState('my-namespace', 'lastRun', new Date().toISOString());
-
-  // Use queue API
-  await client.enqueue('my-queue', { url: 'https://example.com' });
+    // Use queue API
+    client.enqueue('my-queue', { url: 'https://example.com' });
+  } finally {
+    client.close();
+  }
 });
 ```
 
 - `runScript()` handles error reporting and exit codes (imported from `@karmaniverous/jeeves`, not the runner package).
-- `getRunnerClient()` returns an HTTP client pointed at the running runner API (imported from `@karmaniverous/jeeves-runner`, not core).
+- `getRunnerClient()` returns a synchronous SQLite client on the runner database (`JR_DB_PATH`, set by the executor) for state and queue operations (imported from `@karmaniverous/jeeves-runner`, not core). To call the HTTP API instead, use `@karmaniverous/jeeves-runner-sdk`.
 - State and queue APIs are available for cross-job coordination.
 - Script utilities (`runScript`, `fsUtils`, `shell`, `googleAuth`, `slackWorkspace`) are hoisted to `@karmaniverous/jeeves` core — import them from there.
 

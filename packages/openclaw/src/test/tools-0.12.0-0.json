@@ -19,9 +19,7 @@
             "description": "The job ID."
           }
         },
-        "required": [
-          "jobId"
-        ]
+        "required": ["jobId"]
       }
     },
     {
@@ -39,9 +37,7 @@
             "description": "Maximum number of runs to return (default 50)."
           }
         },
-        "required": [
-          "jobId"
-        ]
+        "required": ["jobId"]
       }
     },
     {
@@ -55,9 +51,7 @@
             "description": "The job ID."
           }
         },
-        "required": [
-          "jobId"
-        ]
+        "required": ["jobId"]
       }
     },
     {
@@ -71,9 +65,7 @@
             "description": "The job ID."
           }
         },
-        "required": [
-          "jobId"
-        ]
+        "required": ["jobId"]
       }
     },
     {
@@ -87,9 +79,7 @@
             "description": "The job ID."
           }
         },
-        "required": [
-          "jobId"
-        ]
+        "required": ["jobId"]
       }
     },
     {
@@ -162,12 +152,7 @@
             }
           }
         },
-        "required": [
-          "id",
-          "name",
-          "schedule",
-          "script"
-        ]
+        "required": ["id", "name", "schedule", "script"]
       }
     },
     {
@@ -240,9 +225,7 @@
             }
           }
         },
-        "required": [
-          "jobId"
-        ]
+        "required": ["jobId"]
       }
     },
     {
@@ -256,9 +239,7 @@
             "description": "The job ID."
           }
         },
-        "required": [
-          "jobId"
-        ]
+        "required": ["jobId"]
       }
     },
     {
@@ -280,10 +261,7 @@
             "description": "Script source: \"path\" or \"inline\"."
           }
         },
-        "required": [
-          "jobId",
-          "script"
-        ]
+        "required": ["jobId", "script"]
       }
     },
     {
@@ -305,9 +283,7 @@
             "description": "Queue name to inspect."
           }
         },
-        "required": [
-          "queueName"
-        ]
+        "required": ["queueName"]
       }
     },
     {
@@ -325,9 +301,7 @@
             "description": "Maximum items to return (default 10)."
           }
         },
-        "required": [
-          "queueName"
-        ]
+        "required": ["queueName"]
       }
     },
     {
@@ -353,9 +327,7 @@
             "description": "Optional JSONPath expression to filter results."
           }
         },
-        "required": [
-          "namespace"
-        ]
+        "required": ["namespace"]
       }
     },
     {
@@ -373,10 +345,7 @@
             "description": "Collection key within the namespace."
           }
         },
-        "required": [
-          "namespace",
-          "key"
-        ]
+        "required": ["namespace", "key"]
       }
     }
   ],
@@ -654,9 +623,7 @@
             "env": {
               "A": "1"
             },
-            "args": [
-              "--x"
-            ]
+            "args": ["--x"]
           }
         }
       ],

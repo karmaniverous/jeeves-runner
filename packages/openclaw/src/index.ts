@@ -1,7 +1,8 @@
 /**
  * OpenClaw plugin for jeeves-runner.
  *
- * Thin HTTP client — all operations delegate to the jeeves-runner service.
+ * Thin HTTP client: every runner tool calls the jeeves-runner service
+ * through `@karmaniverous/jeeves-runner-sdk`.
  * A standard OpenClaw plugin: it registers tools and ships its skill via the
  * manifest; it writes no workspace files. Installed by `jeeves install`.
  *
@@ -15,6 +16,7 @@ import {
   type PluginApi,
   RUNNER_PORT,
 } from '@karmaniverous/jeeves';
+import { RUNNER_CATALOG } from '@karmaniverous/jeeves-runner-core';
 
 import { createConfigRootGate } from './configRootGate.js';
 import { getApiUrl } from './helpers.js';
@@ -54,13 +56,13 @@ const descriptor: JeevesComponentDescriptor = {
  * work without it.
  */
 export default function register(api: PluginApi): void {
-  const baseUrl = getApiUrl(api);
   const gate = createConfigRootGate(api);
 
   // 4 standard tools from the core factory; gate only configRoot readers.
   // apiUrl is resolved lazily per call (same resolution as the custom tools).
   const standardTools = createPluginToolset(descriptor, {
     apiUrl: () => getApiUrl(api),
+    catalog: RUNNER_CATALOG,
   });
   for (const tool of standardTools) {
     const readsConfigRoot = CONFIG_ROOT_READERS[tool.name];
@@ -72,6 +74,7 @@ export default function register(api: PluginApi): void {
     );
   }
 
-  // 16 custom runner tools (HTTP only; excludes runner_status, now standard)
-  registerRunnerCustomTools(api, baseUrl);
+  // 16 custom runner tools on the SDK (HTTP only; excludes runner_status,
+  // now standard); apiUrl resolved per call, like the standard tools.
+  registerRunnerCustomTools(api, () => getApiUrl(api));
 }

@@ -1,82 +1,115 @@
 /**
- * Shared types and helpers for runner tool registration.
+ * Shared types and helpers for the runner's own tools: each tool calls one SDK method (`@karmaniverous/jeeves-runner-sdk`, DD#91) and keeps the 0.12.0-0 name, description, parameters and result text.
  *
  * @module toolHelpers
  */
 
 import {
   connectionFail,
-  fetchJson,
+  fail,
   ok,
   type PluginApi,
   type ToolResult,
 } from '@karmaniverous/jeeves';
+import { CatalogClientError } from '@karmaniverous/jeeves/catalog';
 import {
   RUNNER_CATALOG,
   type RunnerEntryName,
 } from '@karmaniverous/jeeves-runner-core';
+import {
+  type CallOptions,
+  createRunnerClient,
+  isRunnerError,
+  type RunnerError,
+} from '@karmaniverous/jeeves-runner-sdk';
 
 import { PLUGIN_ID } from './constants.js';
 
-/** Config for a runner API tool. */
-export interface ApiToolConfig {
+/** Base URL of the runner API, or a getter resolving it per call. */
+export type BaseUrl = string | (() => string);
+
+/** Config for a runner tool. */
+export interface RunnerToolConfig {
+  /** Tool name (unchanged since 0.12.0-0; renaming is #134). */
   name: string;
-  description: string;
+  /** Catalog entry the tool calls (its SDK method). */
+  entry: RunnerEntryName;
+  /** Tool parameters as JSON Schema (unchanged since 0.12.0-0). */
   parameters: Record<string, unknown>;
-  /** HTTP method override. Defaults to GET (no body) or POST (with body). */
-  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-  /** Build the request: return [endpoint, body?]. No body = GET. */
-  buildRequest: (params: Record<string, unknown>) => [string, unknown?];
-  /**
-   * Request timeout in ms. Defaults to jeeves `fetchJson`'s default
-   * (`DEFAULT_FETCH_TIMEOUT_MS`, 2 minutes).
-   */
+  /** Map tool parameters to the SDK method's input. */
+  toInput: (params: Record<string, unknown>) => Record<string, unknown>;
+  /** Timeout override for the call (default: the SDK's per-entry default). */
   timeoutMs?: number;
 }
 
-/** Register a single API tool with standard try/catch + ok/connectionFail. */
-export function registerApiTool(
+/**
+ * What failed under the SDK when no usable response arrived: the error
+ * `fetch` threw (its `cause` carries `ECONNREFUSED` etc.), the timeout abort
+ * or the JSON parse error, so tool results read as they did with `fetchJson`.
+ *
+ * @param error - A status-0 or non-JSON RunnerError.
+ * @returns The underlying error, or the RunnerError itself.
+ */
+function underlying(error: RunnerError): unknown {
+  const inner =
+    error.cause instanceof CatalogClientError ? error.cause.cause : error.cause;
+  return inner ?? error;
+}
+
+/**
+ * Tool result for a failed call, worded as the 0.12.0-0 tools worded it:
+ * `Error: HTTP <status>: <body as received>` for a non-2xx response, the
+ * connection guidance for an unreachable runner, `Error: <message>` for a
+ * timeout, a non-JSON body or anything else.
+ *
+ * @param error - What the SDK call threw.
+ * @param baseUrl - The runner URL the call used.
+ * @returns The error result.
+ */
+export function toolError(error: unknown, baseUrl: string): ToolResult {
+  if (!isRunnerError(error)) return fail(error);
+  if (error.status >= 300) {
+    const text = error.responseText ?? JSON.stringify(error.body ?? {});
+    return fail(new Error(`HTTP ${String(error.status)}: ${text}`));
+  }
+  if (error.issues !== undefined) return fail(error);
+  return connectionFail(underlying(error), baseUrl, PLUGIN_ID);
+}
+
+/**
+ * Register one runner tool.
+ *
+ * @param api - Plugin API.
+ * @param baseUrl - Runner URL, or a getter resolved on every call.
+ * @param config - Tool name, entry, parameters, input mapping and timeout.
+ */
+export function registerRunnerTool(
   api: PluginApi,
-  baseUrl: string,
-  config: ApiToolConfig,
+  baseUrl: BaseUrl,
+  config: RunnerToolConfig,
 ): void {
+  const resolveUrl = typeof baseUrl === 'string' ? () => baseUrl : baseUrl;
+  const call: CallOptions =
+    config.timeoutMs === undefined ? {} : { timeoutMs: config.timeoutMs };
   api.registerTool(
     {
       name: config.name,
-      description: config.description,
+      description: RUNNER_CATALOG.byName(config.entry).description,
       parameters: config.parameters,
       execute: async (
         _id: string,
         params: Record<string, unknown>,
       ): Promise<ToolResult> => {
+        const url = resolveUrl();
         try {
-          const [endpoint, body] = config.buildRequest(params);
-          const url = `${baseUrl}${endpoint}`;
-          const method = config.method;
-
-          const init: RequestInit | undefined =
-            method && method !== 'GET'
-              ? {
-                  method,
-                  ...(body !== undefined
-                    ? {
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(body),
-                      }
-                    : {}),
-                }
-              : undefined;
-
-          const data = await fetchJson(
-            url,
-            init,
-            config.timeoutMs === undefined
-              ? undefined
-              : { timeoutMs: config.timeoutMs },
-          );
-          return ok(data);
+          const client = createRunnerClient({ baseUrl: url });
+          const method = client[config.entry] as (
+            input: unknown,
+            options: CallOptions,
+          ) => Promise<unknown>;
+          return ok(await method(config.toInput(params), call));
         } catch (error) {
-          return connectionFail(error, baseUrl, PLUGIN_ID);
+          return toolError(error, url);
         }
       },
     },
@@ -93,29 +126,33 @@ export const JOB_ID_PARAM = {
   required: ['jobId'],
 } as const;
 
-/** URL-encode the jobId param for safe path interpolation. */
-export function jobPath(params: Record<string, unknown>, suffix = ''): string {
-  return `/jobs/${encodeURIComponent(String(params.jobId))}${suffix}`;
-}
+/** No parameters. */
+export const NO_PARAMS = { type: 'object', properties: {} } as const;
 
 /**
- * Build an ApiToolConfig from the endpoint catalog.
+ * SDK input `{ id }` from the `jobId` tool parameter.
  *
- * Derives method, description, and base path from `RUNNER_ENDPOINTS`.
- * The caller supplies the tool name, parameters, and request builder.
+ * @param params - Tool parameters.
+ * @returns The input.
  */
-export function catalogTool(
-  endpointName: RunnerEntryName,
-  toolName: string,
-  parameters: Record<string, unknown>,
-  buildRequest: ApiToolConfig['buildRequest'],
-): ApiToolConfig {
-  const ep = RUNNER_CATALOG.byName(endpointName);
-  return {
-    name: toolName,
-    description: ep.description,
-    parameters,
-    method: ep.method,
-    buildRequest,
-  };
+export const jobInput = (
+  params: Record<string, unknown>,
+): Record<string, unknown> => ({ id: params.jobId });
+
+/**
+ * Copy the defined parameters among `keys`.
+ *
+ * @param params - Tool parameters.
+ * @param keys - Parameter names to copy.
+ * @returns The defined ones.
+ */
+export function pick(
+  params: Record<string, unknown>,
+  keys: readonly string[],
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const key of keys) {
+    if (params[key] !== undefined) out[key] = params[key];
+  }
+  return out;
 }

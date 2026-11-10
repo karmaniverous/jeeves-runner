@@ -6,124 +6,114 @@
 
 import type { PluginApi } from '@karmaniverous/jeeves';
 
-import { catalogTool, registerApiTool } from './toolHelpers.js';
+import {
+  type BaseUrl,
+  NO_PARAMS,
+  pick,
+  registerRunnerTool,
+  type RunnerToolConfig,
+} from './toolHelpers.js';
 
-/** URL-encode a path segment for safe interpolation. */
-function enc(value: unknown): string {
-  return encodeURIComponent(String(value));
-}
-
-/** Register queue and state inspection tools. */
-export function registerInspectionTools(api: PluginApi, baseUrl: string): void {
-  const tools = [
-    catalogTool(
-      'listQueues',
-      'runner_list_queues',
-      {
-        type: 'object',
-        properties: {},
-      },
-      () => ['/queues'],
-    ),
-
-    catalogTool(
-      'queueStatus',
-      'runner_queue_status',
-      {
-        type: 'object',
-        properties: {
-          queueName: {
-            type: 'string',
-            description: 'Queue name to inspect.',
-          },
+/** Queue and state tools. */
+const INSPECTION_TOOLS: readonly RunnerToolConfig[] = [
+  {
+    name: 'runner_list_queues',
+    entry: 'listQueues',
+    parameters: NO_PARAMS,
+    toInput: () => ({}),
+  },
+  {
+    name: 'runner_queue_status',
+    entry: 'queueStatus',
+    parameters: {
+      type: 'object',
+      properties: {
+        queueName: {
+          type: 'string',
+          description: 'Queue name to inspect.',
         },
-        required: ['queueName'],
       },
-      (params) => [`/queues/${enc(params.queueName)}/status`],
-    ),
-
-    catalogTool(
-      'queuePeek',
-      'runner_queue_peek',
-      {
-        type: 'object',
-        properties: {
-          queueName: {
-            type: 'string',
-            description: 'Queue name to peek.',
-          },
-          limit: {
-            type: 'number',
-            description: 'Maximum items to return (default 10).',
-          },
+      required: ['queueName'],
+    },
+    toInput: (params) => ({ name: params.queueName }),
+  },
+  {
+    name: 'runner_queue_peek',
+    entry: 'queuePeek',
+    parameters: {
+      type: 'object',
+      properties: {
+        queueName: {
+          type: 'string',
+          description: 'Queue name to peek.',
         },
-        required: ['queueName'],
-      },
-      (params) => {
-        const query =
-          params.limit !== undefined
-            ? `?limit=${String(Number(params.limit))}`
-            : '';
-        return [`/queues/${enc(params.queueName)}/peek${query}`];
-      },
-    ),
-
-    catalogTool(
-      'listNamespaces',
-      'runner_list_namespaces',
-      {
-        type: 'object',
-        properties: {},
-      },
-      () => ['/state'],
-    ),
-
-    catalogTool(
-      'queryState',
-      'runner_query_state',
-      {
-        type: 'object',
-        properties: {
-          namespace: {
-            type: 'string',
-            description: 'State namespace to query.',
-          },
-          path: {
-            type: 'string',
-            description: 'Optional JSONPath expression to filter results.',
-          },
+        limit: {
+          type: 'number',
+          description: 'Maximum items to return (default 10).',
         },
-        required: ['namespace'],
       },
-      (params) => {
-        const query =
-          params.path !== undefined ? `?path=${enc(params.path)}` : '';
-        return [`/state/${enc(params.namespace)}${query}`];
-      },
-    ),
-
-    catalogTool(
-      'queryCollection',
-      'runner_query_collection',
-      {
-        type: 'object',
-        properties: {
-          namespace: {
-            type: 'string',
-            description: 'State namespace.',
-          },
-          key: {
-            type: 'string',
-            description: 'Collection key within the namespace.',
-          },
+      required: ['queueName'],
+    },
+    toInput: (params) => ({
+      name: params.queueName,
+      ...pick(params, ['limit']),
+    }),
+  },
+  {
+    name: 'runner_list_namespaces',
+    entry: 'listNamespaces',
+    parameters: NO_PARAMS,
+    toInput: () => ({}),
+  },
+  {
+    name: 'runner_query_state',
+    entry: 'queryState',
+    parameters: {
+      type: 'object',
+      properties: {
+        namespace: {
+          type: 'string',
+          description: 'State namespace to query.',
         },
-        required: ['namespace', 'key'],
+        path: {
+          type: 'string',
+          description: 'Optional JSONPath expression to filter results.',
+        },
       },
-      (params) => [`/state/${enc(params.namespace)}/${enc(params.key)}`],
-    ),
-  ];
+      required: ['namespace'],
+    },
+    toInput: (params) => pick(params, ['namespace', 'path']),
+  },
+  {
+    name: 'runner_query_collection',
+    entry: 'queryCollection',
+    parameters: {
+      type: 'object',
+      properties: {
+        namespace: {
+          type: 'string',
+          description: 'State namespace.',
+        },
+        key: {
+          type: 'string',
+          description: 'Collection key within the namespace.',
+        },
+      },
+      required: ['namespace', 'key'],
+    },
+    toInput: (params) => pick(params, ['namespace', 'key']),
+  },
+];
 
-  for (const tool of tools) {
-    registerApiTool(api, baseUrl, tool);
-  }
+/**
+ * Register queue and state inspection tools.
+ *
+ * @param api - Plugin API.
+ * @param baseUrl - Runner URL, or a getter resolved on every call.
+ */
+export function registerInspectionTools(
+  api: PluginApi,
+  baseUrl: BaseUrl,
+): void {
+  for (const tool of INSPECTION_TOOLS) registerRunnerTool(api, baseUrl, tool);
 }

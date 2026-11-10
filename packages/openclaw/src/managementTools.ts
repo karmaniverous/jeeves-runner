@@ -7,10 +7,12 @@
 import type { PluginApi } from '@karmaniverous/jeeves';
 
 import {
-  catalogTool,
+  type BaseUrl,
   JOB_ID_PARAM,
-  jobPath,
-  registerApiTool,
+  jobInput,
+  pick,
+  registerRunnerTool,
+  type RunnerToolConfig,
 } from './toolHelpers.js';
 
 /** Shared mutable-field properties for create/update job schemas. */
@@ -67,86 +69,80 @@ const JOB_MUTABLE_FIELDS = {
   },
 } as const;
 
-/** Build the request body from params, stripping undefined values. */
-function buildJobBody(
-  params: Record<string, unknown>,
-): Record<string, unknown> {
-  const body: Record<string, unknown> = {};
-  for (const key of Object.keys(JOB_MUTABLE_FIELDS)) {
-    if (params[key] !== undefined) {
-      body[key] = params[key];
-    }
-  }
-  return body;
-}
+/** Names of the mutable job fields. */
+const MUTABLE_KEYS = Object.keys(JOB_MUTABLE_FIELDS);
 
-/** Register job management tools (create, update, delete, update_script). */
-export function registerManagementTools(api: PluginApi, baseUrl: string): void {
-  const tools = [
-    catalogTool(
-      'createJob',
-      'runner_create_job',
-      {
-        type: 'object',
-        properties: {
-          id: { type: 'string', description: 'Unique job identifier.' },
-          ...JOB_MUTABLE_FIELDS,
+/** Create, update, delete and script update tools. */
+const MANAGEMENT_TOOLS: readonly RunnerToolConfig[] = [
+  {
+    name: 'runner_create_job',
+    entry: 'createJob',
+    parameters: {
+      type: 'object',
+      properties: {
+        id: { type: 'string', description: 'Unique job identifier.' },
+        ...JOB_MUTABLE_FIELDS,
+      },
+      required: ['id', 'name', 'schedule', 'script'],
+    },
+    toInput: (params) => ({ id: params.id, ...pick(params, MUTABLE_KEYS) }),
+  },
+  {
+    name: 'runner_update_job',
+    entry: 'updateJob',
+    parameters: {
+      type: 'object',
+      properties: {
+        ...JOB_ID_PARAM.properties,
+        ...JOB_MUTABLE_FIELDS,
+      },
+      required: ['jobId'],
+    },
+    toInput: (params) => ({
+      ...jobInput(params),
+      ...pick(params, MUTABLE_KEYS),
+    }),
+  },
+  {
+    name: 'runner_delete_job',
+    entry: 'deleteJob',
+    parameters: JOB_ID_PARAM,
+    toInput: jobInput,
+  },
+  {
+    name: 'runner_update_script',
+    entry: 'updateScript',
+    parameters: {
+      type: 'object',
+      properties: {
+        ...JOB_ID_PARAM.properties,
+        script: {
+          type: 'string',
+          description: 'New script path or inline content.',
         },
-        required: ['id', 'name', 'schedule', 'script'],
-      },
-      (params) => {
-        const body = { id: params.id, ...buildJobBody(params) };
-        return ['/jobs', body];
-      },
-    ),
-
-    catalogTool(
-      'updateJob',
-      'runner_update_job',
-      {
-        type: 'object',
-        properties: {
-          ...JOB_ID_PARAM.properties,
-          ...JOB_MUTABLE_FIELDS,
+        source_type: {
+          type: 'string',
+          description: 'Script source: "path" or "inline".',
         },
-        required: ['jobId'],
       },
-      (params) => [jobPath(params), buildJobBody(params)],
-    ),
+      required: ['jobId', 'script'],
+    },
+    toInput: (params) => ({
+      ...jobInput(params),
+      ...pick(params, ['script', 'source_type']),
+    }),
+  },
+];
 
-    catalogTool('deleteJob', 'runner_delete_job', JOB_ID_PARAM, (params) => [
-      jobPath(params),
-    ]),
-
-    catalogTool(
-      'updateScript',
-      'runner_update_script',
-      {
-        type: 'object',
-        properties: {
-          ...JOB_ID_PARAM.properties,
-          script: {
-            type: 'string',
-            description: 'New script path or inline content.',
-          },
-          source_type: {
-            type: 'string',
-            description: 'Script source: "path" or "inline".',
-          },
-        },
-        required: ['jobId', 'script'],
-      },
-      (params) => {
-        const body: Record<string, unknown> = { script: params.script };
-        if (params.source_type !== undefined) {
-          body.source_type = params.source_type;
-        }
-        return [jobPath(params, '/script'), body];
-      },
-    ),
-  ];
-
-  for (const tool of tools) {
-    registerApiTool(api, baseUrl, tool);
-  }
+/**
+ * Register job management tools (create, update, delete, update_script).
+ *
+ * @param api - Plugin API.
+ * @param baseUrl - Runner URL, or a getter resolved on every call.
+ */
+export function registerManagementTools(
+  api: PluginApi,
+  baseUrl: BaseUrl,
+): void {
+  for (const tool of MANAGEMENT_TOOLS) registerRunnerTool(api, baseUrl, tool);
 }
