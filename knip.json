@@ -14,6 +14,7 @@
         "entry": ["*/**/*.test.!(*.*)"]
       }
     },
-    "packages/openclaw": {}
+    "packages/openclaw": {},
+    "packages/sdk": {}
   }
 }

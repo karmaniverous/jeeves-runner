@@ -1,0 +1,103 @@
+{
+  "name": "@karmaniverous/jeeves-runner-sdk",
+  "version": "0.1.0-0",
+  "author": "Jason Williscroft",
+  "description": "Typed TypeScript client for the jeeves-runner HTTP API: jobs, runs, manual triggers, queues, state and config, from the runner's endpoint catalog.",
+  "license": "BSD-3-Clause",
+  "type": "module",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      }
+    }
+  },
+  "types": "dist/index.d.ts",
+  "keywords": [
+    "jeeves-runner",
+    "job-runner",
+    "sdk",
+    "client"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/karmaniverous/jeeves-runner.git",
+    "directory": "packages/sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/karmaniverous/jeeves-runner/issues"
+  },
+  "homepage": "https://github.com/karmaniverous/jeeves-runner#readme",
+  "engines": {
+    "node": ">=24.22.2"
+  },
+  "dependencies": {
+    "@karmaniverous/jeeves": "0.9.2",
+    "@karmaniverous/jeeves-runner-core": "^0.6.0-0"
+  },
+  "devDependencies": {
+    "@dotenvx/dotenvx": "^2.35.0",
+    "@rollup/plugin-typescript": "^12.3.0",
+    "cross-env": "^10.1.0",
+    "release-it": "^21.1.1",
+    "rollup": "^4.64.6",
+    "tslib": "^2.8.1",
+    "vitest": "^5.1.0"
+  },
+  "scripts": {
+    "build": "rimraf dist && cross-env NO_COLOR=1 rollup --config rollup.config.ts --configPlugin @rollup/plugin-typescript",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "changelog": "git-cliff -o CHANGELOG.md",
+    "release": "dotenvx run -f .env.local -- release-it",
+    "release:pre": "dotenvx run -f .env.local -- release-it --no-git.requireBranch --github.preRelease --preRelease"
+  },
+  "release-it": {
+    "git": {
+      "changelog": "npx git-cliff --unreleased --strip header",
+      "commitMessage": "chore: release @karmaniverous/jeeves-runner-sdk v${version}",
+      "tagName": "sdk/${version}",
+      "requireBranch": "main"
+    },
+    "github": {
+      "release": true,
+      "releaseName": "${name.split('/').pop()}@${version}",
+      "releaseNotes": "npx git-cliff --tag sdk/${version} --unreleased --strip header"
+    },
+    "hooks": {
+      "before:init": [
+        "node ../../scripts/check-core-range.mjs"
+      ],
+      "after:init": [
+        "npm run lint",
+        "npm run typecheck",
+        "npm run test",
+        "npm run build"
+      ],
+      "after:bump": [
+        "npm install --package-lock-only --ignore-scripts"
+      ],
+      "before:npm:release": [
+        "npx git-cliff --tag sdk/${version} -o CHANGELOG.md",
+        "git add -A"
+      ],
+      "after:release": [
+        "git switch -c release/sdk/${version}",
+        "git push -u origin release/sdk/${version}",
+        "git switch ${branchName}"
+      ]
+    },
+    "npm": {
+      "publish": true
+    }
+  }
+}
