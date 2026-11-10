@@ -1,0 +1,467 @@
+{
+  "status": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"name\":\"runner\",\"version\":\"{version}\",\"uptime\":0,\"status\":\"healthy\",\"health\":{\"totalJobs\":2,\"running\":0,\"failedRegistrations\":0,\"okLastHour\":0,\"errorsLastHour\":0}}"
+  },
+  "status HEAD": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": ""
+  },
+  "status busy": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"name\":\"runner\",\"version\":\"{version}\",\"uptime\":0,\"status\":\"healthy\",\"health\":{\"totalJobs\":2,\"running\":1,\"failedRegistrations\":1,\"okLastHour\":1,\"errorsLastHour\":1}}"
+  },
+  "config full": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"port\":1937,\"host\":\"127.0.0.1\",\"dbPath\":\"./data/wire.sqlite\",\"maxConcurrency\":2,\"runRetentionDays\":30,\"stateCleanupIntervalMs\":3600000,\"shutdownGraceMs\":30000,\"reconcileIntervalMs\":60000,\"notifications\":{\"defaultOnFailure\":null,\"defaultOnSuccess\":null},\"logging\":{\"level\":\"info\"},\"gatewayUrl\":\"http://127.0.0.1:18789\",\"runners\":{}}"
+  },
+  "config jsonpath": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"result\":[1937],\"count\":1}"
+  },
+  "config jsonpath no match": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"result\":[],\"count\":0}"
+  },
+  "config invalid jsonpath": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"error\":\"Unclosed ( at character 3\"}"
+  },
+  "config unknown query key": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"port\":1937,\"host\":\"127.0.0.1\",\"dbPath\":\"./data/wire.sqlite\",\"maxConcurrency\":2,\"runRetentionDays\":30,\"stateCleanupIntervalMs\":3600000,\"shutdownGraceMs\":30000,\"reconcileIntervalMs\":60000,\"notifications\":{\"defaultOnFailure\":null,\"defaultOnSuccess\":null},\"logging\":{\"level\":\"info\"},\"gatewayUrl\":\"http://127.0.0.1:18789\",\"runners\":{}}"
+  },
+  "configApply patch": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"applied\":true,\"config\":{\"port\":1937,\"host\":\"127.0.0.1\",\"dbPath\":\"./data/wire.sqlite\",\"maxConcurrency\":3,\"runRetentionDays\":30,\"stateCleanupIntervalMs\":3600000,\"shutdownGraceMs\":30000,\"reconcileIntervalMs\":60000,\"notifications\":{\"defaultOnFailure\":null,\"defaultOnSuccess\":null},\"logging\":{\"level\":\"info\"},\"gatewayUrl\":\"http://127.0.0.1:18789\",\"runners\":{}}}"
+  },
+  "configApply replace": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"applied\":true,\"config\":{\"port\":1999,\"host\":\"0.0.0.0\",\"dbPath\":\"./data/runner.sqlite\",\"maxConcurrency\":4,\"runRetentionDays\":30,\"stateCleanupIntervalMs\":3600000,\"shutdownGraceMs\":30000,\"reconcileIntervalMs\":60000,\"notifications\":{\"defaultOnFailure\":null,\"defaultOnSuccess\":null},\"logging\":{\"level\":\"info\"},\"gatewayUrl\":\"http://127.0.0.1:18789\",\"runners\":{}}}"
+  },
+  "configApply invalid config": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"error\":\"Config validation failed\",\"issues\":[{\"expected\":\"number\",\"code\":\"invalid_type\",\"path\":[\"maxConcurrency\"],\"message\":\"Invalid input: expected number, received string\"}]}"
+  },
+  "configApply unknown key": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"applied\":true,\"config\":{\"port\":1937,\"host\":\"127.0.0.1\",\"dbPath\":\"./data/wire.sqlite\",\"maxConcurrency\":2,\"runRetentionDays\":9,\"stateCleanupIntervalMs\":3600000,\"shutdownGraceMs\":30000,\"reconcileIntervalMs\":60000,\"notifications\":{\"defaultOnFailure\":null,\"defaultOnSuccess\":null},\"logging\":{\"level\":\"info\"},\"gatewayUrl\":\"http://127.0.0.1:18789\",\"runners\":{}}}"
+  },
+  "configApply empty body": {
+    "status": 500,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"statusCode\":500,\"error\":\"Internal Server Error\",\"message\":\"Cannot convert undefined or null to object\"}"
+  },
+  "configApply non-object patch": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"applied\":true,\"config\":{\"port\":1937,\"host\":\"127.0.0.1\",\"dbPath\":\"./data/wire.sqlite\",\"maxConcurrency\":2,\"runRetentionDays\":30,\"stateCleanupIntervalMs\":3600000,\"shutdownGraceMs\":30000,\"reconcileIntervalMs\":60000,\"notifications\":{\"defaultOnFailure\":null,\"defaultOnSuccess\":null},\"logging\":{\"level\":\"info\"},\"gatewayUrl\":\"http://127.0.0.1:18789\",\"runners\":{}}}"
+  },
+  "configApply no body": {
+    "status": 500,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"statusCode\":500,\"error\":\"Internal Server Error\",\"message\":\"Cannot read properties of undefined (reading 'patch')\"}"
+  },
+  "listJobs": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"jobs\":[{\"id\":\"alpha\",\"name\":\"Alpha job\",\"schedule\":\"0 * * * *\",\"script\":\"/scripts/alpha.js\",\"type\":\"script\",\"description\":\"First job\",\"enabled\":1,\"timeout_ms\":60000,\"overlap_policy\":\"skip\",\"on_failure\":\"C-FAIL\",\"on_success\":null,\"created_at\":\"2026-01-01 00:00:00\",\"updated_at\":\"2026-01-02 00:00:00\",\"source_type\":\"path\",\"output_channel\":null,\"env\":\"{\\\"MODE\\\":\\\"wire\\\"}\",\"args\":\"[\\\"--fast\\\"]\",\"last_status\":\"error\",\"last_run\":\"2026-01-05 10:00:00\"},{\"id\":\"beta\",\"name\":\"Beta job\",\"schedule\":\"*/5 * * * *\",\"script\":\"console.log(1)\",\"type\":\"session\",\"description\":null,\"enabled\":0,\"timeout_ms\":null,\"overlap_policy\":\"allow\",\"on_failure\":null,\"on_success\":\"C-OK\",\"created_at\":\"2026-01-03 00:00:00\",\"updated_at\":\"2026-01-03 00:00:00\",\"source_type\":\"inline\",\"output_channel\":\"C-OUT\",\"env\":null,\"args\":null,\"last_status\":\"running\",\"last_run\":\"2026-01-06 10:00:00\"}]}"
+  },
+  "listJobs empty": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"jobs\":[]}"
+  },
+  "createJob minimal": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"ok\":true,\"id\":\"gamma\"}"
+  },
+  "createJob full": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"ok\":true,\"id\":\"delta\"}"
+  },
+  "createJob unknown key": {
+    "status": 201,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"ok\":true,\"id\":\"gamma\"}"
+  },
+  "createJob invalid body": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"error\":\"[\\n  {\\n    \\\"origin\\\": \\\"string\\\",\\n    \\\"code\\\": \\\"too_small\\\",\\n    \\\"minimum\\\": 1,\\n    \\\"inclusive\\\": true,\\n    \\\"path\\\": [\\n      \\\"name\\\"\\n    ],\\n    \\\"message\\\": \\\"Too small: expected string to have >=1 characters\\\"\\n  },\\n  {\\n    \\\"expected\\\": \\\"string\\\",\\n    \\\"code\\\": \\\"invalid_type\\\",\\n    \\\"path\\\": [\\n      \\\"schedule\\\"\\n    ],\\n    \\\"message\\\": \\\"Invalid input: expected string, received undefined\\\"\\n  },\\n  {\\n    \\\"expected\\\": \\\"string\\\",\\n    \\\"code\\\": \\\"invalid_type\\\",\\n    \\\"path\\\": [\\n      \\\"script\\\"\\n    ],\\n    \\\"message\\\": \\\"Invalid input: expected string, received undefined\\\"\\n  }\\n]\"}"
+  },
+  "createJob bad schedule": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"error\":\"Invalid cron expression: CronPattern: invalid configuration format ('every so often'), exactly five, six, or seven space separated parts are required.\"}"
+  },
+  "createJob duplicate id": {
+    "status": 500,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"statusCode\":500,\"code\":\"ERR_SQLITE_ERROR\",\"error\":\"Internal Server Error\",\"message\":\"UNIQUE constraint failed: jobs.id\"}"
+  },
+  "createJob no body": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"error\":\"[\\n  {\\n    \\\"expected\\\": \\\"object\\\",\\n    \\\"code\\\": \\\"invalid_type\\\",\\n    \\\"path\\\": [],\\n    \\\"message\\\": \\\"Invalid input: expected object, received undefined\\\"\\n  }\\n]\"}"
+  },
+  "jobDetail": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"job\":{\"id\":\"alpha\",\"name\":\"Alpha job\",\"schedule\":\"0 * * * *\",\"script\":\"/scripts/alpha.js\",\"type\":\"script\",\"description\":\"First job\",\"enabled\":1,\"timeout_ms\":60000,\"overlap_policy\":\"skip\",\"on_failure\":\"C-FAIL\",\"on_success\":null,\"created_at\":\"2026-01-01 00:00:00\",\"updated_at\":\"2026-01-02 00:00:00\",\"source_type\":\"path\",\"output_channel\":null,\"env\":\"{\\\"MODE\\\":\\\"wire\\\"}\",\"args\":\"[\\\"--fast\\\"]\"}}"
+  },
+  "jobDetail inline session job": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"job\":{\"id\":\"beta\",\"name\":\"Beta job\",\"schedule\":\"*/5 * * * *\",\"script\":\"console.log(1)\",\"type\":\"session\",\"description\":null,\"enabled\":0,\"timeout_ms\":null,\"overlap_policy\":\"allow\",\"on_failure\":null,\"on_success\":\"C-OK\",\"created_at\":\"2026-01-03 00:00:00\",\"updated_at\":\"2026-01-03 00:00:00\",\"source_type\":\"inline\",\"output_channel\":\"C-OUT\",\"env\":null,\"args\":null}}"
+  },
+  "jobDetail not found": {
+    "status": 404,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"error\":\"Job not found\"}"
+  },
+  "jobDetail encoded id": {
+    "status": 404,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"error\":\"Job not found\"}"
+  },
+  "updateJob": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"ok\":true}"
+  },
+  "updateJob empty body": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"ok\":true}"
+  },
+  "updateJob unknown key": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"ok\":true}"
+  },
+  "updateJob invalid body": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"error\":\"[\\n  {\\n    \\\"origin\\\": \\\"string\\\",\\n    \\\"code\\\": \\\"too_small\\\",\\n    \\\"minimum\\\": 1,\\n    \\\"inclusive\\\": true,\\n    \\\"path\\\": [\\n      \\\"name\\\"\\n    ],\\n    \\\"message\\\": \\\"Too small: expected string to have >=1 characters\\\"\\n  }\\n]\"}"
+  },
+  "updateJob bad schedule": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"error\":\"Invalid cron expression: CronPattern: invalid configuration format ('nope'), exactly five, six, or seven space separated parts are required.\"}"
+  },
+  "updateJob not found": {
+    "status": 404,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"error\":\"Job not found\"}"
+  },
+  "updateJob invalid body not found": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"error\":\"[\\n  {\\n    \\\"origin\\\": \\\"string\\\",\\n    \\\"code\\\": \\\"too_small\\\",\\n    \\\"minimum\\\": 1,\\n    \\\"inclusive\\\": true,\\n    \\\"path\\\": [\\n      \\\"name\\\"\\n    ],\\n    \\\"message\\\": \\\"Too small: expected string to have >=1 characters\\\"\\n  }\\n]\"}"
+  },
+  "updateJob no body": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"error\":\"[\\n  {\\n    \\\"expected\\\": \\\"object\\\",\\n    \\\"code\\\": \\\"invalid_type\\\",\\n    \\\"path\\\": [],\\n    \\\"message\\\": \\\"Invalid input: expected object, received undefined\\\"\\n  }\\n]\"}"
+  },
+  "deleteJob": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"ok\":true}"
+  },
+  "deleteJob not found": {
+    "status": 404,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"error\":\"Job not found\"}"
+  },
+  "enableJob": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"ok\":true}"
+  },
+  "enableJob no body": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"ok\":true}"
+  },
+  "enableJob body ignored": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"ok\":true}"
+  },
+  "enableJob not found": {
+    "status": 404,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"error\":\"Job not found\"}"
+  },
+  "disableJob": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"ok\":true}"
+  },
+  "disableJob not found": {
+    "status": 404,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"error\":\"Job not found\"}"
+  },
+  "updateScript": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"ok\":true}"
+  },
+  "updateScript with source_type": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"ok\":true}"
+  },
+  "updateScript invalid body": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"error\":\"[\\n  {\\n    \\\"origin\\\": \\\"string\\\",\\n    \\\"code\\\": \\\"too_small\\\",\\n    \\\"minimum\\\": 1,\\n    \\\"inclusive\\\": true,\\n    \\\"path\\\": [\\n      \\\"script\\\"\\n    ],\\n    \\\"message\\\": \\\"Too small: expected string to have >=1 characters\\\"\\n  }\\n]\"}"
+  },
+  "updateScript bad source_type": {
+    "status": 400,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"error\":\"[\\n  {\\n    \\\"code\\\": \\\"invalid_value\\\",\\n    \\\"values\\\": [\\n      \\\"path\\\",\\n      \\\"inline\\\"\\n    ],\\n    \\\"path\\\": [\\n      \\\"source_type\\\"\\n    ],\\n    \\\"message\\\": \\\"Invalid option: expected one of \\\\\\\"path\\\\\\\"|\\\\\\\"inline\\\\\\\"\\\"\\n  }\\n]\"}"
+  },
+  "updateScript not found": {
+    "status": 404,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"error\":\"Job not found\"}"
+  },
+  "triggerJob": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"result\":{\"status\":\"ok\",\"exitCode\":0,\"durationMs\":1234,\"tokens\":7,\"resultMeta\":\"meta\",\"stdoutTail\":\"out\",\"stderrTail\":\"\",\"error\":null}}"
+  },
+  "triggerJob no body": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"result\":{\"status\":\"ok\",\"exitCode\":0,\"durationMs\":1234,\"tokens\":7,\"resultMeta\":\"meta\",\"stdoutTail\":\"out\",\"stderrTail\":\"\",\"error\":null}}"
+  },
+  "triggerJob timeout result": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"result\":{\"status\":\"timeout\",\"exitCode\":null,\"durationMs\":5000,\"tokens\":null,\"resultMeta\":null,\"stdoutTail\":\"\",\"stderrTail\":\"\",\"error\":\"Job timed out after 5000ms\"}}"
+  },
+  "triggerJob not found": {
+    "status": 404,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"error\":\"Job not found: nope\"}"
+  },
+  "triggerJob at maxConcurrency": {
+    "status": 409,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"error\":\"Max concurrency reached\"}"
+  },
+  "triggerJob other error": {
+    "status": 500,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"error\":\"database is locked\"}"
+  },
+  "triggerJob non-Error rejection": {
+    "status": 500,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"error\":\"Unknown error\"}"
+  },
+  "jobRuns": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"runs\":[{\"id\":2,\"job_id\":\"alpha\",\"status\":\"error\",\"started_at\":\"2026-01-05 10:00:00\",\"finished_at\":\"2026-01-05 10:00:01\",\"duration_ms\":1000,\"exit_code\":1,\"tokens\":12,\"result_meta\":\"meta\",\"error\":\"boom\",\"stdout_tail\":\"\",\"stderr_tail\":\"boom\",\"trigger\":\"manual\"},{\"id\":1,\"job_id\":\"alpha\",\"status\":\"ok\",\"started_at\":\"2026-01-04 10:00:00\",\"finished_at\":\"2026-01-04 10:00:05\",\"duration_ms\":5000,\"exit_code\":0,\"tokens\":null,\"result_meta\":null,\"error\":null,\"stdout_tail\":\"done\",\"stderr_tail\":\"\",\"trigger\":\"schedule\"}]}"
+  },
+  "jobRuns limit": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"runs\":[{\"id\":2,\"job_id\":\"alpha\",\"status\":\"error\",\"started_at\":\"2026-01-05 10:00:00\",\"finished_at\":\"2026-01-05 10:00:01\",\"duration_ms\":1000,\"exit_code\":1,\"tokens\":12,\"result_meta\":\"meta\",\"error\":\"boom\",\"stdout_tail\":\"\",\"stderr_tail\":\"boom\",\"trigger\":\"manual\"}]}"
+  },
+  "jobRuns limit negative": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"runs\":[{\"id\":2,\"job_id\":\"alpha\",\"status\":\"error\",\"started_at\":\"2026-01-05 10:00:00\",\"finished_at\":\"2026-01-05 10:00:01\",\"duration_ms\":1000,\"exit_code\":1,\"tokens\":12,\"result_meta\":\"meta\",\"error\":\"boom\",\"stdout_tail\":\"\",\"stderr_tail\":\"boom\",\"trigger\":\"manual\"},{\"id\":1,\"job_id\":\"alpha\",\"status\":\"ok\",\"started_at\":\"2026-01-04 10:00:00\",\"finished_at\":\"2026-01-04 10:00:05\",\"duration_ms\":5000,\"exit_code\":0,\"tokens\":null,\"result_meta\":null,\"error\":null,\"stdout_tail\":\"done\",\"stderr_tail\":\"\",\"trigger\":\"schedule\"}]}"
+  },
+  "jobRuns limit not a number": {
+    "status": 500,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"statusCode\":500,\"code\":\"ERR_SQLITE_ERROR\",\"error\":\"Internal Server Error\",\"message\":\"datatype mismatch\"}"
+  },
+  "jobRuns limit fraction": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"runs\":[{\"id\":2,\"job_id\":\"alpha\",\"status\":\"error\",\"started_at\":\"2026-01-05 10:00:00\",\"finished_at\":\"2026-01-05 10:00:01\",\"duration_ms\":1000,\"exit_code\":1,\"tokens\":12,\"result_meta\":\"meta\",\"error\":\"boom\",\"stdout_tail\":\"\",\"stderr_tail\":\"boom\",\"trigger\":\"manual\"}]}"
+  },
+  "jobRuns limit trailing text": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"runs\":[{\"id\":2,\"job_id\":\"alpha\",\"status\":\"error\",\"started_at\":\"2026-01-05 10:00:00\",\"finished_at\":\"2026-01-05 10:00:01\",\"duration_ms\":1000,\"exit_code\":1,\"tokens\":12,\"result_meta\":\"meta\",\"error\":\"boom\",\"stdout_tail\":\"\",\"stderr_tail\":\"boom\",\"trigger\":\"manual\"}]}"
+  },
+  "jobRuns unknown job": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"runs\":[]}"
+  },
+  "unknown route": {
+    "status": 404,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"message\":\"Route GET:/nope not found\",\"error\":\"Not Found\",\"statusCode\":404}"
+  },
+  "listQueues": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"queues\":[\"broken\",\"other\",\"work\"]}"
+  },
+  "listQueues empty": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"queues\":[]}"
+  },
+  "queueStatus": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"depth\":2,\"claimedCount\":1,\"failedCount\":1,\"oldestAge\":\"{age}\"}"
+  },
+  "queueStatus unknown queue": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"depth\":0,\"claimedCount\":0,\"failedCount\":0,\"oldestAge\":null}"
+  },
+  "queuePeek": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"items\":[{\"id\":2,\"payload\":{\"n\":2},\"priority\":5,\"createdAt\":\"2026-01-02 00:00:00\"},{\"id\":1,\"payload\":{\"n\":1},\"priority\":0,\"createdAt\":\"2026-01-01 00:00:00\"}]}"
+  },
+  "queuePeek limit": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"items\":[{\"id\":2,\"payload\":{\"n\":2},\"priority\":5,\"createdAt\":\"2026-01-02 00:00:00\"}]}"
+  },
+  "queuePeek limit not a number": {
+    "status": 500,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"statusCode\":500,\"code\":\"ERR_SQLITE_ERROR\",\"error\":\"Internal Server Error\",\"message\":\"datatype mismatch\"}"
+  },
+  "queuePeek string payload": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"items\":[{\"id\":5,\"payload\":\"text\",\"priority\":0,\"createdAt\":\"2026-01-01 00:00:00\"}]}"
+  },
+  "queuePeek non-JSON payload": {
+    "status": 500,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"statusCode\":500,\"error\":\"Internal Server Error\",\"message\":\"Unexpected token 'o', \\\"not json\\\" is not valid JSON\"}"
+  },
+  "queuePeek unknown queue": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"items\":[]}"
+  },
+  "listNamespaces": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"namespaces\":[\"email\",\"x\"]}"
+  },
+  "listNamespaces empty": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"namespaces\":[]}"
+  },
+  "queryState": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"cursor\":null,\"lastPoll\":\"2026-01-01T00:00:00Z\",\"threads\":\"scalar\"}"
+  },
+  "queryState jsonpath": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"result\":[\"2026-01-01T00:00:00Z\"],\"count\":1}"
+  },
+  "queryState jsonpath all": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"result\":[null,\"2026-01-01T00:00:00Z\",\"scalar\"],\"count\":3}"
+  },
+  "queryState invalid jsonpath": {
+    "status": 500,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"statusCode\":500,\"error\":\"Internal Server Error\",\"message\":\"Unclosed ( at character 3\"}"
+  },
+  "queryState unknown namespace": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{}"
+  },
+  "queryState keys named result and count": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"count\":\"2\",\"result\":\"r\"}"
+  },
+  "queryCollection": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"value\":\"scalar\",\"items\":[{\"itemKey\":\"t3\",\"value\":\"plain\",\"updatedAt\":\"2026-01-01 00:00:03\"},{\"itemKey\":\"t2\",\"value\":null,\"updatedAt\":\"2026-01-01 00:00:02\"},{\"itemKey\":\"t1\",\"value\":\"{\\\"subject\\\":\\\"a\\\"}\",\"updatedAt\":\"2026-01-01 00:00:01\"}],\"count\":3}"
+  },
+  "queryCollection order asc": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"value\":\"scalar\",\"items\":[{\"itemKey\":\"t1\",\"value\":\"{\\\"subject\\\":\\\"a\\\"}\",\"updatedAt\":\"2026-01-01 00:00:01\"},{\"itemKey\":\"t2\",\"value\":null,\"updatedAt\":\"2026-01-01 00:00:02\"},{\"itemKey\":\"t3\",\"value\":\"plain\",\"updatedAt\":\"2026-01-01 00:00:03\"}],\"count\":3}"
+  },
+  "queryCollection order desc": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"value\":\"scalar\",\"items\":[{\"itemKey\":\"t3\",\"value\":\"plain\",\"updatedAt\":\"2026-01-01 00:00:03\"},{\"itemKey\":\"t2\",\"value\":null,\"updatedAt\":\"2026-01-01 00:00:02\"},{\"itemKey\":\"t1\",\"value\":\"{\\\"subject\\\":\\\"a\\\"}\",\"updatedAt\":\"2026-01-01 00:00:01\"}],\"count\":3}"
+  },
+  "queryCollection order other": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"value\":\"scalar\",\"items\":[{\"itemKey\":\"t3\",\"value\":\"plain\",\"updatedAt\":\"2026-01-01 00:00:03\"},{\"itemKey\":\"t2\",\"value\":null,\"updatedAt\":\"2026-01-01 00:00:02\"},{\"itemKey\":\"t1\",\"value\":\"{\\\"subject\\\":\\\"a\\\"}\",\"updatedAt\":\"2026-01-01 00:00:01\"}],\"count\":3}"
+  },
+  "queryCollection limit": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"value\":\"scalar\",\"items\":[{\"itemKey\":\"t3\",\"value\":\"plain\",\"updatedAt\":\"2026-01-01 00:00:03\"},{\"itemKey\":\"t2\",\"value\":null,\"updatedAt\":\"2026-01-01 00:00:02\"}],\"count\":2}"
+  },
+  "queryCollection limit not a number": {
+    "status": 500,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"statusCode\":500,\"code\":\"ERR_SQLITE_ERROR\",\"error\":\"Internal Server Error\",\"message\":\"datatype mismatch\"}"
+  },
+  "queryCollection jsonpath": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"result\":[\"t3\",\"t2\",\"t1\"],\"count\":3}"
+  },
+  "queryCollection jsonpath scalar": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"result\":[\"scalar\"],\"count\":1}"
+  },
+  "queryCollection all query fields": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"result\":[1],\"count\":1}"
+  },
+  "queryCollection scalar only": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"value\":\"2026-01-01T00:00:00Z\",\"items\":[],\"count\":0}"
+  },
+  "queryCollection unknown key": {
+    "status": 200,
+    "contentType": "application/json; charset=utf-8",
+    "body": "{\"value\":null,\"items\":[],\"count\":0}"
+  }
+}
