@@ -6,3 +6,6 @@ packages/core/openapi.json
 
 # Raw-read wire baseline fixtures (byte-compared by wireBaseline.test.ts)
 **/test/wire/*.json
+
+# Raw-read plugin tool baseline (compared by toolBaseline.test.ts)
+packages/openclaw/src/test/*.json
