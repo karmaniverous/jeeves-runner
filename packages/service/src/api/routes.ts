@@ -15,7 +15,7 @@ import {
   createStatusHandler,
   type JeevesComponentDescriptor,
 } from '@karmaniverous/jeeves';
-import { getEndpoint } from '@karmaniverous/jeeves-runner-core';
+import { RUNNER_CATALOG } from '@karmaniverous/jeeves-runner-core';
 import type { FastifyInstance } from 'fastify';
 
 import { JobNotFoundError, MaxConcurrencyError } from '../scheduler/errors.js';
@@ -81,7 +81,7 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
   });
 
   // Route paths reference RUNNER_ENDPOINTS catalog for consistency.
-  app.get(getEndpoint('status').path, async (_request, reply) => {
+  app.get(RUNNER_CATALOG.byName('status').path, async (_request, reply) => {
     const result = await statusHandler();
     return reply.status(result.status).send(result.body);
   });
@@ -101,7 +101,7 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
   );
 
   // --- GET /jobs ---
-  app.get(getEndpoint('listJobs').path, () => {
+  app.get(RUNNER_CATALOG.byName('listJobs').path, () => {
     const rows = db
       .prepare(
         `SELECT j.*,

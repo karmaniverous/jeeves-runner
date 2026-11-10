@@ -22,7 +22,10 @@ export const jobSchema = z.object({
   /** Script path or command to execute. */
   script: z.string(),
   /** Job execution type (script or session). */
-  type: z.enum(['script', 'session']).default('script'),
+  type: z
+    .enum(['script', 'session'])
+    .default('script')
+    .describe('Job type: "script" (default) or "session".'),
   /** Optional job description. */
   description: z.string().optional(),
   /** Whether the job is enabled for scheduling. */
@@ -63,33 +66,62 @@ export type Job = z.infer<typeof jobSchema>;
  */
 const jobFieldsBase = z.object({
   /** Human-readable job name. */
-  name: z.string().min(1),
+  name: z.string().min(1).describe('Human-readable job name.'),
   /** Cron or RRStack schedule expression. */
-  schedule: z.string().min(1),
+  schedule: z.string().min(1).describe('Cron or rrstack schedule expression.'),
   /** Script path or command to execute. */
-  script: z.string().min(1),
+  script: z
+    .string()
+    .min(1)
+    .describe('Script path (source_type=path) or inline script content.'),
   /** Script source type: 'path' (file path) or 'inline' (source code). */
-  source_type: z.enum(['path', 'inline']),
+  source_type: z
+    .enum(['path', 'inline'])
+    .describe('Script source: "path" (default) or "inline".'),
   /** Job execution type (script or session). */
-  type: z.enum(['script', 'session']),
+  type: z
+    .enum(['script', 'session'])
+    .describe('Job type: "script" (default) or "session".'),
   /** Timeout in seconds (converted to timeout_ms internally). */
-  timeout_seconds: z.number().positive(),
+  timeout_seconds: z
+    .number()
+    .positive()
+    .describe('Kill the job after this many seconds.'),
   /** Policy for handling overlapping job executions. */
-  overlap_policy: z.enum(['skip', 'allow']),
+  overlap_policy: z
+    .enum(['skip', 'allow'])
+    .describe('"skip" (default) or "allow" concurrent runs.'),
   /** Whether the job is enabled for scheduling. */
-  enabled: z.boolean(),
+  enabled: z.boolean().describe('Whether the job is enabled.'),
   /** Optional job description. */
-  description: z.string(),
+  description: z.string().describe('Job description.'),
   /** Slack channel ID for failure notifications. */
-  on_failure: z.string().nullable(),
+  on_failure: z
+    .string()
+    .nullable()
+    .describe('Slack channel ID for failure alerts.'),
   /** Slack channel ID for success notifications. */
-  on_success: z.string().nullable(),
+  on_success: z
+    .string()
+    .nullable()
+    .describe('Slack channel ID for success alerts.'),
   /** Output channel identifier for routing session results. */
-  output_channel: z.string().nullable(),
+  output_channel: z
+    .string()
+    .nullable()
+    .describe('Slack channel ID for stdout relay.'),
   /** Optional environment variables for script-type jobs. */
-  env: z.record(z.string(), z.string()),
+  env: z
+    .record(z.string(), z.string())
+    .describe(
+      'Environment variables for script-type jobs. Record<string, string> spread into spawn env alongside JR_* vars. Ignored for session jobs.',
+    ),
   /** Optional arguments for script-type jobs. */
-  args: z.array(z.string()),
+  args: z
+    .array(z.string())
+    .describe(
+      'Arguments for script-type jobs. String array appended after the script path in spawn. Ignored for session jobs.',
+    ),
 });
 
 /**
@@ -100,7 +132,7 @@ const jobFieldsBase = z.object({
  */
 export const createJobSchema = z.object({
   /** Unique job identifier. */
-  id: z.string().min(1),
+  id: z.string().min(1).describe('Unique job identifier.'),
   ...jobFieldsBase.partial({
     timeout_seconds: true,
     description: true,
@@ -110,10 +142,16 @@ export const createJobSchema = z.object({
     env: true,
     args: true,
   }).shape,
-  source_type: z.enum(['path', 'inline']).default('path'),
+  source_type: z
+    .enum(['path', 'inline'])
+    .default('path')
+    .describe('Script source: "path" (default) or "inline".'),
   type: z.enum(['script', 'session']).default('script'),
-  overlap_policy: z.enum(['skip', 'allow']).default('skip'),
-  enabled: z.boolean().default(true),
+  overlap_policy: z
+    .enum(['skip', 'allow'])
+    .default('skip')
+    .describe('"skip" (default) or "allow" concurrent runs.'),
+  enabled: z.boolean().default(true).describe('Whether the job is enabled.'),
 });
 
 /** Inferred CreateJob type from schema. */
@@ -138,9 +176,12 @@ export type UpdateJob = z.infer<typeof updateJobSchema>;
  */
 export const updateScriptSchema = z.object({
   /** New script content (path or inline source). */
-  script: z.string().min(1),
+  script: z.string().min(1).describe('New script path or inline content.'),
   /** Optional source type override. */
-  source_type: z.enum(['path', 'inline']).optional(),
+  source_type: z
+    .enum(['path', 'inline'])
+    .optional()
+    .describe('Script source: "path" or "inline".'),
 });
 
 /** Inferred UpdateScript type from schema. */

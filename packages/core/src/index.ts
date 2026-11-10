@@ -5,34 +5,42 @@
  * @packageDocumentation
  */
 
+// Endpoint catalog (DD#86, DD#88)
+export {
+  type JobListRow,
+  type JobRow,
+  RUNNER_CATALOG,
+  type RunnerCatalog,
+  type RunnerEntry,
+  type RunnerEntryName,
+  type RunnerHealth,
+  type RunnerInput,
+  type RunnerResponse,
+  type RunResult,
+  type RunRow,
+} from './catalog.js';
+export {
+  collectionBodySchema,
+  executionResultSchema,
+  jobListRowSchema,
+  jobRowSchema,
+  jsonPathResultSchema,
+  okResponseSchema,
+  queuePeekItemSchema,
+  queueStatusSchema,
+  runnerHealthSchema,
+  runRowSchema,
+  stateCollectionItemSchema,
+} from './catalog/rows.js';
+
 // Configuration
 export { type RunnerConfig, runnerConfigSchema } from './config.js';
 
-// Contracts (shared response types)
-export type {
-  CollectionResponse,
-  JobDetailResponse,
-  JobListItem,
-  JobsResponse,
-  NamespacesResponse,
-  QueuePeekItem,
-  QueuePeekResponse,
-  QueuesResponse,
-  QueueStatusResponse,
-  RunRecord,
-  RunsResponse,
-  StateCollectionItem,
-  StateResponse,
-} from './contracts.js';
-
-// Endpoints
-export type {
-  Endpoint,
-  EndpointDescriptor,
-  EndpointName,
-  HttpMethod,
-} from './endpoints.js';
-export { getEndpoint, RUNNER_ENDPOINTS } from './endpoints.js';
+// Deprecated (DD#86): response contracts and the endpoint list, superseded by
+// the catalog types above. `export *` because a named re-export of a
+// deprecated symbol fails `no-deprecated`; both modules export only these.
+export type * from './contracts.js';
+export * from './endpoints.js';
 
 // jeeves-scripts manifest mapping (DD#61, DD#62)
 export type {

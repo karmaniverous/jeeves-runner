@@ -1,33 +1,36 @@
 /**
- * Shared endpoint catalog — single source of truth for the jeeves-runner API.
+ * The original endpoint list of the jeeves-runner API (name, method, path,
+ * description), superseded by `RUNNER_CATALOG` and kept for existing
+ * consumers until a breaking core release (DD#86). A test holds the two in
+ * step by name, method and path.
  *
- * Both the CLI service and the OpenClaw plugin derive their registrations
- * from this declarative catalog, eliminating drift between the two.
+ * @remarks
+ * Only the deprecated aliases are exported, so the package entry re-exports
+ * this module with `export *` (a named re-export of a deprecated symbol fails
+ * `no-deprecated`); the list and its types are module-internal.
+ *
+ * @module endpoints
  */
 
+import { ENDPOINT_DESCRIPTIONS } from './descriptions.js';
+
 /** HTTP methods used by the API. */
-export type HttpMethod = 'DELETE' | 'GET' | 'PATCH' | 'POST' | 'PUT';
+type Method = 'DELETE' | 'GET' | 'PATCH' | 'POST' | 'PUT';
 
 /** Descriptor for a single API endpoint. */
-export interface EndpointDescriptor {
+interface Descriptor {
   /** Unique endpoint identifier (camelCase). */
   name: string;
   /** HTTP method. */
-  method: HttpMethod;
+  method: Method;
   /** URL path pattern (e.g. '/jobs/:id'). */
   path: string;
   /** Human-readable description of the endpoint's purpose. */
   description: string;
 }
 
-/**
- * Canonical endpoint catalog for the jeeves-runner API.
- *
- * Every entry describes a single HTTP endpoint exposed by the service.
- * Route handlers, plugin tools, and HTTP clients should reference these
- * descriptors rather than hard-coding paths and descriptions.
- */
-export const RUNNER_ENDPOINTS = [
+/** The endpoint list. */
+const ENDPOINTS = [
   {
     name: 'status',
     method: 'GET',
@@ -39,62 +42,61 @@ export const RUNNER_ENDPOINTS = [
     name: 'listJobs',
     method: 'GET',
     path: '/jobs',
-    description: 'List all jobs with last run status',
+    description: ENDPOINT_DESCRIPTIONS.listJobs,
   },
   {
     name: 'createJob',
     method: 'POST',
     path: '/jobs',
-    description: 'Create a new job',
+    description: ENDPOINT_DESCRIPTIONS.createJob,
   },
   {
     name: 'jobDetail',
     method: 'GET',
     path: '/jobs/:id',
-    description: 'Single job detail',
+    description: ENDPOINT_DESCRIPTIONS.jobDetail,
   },
   {
     name: 'updateJob',
     method: 'PATCH',
     path: '/jobs/:id',
-    description:
-      'Partial update of job config; omitted fields stay unchanged. Schedule changes on jeeves-scripts launcher jobs revert on the next sync-jobs (the manifest schedule is authoritative); change those in jeeves-scripts.json instead.',
+    description: ENDPOINT_DESCRIPTIONS.updateJob,
   },
   {
     name: 'deleteJob',
     method: 'DELETE',
     path: '/jobs/:id',
-    description: 'Remove a job and its runs',
+    description: ENDPOINT_DESCRIPTIONS.deleteJob,
   },
   {
     name: 'enableJob',
     method: 'PATCH',
     path: '/jobs/:id/enable',
-    description: 'Enable a job',
+    description: ENDPOINT_DESCRIPTIONS.enableJob,
   },
   {
     name: 'disableJob',
     method: 'PATCH',
     path: '/jobs/:id/disable',
-    description: 'Disable a job',
+    description: ENDPOINT_DESCRIPTIONS.disableJob,
   },
   {
     name: 'updateScript',
     method: 'PUT',
     path: '/jobs/:id/script',
-    description: 'Update job script (path or inline)',
+    description: ENDPOINT_DESCRIPTIONS.updateScript,
   },
   {
     name: 'triggerJob',
     method: 'POST',
     path: '/jobs/:id/run',
-    description: 'Trigger manual run',
+    description: ENDPOINT_DESCRIPTIONS.triggerJob,
   },
   {
     name: 'jobRuns',
     method: 'GET',
     path: '/jobs/:id/runs',
-    description: 'Run history (limit param)',
+    description: ENDPOINT_DESCRIPTIONS.jobRuns,
   },
   {
     name: 'config',
@@ -113,57 +115,97 @@ export const RUNNER_ENDPOINTS = [
     name: 'listQueues',
     method: 'GET',
     path: '/queues',
-    description: 'List all queue names',
+    description: ENDPOINT_DESCRIPTIONS.listQueues,
   },
   {
     name: 'queueStatus',
     method: 'GET',
     path: '/queues/:name/status',
-    description: 'Queue depth, claimed, failed, oldest age',
+    description: ENDPOINT_DESCRIPTIONS.queueStatus,
   },
   {
     name: 'queuePeek',
     method: 'GET',
     path: '/queues/:name/peek',
-    description: 'Peek at pending items (optional limit)',
+    description: ENDPOINT_DESCRIPTIONS.queuePeek,
   },
   {
     name: 'listNamespaces',
     method: 'GET',
     path: '/state',
-    description: 'List all state namespaces',
+    description: ENDPOINT_DESCRIPTIONS.listNamespaces,
   },
   {
     name: 'queryState',
     method: 'GET',
     path: '/state/:namespace',
-    description: 'Scalar state (optional JSONPath)',
+    description: ENDPOINT_DESCRIPTIONS.queryState,
   },
   {
     name: 'queryCollection',
     method: 'GET',
     path: '/state/:namespace/:key',
-    description: 'Collection items (optional JSONPath, limit, order)',
+    description: ENDPOINT_DESCRIPTIONS.queryCollection,
   },
-] as const satisfies readonly EndpointDescriptor[];
+] as const satisfies readonly Descriptor[];
 
 /** Union of all endpoint names. */
-export type EndpointName = (typeof RUNNER_ENDPOINTS)[number]['name'];
+type Name = (typeof ENDPOINTS)[number]['name'];
 
-/** Single entry from the catalog, narrowed by name. */
-export type Endpoint<N extends EndpointName> = Extract<
-  (typeof RUNNER_ENDPOINTS)[number],
+/** Single entry from the list, narrowed by name. */
+type EndpointOf<N extends Name> = Extract<
+  (typeof ENDPOINTS)[number],
   { name: N }
 >;
+
+/**
+ * HTTP methods used by the API.
+ *
+ * @deprecated Use `RUNNER_CATALOG` entries (`CatalogEntry['method']`).
+ */
+export type HttpMethod = Method;
+
+/**
+ * Descriptor for a single API endpoint.
+ *
+ * @deprecated Use `RUNNER_CATALOG` entries, which add schemas, auth and kind.
+ */
+export type EndpointDescriptor = Descriptor;
+
+/**
+ * Canonical endpoint catalog for the jeeves-runner API.
+ *
+ * Every entry describes a single HTTP endpoint exposed by the service.
+ *
+ * @deprecated Use `RUNNER_CATALOG` (same names, methods and paths, plus
+ *   request and response schemas). Removed in a future breaking core release.
+ */
+export const RUNNER_ENDPOINTS = ENDPOINTS;
+
+/**
+ * Union of all endpoint names.
+ *
+ * @deprecated Use `RunnerEntryName`.
+ */
+export type EndpointName = Name;
+
+/**
+ * Single entry from the catalog, narrowed by name.
+ *
+ * @deprecated Use `RunnerEntry<N>` or `RUNNER_CATALOG.byName(name)`.
+ */
+export type Endpoint<N extends Name> = EndpointOf<N>;
 
 /**
  * Look up an endpoint descriptor by name.
  *
  * @param name - The endpoint identifier.
- * @returns The matching {@link EndpointDescriptor}.
+ * @returns The matching descriptor.
+ * @throws Error when no endpoint has that name.
+ * @deprecated Use `RUNNER_CATALOG.byName(name)`.
  */
-export function getEndpoint<N extends EndpointName>(name: N): Endpoint<N> {
-  const ep = RUNNER_ENDPOINTS.find((e) => e.name === name);
+export function getEndpoint<N extends Name>(name: N): EndpointOf<N> {
+  const ep = ENDPOINTS.find((e) => e.name === name);
   if (!ep) throw new Error(`Unknown endpoint: ${name}`);
-  return ep as Endpoint<N>;
+  return ep as EndpointOf<N>;
 }

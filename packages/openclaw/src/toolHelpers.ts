@@ -12,8 +12,8 @@ import {
   type ToolResult,
 } from '@karmaniverous/jeeves';
 import {
-  type EndpointName,
-  getEndpoint,
+  RUNNER_CATALOG,
+  type RunnerEntryName,
 } from '@karmaniverous/jeeves-runner-core';
 
 import { PLUGIN_ID } from './constants.js';
@@ -105,12 +105,12 @@ export function jobPath(params: Record<string, unknown>, suffix = ''): string {
  * The caller supplies the tool name, parameters, and request builder.
  */
 export function catalogTool(
-  endpointName: EndpointName,
+  endpointName: RunnerEntryName,
   toolName: string,
   parameters: Record<string, unknown>,
   buildRequest: ApiToolConfig['buildRequest'],
 ): ApiToolConfig {
-  const ep = getEndpoint(endpointName);
+  const ep = RUNNER_CATALOG.byName(endpointName);
   return {
     name: toolName,
     description: ep.description,
