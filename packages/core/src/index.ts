@@ -33,6 +33,9 @@ export {
   stateCollectionItemSchema,
 } from './catalog/rows.js';
 
+// OpenAPI document generated from the catalog (DD#93)
+export { RUNNER_OPENAPI_DOCUMENT } from './openapi.js';
+
 // Configuration
 export { type RunnerConfig, runnerConfigSchema } from './config.js';
 

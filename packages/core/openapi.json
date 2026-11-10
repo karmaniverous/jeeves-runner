@@ -1,0 +1,1923 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "jeeves-runner",
+    "version": "0.6.0-0",
+    "description": "HTTP API of the jeeves-runner service: the routes in its endpoint catalog (RUNNER_CATALOG). The runner has no authentication; it binds to localhost by default."
+  },
+  "paths": {
+    "/status": {
+      "get": {
+        "operationId": "status",
+        "description": "Get runner service health, version, and uptime.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "string"
+                    },
+                    "uptime": {
+                      "type": "number"
+                    },
+                    "status": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "const": "healthy"
+                        },
+                        {
+                          "type": "string",
+                          "const": "degraded"
+                        },
+                        {
+                          "type": "string",
+                          "const": "unhealthy"
+                        }
+                      ]
+                    },
+                    "health": {
+                      "type": "object",
+                      "properties": {
+                        "totalJobs": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "running": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "failedRegistrations": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "okLastHour": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "errorsLastHour": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "totalJobs",
+                        "running",
+                        "failedRegistrations",
+                        "okLastHour",
+                        "errorsLastHour"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "version",
+                    "uptime",
+                    "status",
+                    "health"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config": {
+      "get": {
+        "operationId": "config",
+        "description": "Query runner running configuration. Optional JSONPath filter.",
+        "security": [],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "path",
+            "schema": {
+              "type": "string",
+              "description": "JSONPath expression (optional)"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "result": {
+                          "type": "array",
+                          "items": {}
+                        },
+                        "count": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "result",
+                        "count"
+                      ],
+                      "additionalProperties": {}
+                    },
+                    {
+                      "type": "object",
+                      "properties": {},
+                      "additionalProperties": {}
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/config/apply": {
+      "post": {
+        "operationId": "configApply",
+        "description": "Apply a config patch to the running runner service.",
+        "security": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "patch": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {},
+                    "description": "Config patch to apply"
+                  },
+                  "replace": {
+                    "type": "boolean",
+                    "description": "Replace the whole config instead of merging"
+                  }
+                },
+                "required": [
+                  "patch"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "applied": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "config": {
+                      "type": "object",
+                      "properties": {},
+                      "additionalProperties": {}
+                    },
+                    "warning": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "applied",
+                    "config"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs": {
+      "get": {
+        "operationId": "listJobs",
+        "description": "List all jobs with last run status",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "jobs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "schedule": {
+                            "type": "string"
+                          },
+                          "script": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "description": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "enabled": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "timeout_ms": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "overlap_policy": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "on_failure": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "on_success": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "created_at": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "updated_at": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "source_type": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "output_channel": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "env": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "args": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "last_status": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "last_run": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "schedule",
+                          "script",
+                          "type",
+                          "description",
+                          "enabled",
+                          "timeout_ms",
+                          "overlap_policy",
+                          "on_failure",
+                          "on_success",
+                          "created_at",
+                          "updated_at",
+                          "source_type",
+                          "output_channel",
+                          "env",
+                          "args",
+                          "last_status",
+                          "last_run"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "jobs"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createJob",
+        "description": "Create a new job",
+        "security": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Unique job identifier."
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Human-readable job name."
+                  },
+                  "schedule": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Cron or rrstack schedule expression."
+                  },
+                  "script": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Script path (source_type=path) or inline script content."
+                  },
+                  "source_type": {
+                    "default": "path",
+                    "description": "Script source: \"path\" (default) or \"inline\".",
+                    "type": "string",
+                    "enum": [
+                      "path",
+                      "inline"
+                    ]
+                  },
+                  "type": {
+                    "default": "script",
+                    "type": "string",
+                    "enum": [
+                      "script",
+                      "session"
+                    ]
+                  },
+                  "timeout_seconds": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "Kill the job after this many seconds."
+                  },
+                  "overlap_policy": {
+                    "default": "skip",
+                    "description": "\"skip\" (default) or \"allow\" concurrent runs.",
+                    "type": "string",
+                    "enum": [
+                      "skip",
+                      "allow"
+                    ]
+                  },
+                  "enabled": {
+                    "default": true,
+                    "description": "Whether the job is enabled.",
+                    "type": "boolean"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Job description."
+                  },
+                  "on_failure": {
+                    "description": "Slack channel ID for failure alerts.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "on_success": {
+                    "description": "Slack channel ID for success alerts.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "output_channel": {
+                    "description": "Slack channel ID for stdout relay.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "env": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Environment variables for script-type jobs. Record<string, string> spread into spawn env alongside JR_* vars. Ignored for session jobs."
+                  },
+                  "args": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Arguments for script-type jobs. String array appended after the script path in spawn. Ignored for session jobs."
+                  }
+                },
+                "required": [
+                  "id",
+                  "name",
+                  "schedule",
+                  "script"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "id"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/{id}": {
+      "get": {
+        "operationId": "jobDetail",
+        "description": "Single job detail",
+        "security": [],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string",
+              "description": "The job ID."
+            },
+            "required": true,
+            "description": "The job ID."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "job": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "schedule": {
+                          "type": "string"
+                        },
+                        "script": {
+                          "type": "string"
+                        },
+                        "type": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "description": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "enabled": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "timeout_ms": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "overlap_policy": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "on_failure": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "on_success": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "created_at": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "updated_at": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "source_type": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "output_channel": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "env": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "args": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "schedule",
+                        "script",
+                        "type",
+                        "description",
+                        "enabled",
+                        "timeout_ms",
+                        "overlap_policy",
+                        "on_failure",
+                        "on_success",
+                        "created_at",
+                        "updated_at",
+                        "source_type",
+                        "output_channel",
+                        "env",
+                        "args"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "job"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateJob",
+        "description": "Partial update of job config; omitted fields stay unchanged. Schedule changes on jeeves-scripts launcher jobs revert on the next sync-jobs (the manifest schedule is authoritative); change those in jeeves-scripts.json instead.",
+        "security": [],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string",
+              "description": "The job ID."
+            },
+            "required": true,
+            "description": "The job ID."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Human-readable job name."
+                  },
+                  "schedule": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Cron or rrstack schedule expression."
+                  },
+                  "script": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Script path (source_type=path) or inline script content."
+                  },
+                  "source_type": {
+                    "type": "string",
+                    "enum": [
+                      "path",
+                      "inline"
+                    ],
+                    "description": "Script source: \"path\" (default) or \"inline\"."
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "script",
+                      "session"
+                    ],
+                    "description": "Job type: \"script\" (default) or \"session\"."
+                  },
+                  "timeout_seconds": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "Kill the job after this many seconds."
+                  },
+                  "overlap_policy": {
+                    "type": "string",
+                    "enum": [
+                      "skip",
+                      "allow"
+                    ],
+                    "description": "\"skip\" (default) or \"allow\" concurrent runs."
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "description": "Whether the job is enabled."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Job description."
+                  },
+                  "on_failure": {
+                    "description": "Slack channel ID for failure alerts.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "on_success": {
+                    "description": "Slack channel ID for success alerts.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "output_channel": {
+                    "description": "Slack channel ID for stdout relay.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "env": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Environment variables for script-type jobs. Record<string, string> spread into spawn env alongside JR_* vars. Ignored for session jobs."
+                  },
+                  "args": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Arguments for script-type jobs. String array appended after the script path in spawn. Ignored for session jobs."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteJob",
+        "description": "Remove a job and its runs",
+        "security": [],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string",
+              "description": "The job ID."
+            },
+            "required": true,
+            "description": "The job ID."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/{id}/enable": {
+      "patch": {
+        "operationId": "enableJob",
+        "description": "Enable a job",
+        "security": [],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string",
+              "description": "The job ID."
+            },
+            "required": true,
+            "description": "The job ID."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/{id}/disable": {
+      "patch": {
+        "operationId": "disableJob",
+        "description": "Disable a job",
+        "security": [],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string",
+              "description": "The job ID."
+            },
+            "required": true,
+            "description": "The job ID."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/{id}/script": {
+      "put": {
+        "operationId": "updateScript",
+        "description": "Update job script (path or inline)",
+        "security": [],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string",
+              "description": "The job ID."
+            },
+            "required": true,
+            "description": "The job ID."
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "script": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "New script path or inline content."
+                  },
+                  "source_type": {
+                    "description": "Script source: \"path\" or \"inline\".",
+                    "type": "string",
+                    "enum": [
+                      "path",
+                      "inline"
+                    ]
+                  }
+                },
+                "required": [
+                  "script"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    }
+                  },
+                  "required": [
+                    "ok"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/{id}/run": {
+      "post": {
+        "operationId": "triggerJob",
+        "description": "Trigger manual run",
+        "security": [],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string",
+              "description": "The job ID."
+            },
+            "required": true,
+            "description": "The job ID."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "result": {
+                      "type": "object",
+                      "properties": {
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "ok",
+                            "error",
+                            "timeout"
+                          ]
+                        },
+                        "exitCode": {
+                          "anyOf": [
+                            {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "durationMs": {
+                          "type": "number"
+                        },
+                        "tokens": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        },
+                        "resultMeta": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "stdoutTail": {
+                          "type": "string"
+                        },
+                        "stderrTail": {
+                          "type": "string"
+                        },
+                        "error": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "status",
+                        "exitCode",
+                        "durationMs",
+                        "tokens",
+                        "resultMeta",
+                        "stdoutTail",
+                        "stderrTail",
+                        "error"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "result"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/jobs/{id}/runs": {
+      "get": {
+        "operationId": "jobRuns",
+        "description": "Run history (limit param)",
+        "security": [],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "string",
+              "description": "The job ID."
+            },
+            "required": true,
+            "description": "The job ID."
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "description": "Maximum number of runs to return (default 50).",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "description": "Maximum number of runs to return (default 50)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "runs": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "job_id": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "type": "string"
+                          },
+                          "started_at": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "finished_at": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "duration_ms": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "exit_code": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "tokens": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "result_meta": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "error": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "stdout_tail": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "stderr_tail": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "trigger": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "job_id",
+                          "status",
+                          "started_at",
+                          "finished_at",
+                          "duration_ms",
+                          "exit_code",
+                          "tokens",
+                          "result_meta",
+                          "error",
+                          "stdout_tail",
+                          "stderr_tail",
+                          "trigger"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "runs"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/queues": {
+      "get": {
+        "operationId": "listQueues",
+        "description": "List all queue names",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "queues": {
+                      "type": "array",
+                      "items": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "queues"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/queues/{name}/status": {
+      "get": {
+        "operationId": "queueStatus",
+        "description": "Queue depth, claimed, failed, oldest age",
+        "security": [],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "schema": {
+              "type": "string",
+              "description": "Queue name to inspect."
+            },
+            "required": true,
+            "description": "Queue name to inspect."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "depth": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "claimedCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "failedCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "oldestAge": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "depth",
+                    "claimedCount",
+                    "failedCount",
+                    "oldestAge"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/queues/{name}/peek": {
+      "get": {
+        "operationId": "queuePeek",
+        "description": "Peek at pending items (optional limit)",
+        "security": [],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "name",
+            "schema": {
+              "type": "string",
+              "description": "Queue name to peek."
+            },
+            "required": true,
+            "description": "Queue name to peek."
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "description": "Maximum items to return (default 10).",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "description": "Maximum items to return (default 10)."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "payload": {},
+                          "priority": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "createdAt": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "payload",
+                          "priority",
+                          "createdAt"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "items"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/state": {
+      "get": {
+        "operationId": "listNamespaces",
+        "description": "List all state namespaces",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "namespaces": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "namespaces"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/state/{namespace}": {
+      "get": {
+        "operationId": "queryState",
+        "description": "Scalar state (optional JSONPath)",
+        "security": [],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace",
+            "schema": {
+              "type": "string",
+              "description": "State namespace to query."
+            },
+            "required": true,
+            "description": "State namespace to query."
+          },
+          {
+            "in": "query",
+            "name": "path",
+            "schema": {
+              "description": "Optional JSONPath expression to filter results.",
+              "type": "string"
+            },
+            "description": "Optional JSONPath expression to filter results."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "result": {
+                          "type": "array",
+                          "items": {}
+                        },
+                        "count": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "result",
+                        "count"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/state/{namespace}/{key}": {
+      "get": {
+        "operationId": "queryCollection",
+        "description": "Collection items (optional JSONPath, limit, order)",
+        "security": [],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "namespace",
+            "schema": {
+              "type": "string",
+              "description": "State namespace."
+            },
+            "required": true,
+            "description": "State namespace."
+          },
+          {
+            "in": "path",
+            "name": "key",
+            "schema": {
+              "type": "string",
+              "description": "Collection key within the namespace."
+            },
+            "required": true,
+            "description": "Collection key within the namespace."
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "description": "Maximum items to return (default 100).",
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+            },
+            "description": "Maximum items to return (default 100)."
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "schema": {
+              "description": "Sort by last update: \"asc\" or \"desc\" (default).",
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            },
+            "description": "Sort by last update: \"asc\" or \"desc\" (default)."
+          },
+          {
+            "in": "query",
+            "name": "path",
+            "schema": {
+              "description": "Optional JSONPath expression to filter results.",
+              "type": "string"
+            },
+            "description": "Optional JSONPath expression to filter results."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "result": {
+                          "type": "array",
+                          "items": {}
+                        },
+                        "count": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "result",
+                        "count"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "value": {
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "itemKey": {
+                                "type": "string"
+                              },
+                              "value": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              },
+                              "updatedAt": {
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "itemKey",
+                              "value",
+                              "updatedAt"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "count": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "value",
+                        "items",
+                        "count"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorBody"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ErrorBody": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "additionalProperties": {}
+      }
+    }
+  }
+}
