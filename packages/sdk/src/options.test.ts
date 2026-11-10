@@ -123,6 +123,17 @@ describe('captureErrorText', () => {
     expect(await res.text()).toBe('not json');
   });
 
+  it('records an empty body for a bodiless non-2xx status', async () => {
+    const texts = new WeakMap<Headers, string>();
+    const res304 = new Response(null, { status: 304 });
+    const res = await captureErrorText(() => Promise.resolve(res304), texts)(
+      'http://x',
+      {},
+    );
+    expect(res).toBe(res304);
+    expect(texts.get(res.headers)).toBe('');
+  });
+
   it('passes the URL of a Request through', async () => {
     const fetchImpl = vi.fn(() => Promise.resolve(new Response('{}')));
     await captureErrorText(

@@ -62,9 +62,7 @@ export function withJsonPath<B extends object>(
   path: string | undefined,
 ): B | { result: unknown[]; count: number } {
   if (!path) return body;
-  const result: unknown = JSONPath({ path, json: body });
-  return {
-    result: result as unknown[],
-    count: Array.isArray(result) ? result.length : 1,
-  };
+  // `wrap: true` (the default, explicit here): always an array, [] on no match.
+  const result = JSONPath({ path, json: body, wrap: true }) as unknown[];
+  return { result, count: result.length };
 }

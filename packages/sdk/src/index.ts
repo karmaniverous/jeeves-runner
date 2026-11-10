@@ -15,6 +15,7 @@ export {
   TRIGGER_TIMEOUT_MS,
 } from './options.js';
 export {
+  errorBodyText,
   isRunnerError,
   type RunnerClientErrorCode,
   RunnerError,

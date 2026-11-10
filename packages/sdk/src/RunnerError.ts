@@ -74,6 +74,17 @@ export class RunnerError extends Error {
 }
 
 /**
+ * The body of a non-2xx response as text: exactly as received when it was
+ * captured, else the parsed body as JSON (`{}` when there is none).
+ *
+ * @param error - A RunnerError with an HTTP status.
+ * @returns The body text.
+ */
+export function errorBodyText(error: RunnerError): string {
+  return error.responseText ?? JSON.stringify(error.body ?? {});
+}
+
+/**
  * Type guard for {@link RunnerError}.
  *
  * @param value - Any value (typically a caught error).

@@ -129,6 +129,17 @@ describe('createRunnerClient', () => {
     ).rejects.toMatchObject({ code: 'invalid_options' });
   });
 
+  it('serves repeated calls with the same timeout', async () => {
+    const fetchImpl = vi.fn(() => Promise.resolve(json({ queues: ['q'] })));
+    const client = createRunnerClient({
+      baseUrl: 'http://x',
+      fetch: fetchImpl,
+    });
+    await expect(client.listQueues()).resolves.toEqual({ queues: ['q'] });
+    await expect(client.listQueues()).resolves.toEqual({ queues: ['q'] });
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
   it('reports a call that outlives its timeout as timeout', async () => {
     const hang = (_url: string, init: RequestInit) =>
       new Promise<Response>((_resolve, reject) => {

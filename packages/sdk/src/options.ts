@@ -78,7 +78,11 @@ export function captureErrorText(
           ? input.href
           : input.url;
     const res = await fetchImpl(url, init ?? {});
-    if (res.ok || NULL_BODY_STATUSES.has(res.status)) return res;
+    if (res.ok) return res;
+    if (NULL_BODY_STATUSES.has(res.status)) {
+      errorTexts.set(res.headers, '');
+      return res;
+    }
     const text = await res.text();
     const copy = new Response(text, {
       status: res.status,

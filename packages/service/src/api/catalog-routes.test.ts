@@ -82,6 +82,27 @@ describe('row schemas against the migrated database', () => {
   });
 });
 
+describe('updateJob', () => {
+  it('applies a valid schedule and re-enables the job', async () => {
+    testDb.db
+      .prepare(
+        "INSERT INTO jobs (id, name, schedule, script, enabled) VALUES ('u', 'U', '0 * * * *', '/s.js', 0)",
+      )
+      .run();
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/jobs/u',
+      payload: { schedule: '*/5 * * * *', enabled: true },
+    });
+    expect(res.statusCode).toBe(200);
+    expect(
+      testDb.db
+        .prepare("SELECT schedule, enabled FROM jobs WHERE id = 'u'")
+        .get(),
+    ).toEqual({ schedule: '*/5 * * * *', enabled: 1 });
+  });
+});
+
 describe('strict response validation (DD#87 item c)', () => {
   it('answers 500 when a row does not match its schema', async () => {
     // SQLite stores whatever it is given: a text `enabled` breaks the row

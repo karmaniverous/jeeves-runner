@@ -106,14 +106,34 @@ describe('fastifyDefaultErrorHandler', () => {
     expect(res.statusCode).toBe(500);
   });
 
-  it('matches what Fastify itself sends outside the catalog scope', async () => {
-    toThrow = new FieldyError('same', 'E_SAME');
-    app = await build(false);
-    const fastifyOwn = await app.inject({ method: 'GET', url: '/plain' });
-    await app.close();
+  it.each([
+    [undefined, undefined],
+    ['E_SAME', undefined],
+    ['E_TEAPOT', 418],
+  ])(
+    'matches what Fastify itself sends outside the catalog scope (code %s, status %s)',
+    async (code, status) => {
+      toThrow = new FieldyError('same', code, status);
+      app = await build(false);
+      const fastifyOwn = await app.inject({ method: 'GET', url: '/plain' });
+      await app.close();
+      app = await build();
+      const ours = await app.inject({ method: 'GET', url: '/boom' });
+      expect(ours.body).toBe(fastifyOwn.body);
+      expect(ours.statusCode).toBe(fastifyOwn.statusCode);
+      expect(ours.headers['content-type']).toBe(
+        fastifyOwn.headers['content-type'],
+      );
+    },
+  );
+
+  it('names an unregistered status "Unknown Error"', async () => {
+    toThrow = new FieldyError('odd', undefined, 599);
     app = await build();
-    const ours = await app.inject({ method: 'GET', url: '/boom' });
-    expect(ours.body).toBe(fastifyOwn.body);
-    expect(ours.statusCode).toBe(fastifyOwn.statusCode);
+    const res = await app.inject({ method: 'GET', url: '/boom' });
+    expect(res.statusCode).toBe(599);
+    expect(res.body).toBe(
+      '{"statusCode":599,"error":"Unknown Error","message":"odd"}',
+    );
   });
 });

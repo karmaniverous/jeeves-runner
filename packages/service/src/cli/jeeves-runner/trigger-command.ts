@@ -6,6 +6,7 @@
 
 import {
   createRunnerClient,
+  errorBodyText,
   type FetchLike,
   isRunnerError,
   TRIGGER_TIMEOUT_MS,
@@ -61,8 +62,9 @@ export async function triggerCommand(options: TriggerOptions): Promise<number> {
     return 0;
   } catch (error) {
     if (isRunnerError(error) && error.status >= 300) {
-      const text = error.responseText ?? JSON.stringify(error.body ?? {});
-      output.error(`Trigger failed (HTTP ${String(error.status)}): ${text}`);
+      output.error(
+        `Trigger failed (HTTP ${String(error.status)}): ${errorBodyText(error)}`,
+      );
     } else if (
       isRunnerError(error) &&
       (error.code === 'timeout' ||

@@ -19,6 +19,7 @@ import {
 import {
   type CallOptions,
   createRunnerClient,
+  errorBodyText,
   isRunnerError,
   type RunnerError,
 } from '@karmaniverous/jeeves-runner-sdk';
@@ -69,8 +70,9 @@ function underlying(error: RunnerError): unknown {
 export function toolError(error: unknown, baseUrl: string): ToolResult {
   if (!isRunnerError(error)) return fail(error);
   if (error.status >= 300) {
-    const text = error.responseText ?? JSON.stringify(error.body ?? {});
-    return fail(new Error(`HTTP ${String(error.status)}: ${text}`));
+    return fail(
+      new Error(`HTTP ${String(error.status)}: ${errorBodyText(error)}`),
+    );
   }
   if (error.issues !== undefined) return fail(error);
   return connectionFail(underlying(error), baseUrl, PLUGIN_ID);

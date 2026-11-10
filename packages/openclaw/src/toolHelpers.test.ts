@@ -30,6 +30,17 @@ describe('toolError', () => {
     );
   });
 
+  it('words a non-2xx with neither text nor body as an empty object', () => {
+    const error = new RunnerError({
+      code: 'http_304',
+      status: 304,
+      message: 'x',
+    });
+    expect(toolError(error, 'http://x').content[0]?.text).toBe(
+      'Error: HTTP 304: {}',
+    );
+  });
+
   it('reports a RunnerError without a cause by its message', () => {
     const error = new RunnerError({
       code: 'invalid_options',
