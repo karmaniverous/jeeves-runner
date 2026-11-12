@@ -2,11 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0-1] - 2026-11-12
+
+### 🚀 Features
+
+- *(core)* RUNNER_CATALOG with wire schemas; deprecate RUNNER_ENDPOINTS and contracts (#127)
+- *(core)* OpenAPI 3.1 document generated from RUNNER_CATALOG, with drift test (#127)
+- *(service)* Serve every route from RUNNER_CATALOG with strict validation, GET /openapi.json (#127)
+- *(sdk)* New @karmaniverous/jeeves-runner-sdk client built on the catalog (#127)
+- *(openclaw)* Tool definitions from the catalog with the 0.12.0-0 parameter names (DD#91, #127)
+- *(core)* RUNNER_ERROR_CODES and RUNNER_ERROR_STATUS, the code to status table (#136)
+
+### 🐛 Bug Fixes
+
+- Address review - REAL-valued row columns, typed JR_RESULT, more wire scenarios, OpenAPI rebuild on bump (#127)
+- Address review of the error contract (#136)
+
+### 💼 Other
+
+- Updated dependencies
+
+### 📚 Documentation
+
+- Catalog, OpenAPI, SDK and trigger behaviour across READMEs, guides and the skill (#127)
+
+### ⚙️ Miscellaneous Tasks
+
+- Take @karmaniverous/jeeves 0.9.2 (exact) and fix stale script-helper docs (#127)
+- Take @karmaniverous/jeeves 0.11.0 (exact) in every package (#136)
 ## [0.6.0-0] - 2026-11-09
 
 ### ⚙️ Miscellaneous Tasks
 
 - Require Node >=24.22.2 in every package, CI on Node 24 only (#132)
+- Release @karmaniverous/jeeves-runner-core v0.6.0-0
 ## [0.5.0] - 2026-10-14
 
 ### 🐛 Bug Fixes
