@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.0] - 2026-11-12
+
+### 🐛 Bug Fixes
+
+- *(service)* Alert on_failure when a run's execution throws (#137)
+
+### 💼 Other
+
+- Updated core
+- Updated sdk
 ## [0.12.0-1] - 2026-11-12
 
 ### 🚀 Features
@@ -44,6 +54,7 @@ Tool error texts carry the new body. Branch on its `code`. For example:
 
 - Take @karmaniverous/jeeves 0.9.2 (exact) and fix stale script-helper docs (#127)
 - Take @karmaniverous/jeeves 0.11.0 (exact) in every package (#136)
+- Release @karmaniverous/jeeves-runner-openclaw v0.12.0-1
 ## [0.12.0-0] - 2026-11-09
 
 ### 💼 Other
