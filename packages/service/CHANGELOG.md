@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.14.0-2] - 2026-11-12
+
+### 🐛 Bug Fixes
+
+- *(service)* Alert on_failure when a run's execution throws (#137)
 ## [0.14.0-1] - 2026-11-12
 
 ### 🚀 Features
@@ -57,6 +62,7 @@ Every error body is now Fastify's standard body. Branch on `code`. What HTTP cli
 
 - Take @karmaniverous/jeeves 0.9.2 (exact) and fix stale script-helper docs (#127)
 - Take @karmaniverous/jeeves 0.11.0 (exact) in every package (#136)
+- Release @karmaniverous/jeeves-runner v0.14.0-1
 ## [0.14.0-0] - 2026-11-09
 
 ### 🐛 Bug Fixes
