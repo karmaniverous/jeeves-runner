@@ -336,7 +336,7 @@ Every route is declared in the runner's endpoint catalog (`RUNNER_CATALOG` in `@
 | `RUNNER_JOB_NOT_FOUND` | 404 | no job with that id |
 | `RUNNER_JOB_EXISTS` | 409 | `runner_create_job` with an id that already exists: update it instead |
 | `RUNNER_MAX_CONCURRENCY` | 409 | trigger refused at `maxConcurrency` (not recorded as a run); retry later |
-| `RUNNER_TRIGGER_FAILED` | 500 | trigger failed otherwise; the message is fixed, so read `runner_runs` for the run's own error, or the runner log |
+| `RUNNER_TRIGGER_FAILED` | 500 | trigger failed otherwise; the message is fixed, so read `runner_runs` for the run's own error (a started run is recorded as `error` and alerted to its failure channel), or the runner log |
 
 A `500` with **no** `code` is an unexpected failure (cause in the runner log). jeeves' `JEEVES_CONFIG_*` codes come from `runner_config` / `runner_config_apply`.
 

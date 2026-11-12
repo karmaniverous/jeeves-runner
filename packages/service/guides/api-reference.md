@@ -226,7 +226,7 @@ Manually trigger a job run. Blocks until the job completes (the SDK's `triggerJo
 | --- | --- | --- |
 | `404` | `RUNNER_JOB_NOT_FOUND` | No job with that id |
 | `409` | `RUNNER_MAX_CONCURRENCY` | The runner is at `maxConcurrency`; the trigger is refused and not recorded as a run |
-| `500` | `RUNNER_TRIGGER_FAILED` | Any other failure. The message is fixed; the cause is in the runner log and, if the run started, on the run (`GET /jobs/:id/runs`) |
+| `500` | `RUNNER_TRIGGER_FAILED` | Any other failure. The message is fixed; the cause is in the runner log and, if the run started, on the run (`GET /jobs/:id/runs`), which is also alerted to the job's `on_failure` channel (else `notifications.defaultOnFailure`) like any other error run |
 
 ### `POST /jobs`
 
