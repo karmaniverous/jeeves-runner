@@ -43,6 +43,22 @@ const RESULT = {
 
 const OK = json({ ok: true });
 
+/**
+ * A 0.14.0-1 runner error reply: Fastify's standard body (DD#96).
+ *
+ * @param statusCode - HTTP status.
+ * @param code - `RUNNER_*` code.
+ * @param error - Status text.
+ * @param message - Message.
+ * @returns The stub reply.
+ */
+const runnerError = (
+  statusCode: number,
+  code: string,
+  error: string,
+  message: string,
+): StubReply => json({ statusCode, code, error, message }, statusCode);
+
 /** Every scenario, in run order. */
 export const TOOL_SCENARIOS: readonly ToolScenario[] = [
   {
@@ -61,26 +77,33 @@ export const TOOL_SCENARIOS: readonly ToolScenario[] = [
     name: 'trigger 404',
     tool: 'runner_trigger',
     params: { jobId: 'nope' },
-    reply: json({ error: 'Job not found: nope' }, 404),
+    reply: runnerError(
+      404,
+      'RUNNER_JOB_NOT_FOUND',
+      'Not Found',
+      'Job not found: nope',
+    ),
   },
   {
     name: 'trigger 409',
     tool: 'runner_trigger',
     params: { jobId: 'a' },
-    reply: json({ error: 'Max concurrency reached' }, 409),
+    reply: runnerError(
+      409,
+      'RUNNER_MAX_CONCURRENCY',
+      'Conflict',
+      'Max concurrency reached; retry when a running job finishes.',
+    ),
   },
   {
     name: 'trigger 500 Fastify default body',
     tool: 'runner_trigger',
     params: { jobId: 'a' },
-    reply: json(
-      {
-        statusCode: 500,
-        code: 'ERR_X',
-        error: 'Internal Server Error',
-        message: 'boom',
-      },
+    reply: runnerError(
       500,
+      'RUNNER_TRIGGER_FAILED',
+      'Internal Server Error',
+      'The job could not be run; the cause is in the runner log and on the run, if it started.',
     ),
   },
   {
@@ -129,7 +152,12 @@ export const TOOL_SCENARIOS: readonly ToolScenario[] = [
     name: 'job detail 404',
     tool: 'runner_job_detail',
     params: { jobId: 'nope' },
-    reply: json({ error: 'Job not found' }, 404),
+    reply: runnerError(
+      404,
+      'RUNNER_JOB_NOT_FOUND',
+      'Not Found',
+      'Job not found: nope',
+    ),
   },
   {
     name: 'enable',
@@ -163,7 +191,12 @@ export const TOOL_SCENARIOS: readonly ToolScenario[] = [
     name: 'create job bad schedule',
     tool: 'runner_create_job',
     params: { id: 'n', name: 'N', schedule: 'nope', script: '/n.js' },
-    reply: json({ error: 'Invalid schedule' }, 400),
+    reply: runnerError(
+      400,
+      'RUNNER_INVALID_SCHEDULE',
+      'Bad Request',
+      'Invalid cron expression: nope',
+    ),
   },
   {
     name: 'update job',

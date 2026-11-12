@@ -324,9 +324,23 @@ On sessions after bootstrap is complete:
 | `GET` | `/state/:namespace/:key` | Read collection items (`?limit=N` default 100, `?order=asc` or `desc`, `?path=` JSONPath) |
 | `GET` | `/openapi.json` | OpenAPI 3.1 document of every route above (no auth) |
 
-Every route is declared in the runner's endpoint catalog (`RUNNER_CATALOG` in `@karmaniverous/jeeves-runner-core`), which validates requests and responses. A request that fails validation (missing or malformed body field, a `limit` that is not a positive integer, an `order` other than `asc`/`desc`) gets `400 { error: 'Request validation failed', issues: [...] }`. `POST /jobs/:id/run` answers `404` for an unknown job, `409` when the runner is at `maxConcurrency` (refused, not recorded as a run) and `500` for any other failure.
+Every route is declared in the runner's endpoint catalog (`RUNNER_CATALOG` in `@karmaniverous/jeeves-runner-core`), which validates requests and responses. A request that fails validation (missing or malformed body field, a `limit` that is not a positive integer, an `order` other than `asc`/`desc`) gets `400` with code `FST_ERR_VALIDATION`.
 
-TypeScript code should call the API through `@karmaniverous/jeeves-runner-sdk` (`createRunnerClient({ baseUrl })`): typed methods named after the catalog entries, input validated before sending, every failure a `RunnerError` carrying the HTTP status. The plugin's tools and the CLI's `trigger` use it.
+**Errors.** Every non-2xx body is `{ statusCode, code?, error, message }`; branch on `code`, never on `message`. A failing tool's text is `Error: HTTP <status>: <that body>`, so it shows both. The runner's codes:
+
+| `code` | Status | Meaning |
+| --- | --- | --- |
+| `RUNNER_INVALID_SCHEDULE` | 400 | create/update with a schedule that is not valid cron or RRStack; the message says why |
+| `RUNNER_INVALID_JSONPATH` | 400 | a state query `path` that is not valid JSONPath |
+| `RUNNER_INVALID_QUEUE_PAYLOAD` | 400 | a pending queue item's stored payload is not JSON |
+| `RUNNER_JOB_NOT_FOUND` | 404 | no job with that id |
+| `RUNNER_JOB_EXISTS` | 409 | `runner_create_job` with an id that already exists: update it instead |
+| `RUNNER_MAX_CONCURRENCY` | 409 | trigger refused at `maxConcurrency` (not recorded as a run); retry later |
+| `RUNNER_TRIGGER_FAILED` | 500 | trigger failed otherwise; the message is fixed, so read `runner_runs` for the run's own error, or the runner log |
+
+A `500` with **no** `code` is an unexpected failure (cause in the runner log). jeeves' `JEEVES_CONFIG_*` codes come from `runner_config` / `runner_config_apply`.
+
+TypeScript code should call the API through `@karmaniverous/jeeves-runner-sdk` (`createRunnerClient({ baseUrl })`): typed methods named after the catalog entries, input validated before sending, every failure a `RunnerError` carrying the body's `code` and `message` and the HTTP status. The plugin's tools and the CLI's `trigger` use it.
 
 ## Tools
 

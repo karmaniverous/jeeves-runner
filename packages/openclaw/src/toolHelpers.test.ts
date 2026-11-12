@@ -24,15 +24,21 @@ describe('toolError', () => {
     });
   });
 
-  it('words a non-2xx without a captured text from its body', () => {
+  it('words a non-2xx without a captured text from its body, code and message included', () => {
+    const body = {
+      statusCode: 404,
+      code: 'RUNNER_JOB_NOT_FOUND',
+      error: 'Not Found',
+      message: 'Job not found: j',
+    };
     const error = new RunnerError({
-      code: 'http_404',
+      code: 'RUNNER_JOB_NOT_FOUND',
       status: 404,
-      message: 'x',
-      body: { error: 'Job not found' },
+      message: 'Job not found: j',
+      body,
     });
     expect(toolError(error, 'http://x').content[0]?.text).toBe(
-      'Error: HTTP 404: {"error":"Job not found"}',
+      `Error: HTTP 404: ${JSON.stringify(body)}`,
     );
   });
 

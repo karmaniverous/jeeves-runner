@@ -131,9 +131,12 @@ function underlying(error: RunnerError): unknown {
 
 /**
  * Tool result for a failed call, worded as the 0.12.0-0 tools worded it:
- * `Error: HTTP <status>: <body as received>` for a non-2xx response, the
- * connection guidance for an unreachable runner, `Error: <message>` for a
- * timeout, a non-JSON body or anything else.
+ * `Error: HTTP <status>: <body as received>` for a non-2xx response (the
+ * watcher's catalog-tool text; since the runner's 0.14.0-1 error contract,
+ * DD#96, that body is `{ statusCode, code?, error, message }`, so the text
+ * carries the code and message), the connection guidance for an
+ * unreachable runner, `Error: <message>` for a timeout, a non-JSON body or
+ * anything else.
  *
  * @param error - What the SDK call threw.
  * @param baseUrl - The runner URL the call used.
