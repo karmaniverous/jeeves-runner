@@ -346,7 +346,7 @@ See the [Script Helper Utilities Guide](packages/service/guides/script-helpers.m
 
 ### Concurrency
 
-A global semaphore limits concurrent jobs (default: 4, configurable via `maxConcurrency`). A scheduled run that fires while the limit is reached is not executed: it is recorded as a `skipped` run (error `max_concurrency: ...`) and alerted to the job's `on_failure` channel, falling back to `notifications.defaultOnFailure`. It is not retried. Manual triggers at the limit return an error to the caller.
+A global semaphore limits concurrent jobs (default: 4, configurable via `maxConcurrency`). A scheduled run that fires while the limit is reached is not executed: it is recorded as a `skipped` run (error `max_concurrency: ...`) and alerted to the job's `on_failure` channel, falling back to `notifications.defaultOnFailure`. It is not retried. Manual triggers at the limit return an error to the caller. A run that starts but whose execution throws (for example a session job with no gateway configured) is recorded as an `error` run with the thrown message and alerted like any other failed run.
 
 ### Notifications
 

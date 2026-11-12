@@ -100,6 +100,32 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
     logger,
   });
 
+  /**
+   * Send a finished run's success or failure alert to the job's resolved
+   * channels (DD#77). Never throws: `dispatchResult` logs a failed send, and
+   * anything else is logged here, so an alert can't mask a run's outcome.
+   */
+  async function notifyResult(
+    job: JobRow,
+    result: ExecutionResult,
+  ): Promise<void> {
+    try {
+      const { onSuccess, onFailure } = resolveChannels(job);
+      await notifier.dispatchResult(
+        result,
+        job.name,
+        onSuccess,
+        onFailure,
+        logger,
+      );
+    } catch (notifyErr) {
+      logger.error(
+        { jobId: job.id, err: notifyErr },
+        'Failed to send the run notification',
+      );
+    }
+  }
+
   /** Execute a job: create run record, run script, update record, send notifications. */
   async function runJob(
     job: JobRow,
@@ -107,7 +133,6 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
   ): Promise<ExecutionResult> {
     const {
       id,
-      name,
       script,
       type,
       timeout_ms,
@@ -174,26 +199,26 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
         }
       } catch (err) {
         // The run row exists: finish it with the error, so the run keeps its
-        // own cause (a manual trigger's caller gets RUNNER_TRIGGER_FAILED).
-        // Not alerted, as before (DD#96). A failure to record must not hide
-        // the original error.
+        // own cause (a manual trigger's caller gets RUNNER_TRIGGER_FAILED),
+        // and alert it like any other error run (#137). Neither a failure to
+        // record nor a failed alert may hide the original error.
+        const thrown = thrownResult(err, startedAt);
         try {
-          runRepository.finishRun(runId, thrownResult(err, startedAt));
+          runRepository.finishRun(runId, thrown);
         } catch (recordErr) {
           logger.error(
             { jobId: id, runId, err: recordErr },
             'Failed to record the error run',
           );
         }
+        await notifyResult(job, thrown);
         throw err;
       }
 
       runRepository.finishRun(runId, result);
       logger.info({ jobId: id, runId, status: result.status }, 'Job finished');
 
-      // Send notifications
-      const { onSuccess, onFailure } = resolveChannels(job);
-      await notifier.dispatchResult(result, name, onSuccess, onFailure, logger);
+      await notifyResult(job, result);
 
       return result;
     } finally {
