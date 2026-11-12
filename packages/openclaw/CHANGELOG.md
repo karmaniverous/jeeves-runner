@@ -2,6 +2,48 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.12.0-1] - 2026-11-12
+
+### 🚀 Features
+
+- *(core)* RUNNER_CATALOG with wire schemas; deprecate RUNNER_ENDPOINTS and contracts (#127)
+- *(sdk)* New @karmaniverous/jeeves-runner-sdk client built on the catalog (#127)
+- *(openclaw)* Run the runner tools through the SDK, standard tools from the catalog (#127)
+- *(openclaw)* Tool definitions from the catalog with the 0.12.0-0 parameter names (DD#91, #127)
+- *(openclaw)* [**breaking**] Tool error text carries the runner's standard error body (#136)
+
+Tool error texts carry the new body. Branch on its `code`. For example:
+
+| Tool failure | 0.12.0-0 text | Now |
+| --- | --- | --- |
+| Unknown job | `Error: HTTP 404: {"error":"Job not found"}` | `Error: HTTP 404: {"statusCode":404,"code":"RUNNER_JOB_NOT_FOUND","error":"Not Found","message":"Job not found: <id>"}` |
+| runner_trigger at maxConcurrency | `Error: HTTP 409: {"error":"Max concurrency reached"}` | `Error: HTTP 409: {"statusCode":409,"code":"RUNNER_MAX_CONCURRENCY",...}` |
+| runner_trigger, other failure | `Error: HTTP 500: {"error":"<the error text>"}` | `Error: HTTP 500: {"statusCode":500,"code":"RUNNER_TRIGGER_FAILED",...}` (fixed message) |
+| Invalid schedule | `Error: HTTP 400: {"error":"<message>"}` | `Error: HTTP 400: {"statusCode":400,"code":"RUNNER_INVALID_SCHEDULE",...}` |
+| runner_create_job, existing id | `Error: HTTP 500: {...,"message":"UNIQUE constraint failed: jobs.id"}` | `Error: HTTP 409: {"statusCode":409,"code":"RUNNER_JOB_EXISTS",...}` |
+
+
+
+### 🐛 Bug Fixes
+
+- Address review - REAL-valued row columns, typed JR_RESULT, more wire scenarios, OpenAPI rebuild on bump (#127)
+- Address review of the error contract (#136)
+
+### 💼 Other
+
+- Updated dependencies
+- Updated core
+- Updated sdk
+
+### 🧪 Testing
+
+- *(openclaw)* Record the 0.12.0-0 tool baseline (#127)
+- Close coverage gaps; share the error-body wording via errorBodyText (#127)
+
+### ⚙️ Miscellaneous Tasks
+
+- Take @karmaniverous/jeeves 0.9.2 (exact) and fix stale script-helper docs (#127)
+- Take @karmaniverous/jeeves 0.11.0 (exact) in every package (#136)
 ## [0.12.0-0] - 2026-11-09
 
 ### 💼 Other
@@ -17,6 +59,7 @@ All notable changes to this project will be documented in this file.
 ### ⚙️ Miscellaneous Tasks
 
 - Require Node >=24.22.2 in every package, CI on Node 24 only (#132)
+- Release @karmaniverous/jeeves-runner-openclaw v0.12.0-0
 ## [0.11.0] - 2026-10-14
 
 ### 🐛 Bug Fixes
