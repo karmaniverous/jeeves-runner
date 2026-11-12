@@ -1,6 +1,6 @@
 /**
  * @module toRunnerError.test
- * Error mapping (DD#80): responses keep their HTTP status and body; client-side failures get the SDK codes with status 0.
+ * Error mapping (DD#80, DD#96): responses keep their HTTP status, their body's code (else `http_<status>`) and message, and the body; client-side failures get the SDK codes with status 0.
  */
 
 import { CatalogClientError } from '@karmaniverous/jeeves/catalog';
@@ -23,25 +23,70 @@ const clientError = ({
   });
 
 describe('toRunnerError', () => {
-  it.each([404, 409, 500])('keeps HTTP %i as status and code', (status) => {
+  it.each([
+    [404, 'RUNNER_JOB_NOT_FOUND', 'Not Found', 'Job not found: j'],
+    [
+      409,
+      'RUNNER_MAX_CONCURRENCY',
+      'Conflict',
+      'Max concurrency reached; retry when a running job finishes.',
+    ],
+    [
+      500,
+      'RUNNER_TRIGGER_FAILED',
+      'Internal Server Error',
+      'The job could not be run; the cause is in the runner log and on the run, if it started.',
+    ],
+  ])(
+    "keeps HTTP %i, the body's code %s and its message",
+    (status, code, error, message) => {
+      const body = { statusCode: status, code, error, message };
+      const err = toRunnerError(
+        clientError({ message: 'x', status, body }),
+        'triggerJob',
+        1000,
+        JSON.stringify(body),
+      );
+      expect(err).toBeInstanceOf(RunnerError);
+      expect(err).toMatchObject({
+        code,
+        status,
+        body,
+        responseText: JSON.stringify(body),
+        message,
+      });
+    },
+  );
+
+  it('falls back to http_<status> for a body without a code (a masked 500)', () => {
+    const body = {
+      statusCode: 500,
+      error: 'Internal Server Error',
+      message: 'The server could not complete the request.',
+    };
+    const err = toRunnerError(
+      clientError({ message: 'x', status: 500, body }),
+      'listJobs',
+      1000,
+    );
+    expect(err).toMatchObject({
+      code: 'http_500',
+      status: 500,
+      message: 'The server could not complete the request.',
+    });
+  });
+
+  it('treats an empty code and message as absent, falling back to the status text', () => {
     const err = toRunnerError(
       clientError({
         message: 'x',
-        status,
-        body: { error: 'Job not found' },
+        status: 418,
+        body: { statusCode: 418, code: '', error: 'Teapot', message: '' },
       }),
-      'triggerJob',
+      'status',
       1000,
-      '{"error":"Job not found"}',
     );
-    expect(err).toBeInstanceOf(RunnerError);
-    expect(err).toMatchObject({
-      code: `http_${String(status)}`,
-      status,
-      body: { error: 'Job not found' },
-      responseText: '{"error":"Job not found"}',
-      message: `triggerJob failed (HTTP ${String(status)}): Job not found`,
-    });
+    expect(err).toMatchObject({ code: 'http_418', message: 'Teapot' });
   });
 
   it('names a non-2xx without a body', () => {
@@ -51,7 +96,7 @@ describe('toRunnerError', () => {
       1000,
     );
     expect(err).toMatchObject({ code: 'http_502', status: 502 });
-    expect(err.message).toBe('status failed (HTTP 502): no error message');
+    expect(err.message).toBe('HTTP 502');
     expect(err).not.toHaveProperty('responseText', expect.anything());
   });
 

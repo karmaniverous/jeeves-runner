@@ -27,7 +27,15 @@ const RESULT = {
 const runnerReply = (url: string) => {
   if (url.endsWith('/jobs')) return Response.json({ jobs: [] });
   if (url.includes('/runs')) return Response.json({ runs: [] });
-  return Response.json({ error: 'Max concurrency reached' }, { status: 409 });
+  return Response.json(
+    {
+      statusCode: 409,
+      code: 'RUNNER_MAX_CONCURRENCY',
+      error: 'Conflict',
+      message: 'Max concurrency reached; retry when a running job finishes.',
+    },
+    { status: 409 },
+  );
 };
 
 describe('README usage', () => {
@@ -46,15 +54,17 @@ describe('README usage', () => {
       const { result } = await runner.triggerJob({ id: 'poll-email' });
       log(result.status, result.durationMs);
     } catch (error) {
-      if (isRunnerError(error) && error.status === 409) {
-        log('Runner is at maxConcurrency; try later.');
+      if (isRunnerError(error) && error.code === 'RUNNER_MAX_CONCURRENCY') {
+        log(`${error.message} (HTTP ${String(error.status)})`);
       } else throw error;
     }
     // --- end ---
 
     expect(jobs).toEqual([]);
     expect(runs).toEqual([]);
-    expect(log).toHaveBeenCalledWith('Runner is at maxConcurrency; try later.');
+    expect(log).toHaveBeenCalledWith(
+      'Max concurrency reached; retry when a running job finishes. (HTTP 409)',
+    );
   });
 
   it('documents per-call timeouts and the exported types', async () => {

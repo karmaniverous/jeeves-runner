@@ -6,8 +6,12 @@
 import type { ErrorBody } from '@karmaniverous/jeeves/catalog';
 
 /**
- * Codes the SDK assigns. A non-2xx response gets `http_<status>`
- * (`http_404`, `http_409`, `http_500`, ...).
+ * Codes the SDK assigns itself (lower case, so they never collide with a
+ * server code). An error from a non-2xx response carries the server's code
+ * instead: the body's `code` (a `RunnerErrorCode` from core
+ * `RUNNER_ERROR_CODES`, a jeeves `JEEVES_*` code or a Fastify `FST_ERR_*`
+ * code), else `http_<status>` (a masked 500, an unknown route, a body that
+ * isn't Fastify's).
  *
  * - `invalid_options`: {@link createRunnerClient} options are invalid.
  * - `invalid_request`: the input failed the catalog entry's request schema; nothing was sent.
@@ -24,9 +28,9 @@ export type RunnerClientErrorCode =
 
 /** Constructor fields of a {@link RunnerError}. */
 export interface RunnerErrorInit {
-  /** `http_<status>` or a {@link RunnerClientErrorCode}. */
-  code: `http_${number}` | RunnerClientErrorCode;
-  /** Human-readable message. */
+  /** The server's code, `http_<status>` or a {@link RunnerClientErrorCode}. */
+  code: string;
+  /** Human-readable message (a response's: the body's `message`). */
   message: string;
   /** HTTP status when a response arrived, else 0. */
   status: number;
@@ -42,15 +46,23 @@ export interface RunnerErrorInit {
 
 /**
  * The one error type thrown by every SDK call. The SDK never retries;
- * branch on `status` (`triggerJob`: 404 unknown job, 409 at
- * `maxConcurrency`, 500 other failure) or `code`.
+ * branch on `code` (`triggerJob`: `RUNNER_JOB_NOT_FOUND`,
+ * `RUNNER_MAX_CONCURRENCY`, `RUNNER_TRIGGER_FAILED`), never on `message`;
+ * `status` is the HTTP status.
  */
 export class RunnerError extends Error {
-  /** `http_<status>` or a {@link RunnerClientErrorCode}. */
-  readonly code: RunnerErrorInit['code'];
+  /**
+   * Machine-readable code: the response body's `code` (`RUNNER_*`,
+   * `JEEVES_*`, `FST_ERR_*`), else `http_<status>`, or a
+   * {@link RunnerClientErrorCode} when no usable response arrived.
+   */
+  readonly code: string;
   /** HTTP status when a response arrived, else 0. */
   readonly status: number;
-  /** Parsed error body of a non-2xx response (`{ error, ... }`). */
+  /**
+   * Parsed error body of a non-2xx response: Fastify's standard body
+   * `{ statusCode, code?, error, message }`.
+   */
   readonly body?: ErrorBody;
   /** The non-2xx response body exactly as received (JSON or not). */
   readonly responseText?: string;

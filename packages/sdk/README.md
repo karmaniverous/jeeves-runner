@@ -29,8 +29,8 @@ try {
   const { result } = await runner.triggerJob({ id: 'poll-email' });
   console.log(result.status, result.durationMs);
 } catch (error) {
-  if (isRunnerError(error) && error.status === 409) {
-    console.log('Runner is at maxConcurrency; try later.');
+  if (isRunnerError(error) && error.code === 'RUNNER_MAX_CONCURRENCY') {
+    console.log(`${error.message} (HTTP ${String(error.status)})`);
   } else throw error;
 }
 ```
@@ -71,18 +71,31 @@ The SDK never retries.
 
 ## Errors
 
-Every failure is a `RunnerError`:
+Every failure is a `RunnerError`. Branch on `code`, never on `message`:
 
 | `code` | `status` | When |
 | --- | --- | --- |
-| `http_<status>` | the HTTP status | the runner answered non-2xx; `body` holds `{ error, ... }` and `responseText` the body as received |
+| the body's `code` | the HTTP status | the runner answered non-2xx with a code (`RUNNER_*`, `JEEVES_*`, `FST_ERR_*`, below); `message` is the body's `message`, `body` the whole body and `responseText` the body as received |
+| `http_<status>` | the HTTP status | the runner answered non-2xx without a code: a masked 500 (an unexpected failure; the cause is in the runner log), an unknown route, or a body that isn't the runner's (a proxy's page) |
 | `invalid_request` | `0` | the input failed the entry's schema; nothing was sent (`issues`) |
 | `invalid_response` | 2xx | the response was not JSON or did not match the entry's schema |
 | `timeout` | `0` | no response within the call's timeout |
 | `network_error` | `0` | the request failed (runner not running, DNS, ...) |
 | `invalid_options` | `0` | `createRunnerClient` options are invalid |
 
-`triggerJob` answers **404** for an unknown job, **409** when the runner is at `maxConcurrency` (the trigger is refused and not recorded as a run) and **500** for any other failure.
+A non-2xx body is always Fastify's standard error body, `{ statusCode, code?, error, message }`. The runner's own codes (`RUNNER_ERROR_CODES` and `RUNNER_ERROR_STATUS`, exported here and by `@karmaniverous/jeeves-runner-core`):
+
+| `code` | Status | When |
+| --- | --- | --- |
+| `RUNNER_INVALID_SCHEDULE` | 400 | `createJob` / `updateJob` with an invalid cron or RRStack schedule |
+| `RUNNER_INVALID_JSONPATH` | 400 | `queryState` / `queryCollection` with a `path` that is not valid JSONPath |
+| `RUNNER_INVALID_QUEUE_PAYLOAD` | 400 | `queuePeek` reached a pending item whose stored payload is not JSON |
+| `RUNNER_JOB_NOT_FOUND` | 404 | no job has that id |
+| `RUNNER_JOB_EXISTS` | 409 | `createJob` with an id a job already has |
+| `RUNNER_MAX_CONCURRENCY` | 409 | `triggerJob` refused: the runner is at `maxConcurrency` (not recorded as a run) |
+| `RUNNER_TRIGGER_FAILED` | 500 | `triggerJob` failed for any other reason; the cause is in the runner log and, if the run started, on the run (`jobRuns`) |
+
+Also: `FST_ERR_VALIDATION` (400) when a request fails the catalog's schemas (the SDK checks input first, so you see `invalid_request` instead), jeeves' `JEEVES_CONFIG_*` codes from `config` and `configApply`, and `JEEVES_RESPONSE_VALIDATION` (500) if the runner's own response fails its schema.
 
 ## OpenAPI
 

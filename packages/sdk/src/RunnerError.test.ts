@@ -10,23 +10,29 @@ import { errorBodyText, isRunnerError, RunnerError } from './RunnerError.js';
 describe('RunnerError', () => {
   it('keeps code, status, body, text, issues and cause', () => {
     const cause = new Error('inner');
+    const body = {
+      statusCode: 409,
+      code: 'RUNNER_MAX_CONCURRENCY',
+      error: 'Conflict',
+      message: 'busy',
+    };
     const err = new RunnerError({
-      code: 'http_409',
+      code: 'RUNNER_MAX_CONCURRENCY',
       status: 409,
       message: 'busy',
-      body: { error: 'Max concurrency reached' },
-      responseText: '{"error":"Max concurrency reached"}',
+      body,
+      responseText: JSON.stringify(body),
       issues: [],
       cause,
     });
     expect(err).toBeInstanceOf(Error);
     expect(err).toMatchObject({
       name: 'RunnerError',
-      code: 'http_409',
+      code: 'RUNNER_MAX_CONCURRENCY',
       status: 409,
       message: 'busy',
-      body: { error: 'Max concurrency reached' },
-      responseText: '{"error":"Max concurrency reached"}',
+      body,
+      responseText: JSON.stringify(body),
       issues: [],
     });
     expect(err.cause).toBe(cause);
@@ -46,13 +52,13 @@ describe('errorBodyText', () => {
     expect(errorBodyText(http({ responseText: 'Bad Gateway' }))).toBe(
       'Bad Gateway',
     );
-    expect(errorBodyText(http({ responseText: '', body: { error: '' } }))).toBe(
-      '',
-    );
+    const body = { statusCode: 502, error: 'Bad Gateway', message: '' };
+    expect(errorBodyText(http({ responseText: '', body }))).toBe('');
   });
 
   it('falls back to the parsed body, or {}', () => {
-    expect(errorBodyText(http({ body: { error: 'e' } }))).toBe('{"error":"e"}');
+    const body = { statusCode: 502, error: 'Bad Gateway', message: 'e' };
+    expect(errorBodyText(http({ body }))).toBe(JSON.stringify(body));
     expect(errorBodyText(http({}))).toBe('{}');
   });
 });

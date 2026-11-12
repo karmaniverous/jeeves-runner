@@ -38,7 +38,7 @@ describe('packaging', () => {
       '@karmaniverous/jeeves',
       '@karmaniverous/jeeves-runner-core',
     ]);
-    expect(pkg.dependencies['@karmaniverous/jeeves']).toBe('0.9.2');
+    expect(pkg.dependencies['@karmaniverous/jeeves']).toBe('0.11.0');
     expect(pkg.dependencies['@karmaniverous/jeeves']).toBe(
       core.dependencies['@karmaniverous/jeeves'],
     );

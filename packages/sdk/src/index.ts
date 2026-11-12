@@ -22,6 +22,13 @@ export {
   type RunnerErrorInit,
 } from './RunnerError.js';
 
+// The runner's error codes and their statuses (DD#96).
+export {
+  RUNNER_ERROR_CODES,
+  RUNNER_ERROR_STATUS,
+  type RunnerErrorCode,
+} from '@karmaniverous/jeeves-runner-core';
+
 // Request and response types, inferred from the catalog.
 export type {
   JobListRow,

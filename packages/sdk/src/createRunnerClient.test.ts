@@ -73,10 +73,14 @@ describe('createRunnerClient', () => {
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
-  it('keeps the status, body and raw text of an error response, without retrying', async () => {
-    const fetchImpl = vi.fn(() =>
-      Promise.resolve(json({ error: 'Job not found' }, 404)),
-    );
+  it("keeps the status, the body's code and message, the body and raw text of an error response, without retrying", async () => {
+    const sent = {
+      statusCode: 404,
+      code: 'RUNNER_JOB_NOT_FOUND',
+      error: 'Not Found',
+      message: 'Job not found: nope',
+    };
+    const fetchImpl = vi.fn(() => Promise.resolve(json(sent, 404)));
     const client = createRunnerClient({
       baseUrl: 'http://x',
       fetch: fetchImpl,
@@ -87,9 +91,10 @@ describe('createRunnerClient', () => {
     expect(err).toBeInstanceOf(RunnerError);
     expect(err).toMatchObject({
       status: 404,
-      code: 'http_404',
-      body: { error: 'Job not found' },
-      responseText: '{"error":"Job not found"}',
+      code: 'RUNNER_JOB_NOT_FOUND',
+      message: 'Job not found: nope',
+      body: sent,
+      responseText: JSON.stringify(sent),
     });
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });

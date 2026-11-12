@@ -1,6 +1,6 @@
 /**
  * @module toRunnerError
- * The one mapping from what jeeves' catalog client throws to {@link RunnerError} (DD#80): a response keeps its HTTP status (`http_<status>`); client-side failures get the SDK's own codes and status 0. Pure.
+ * The one mapping from what jeeves' catalog client throws to {@link RunnerError} (DD#80, DD#96): a response keeps its HTTP status, its body's `code` (else `http_<status>`) and its body's `message`; client-side failures get the SDK's own codes and status 0. Pure.
  */
 
 import { CatalogClientError } from '@karmaniverous/jeeves/catalog';
@@ -31,6 +31,15 @@ const messageOf = (cause: unknown): string =>
   cause instanceof Error ? cause.message : String(cause);
 
 /**
+ * A string field of an error body, treating empty as absent.
+ *
+ * @param value - The field.
+ * @returns It, or `undefined` when missing or empty.
+ */
+const nonEmpty = (value: string | undefined): string | undefined =>
+  value === '' ? undefined : value;
+
+/**
  * Convert a failed catalog call to a {@link RunnerError}.
  *
  * @param error - What the catalog client threw.
@@ -55,9 +64,12 @@ export function toRunnerError(
   }
   if (error.status >= 300) {
     return new RunnerError({
-      code: `http_${String(error.status)}` as `http_${number}`,
+      code: nonEmpty(error.code) ?? `http_${String(error.status)}`,
       status: error.status,
-      message: `${operation} failed (HTTP ${String(error.status)}): ${error.body?.error ?? 'no error message'}`,
+      message:
+        nonEmpty(error.body?.message) ??
+        nonEmpty(error.body?.error) ??
+        `HTTP ${String(error.status)}`,
       ...(error.body === undefined ? {} : { body: error.body }),
       ...(responseText === undefined ? {} : { responseText }),
       cause: error,
