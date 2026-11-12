@@ -2,11 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.14.0] - 2026-11-12
+
+### 💼 Other
+
+- Updated core
+- Updated sdk
 ## [0.14.0-2] - 2026-11-12
 
 ### 🐛 Bug Fixes
 
 - *(service)* Alert on_failure when a run's execution throws (#137)
+
+### ⚙️ Miscellaneous Tasks
+
+- Release @karmaniverous/jeeves-runner v0.14.0-2
 ## [0.14.0-1] - 2026-11-12
 
 ### 🚀 Features
