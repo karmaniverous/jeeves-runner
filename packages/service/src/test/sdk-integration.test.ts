@@ -142,22 +142,38 @@ describe('SDK round trip through every entry', () => {
   });
 });
 
-describe('triggerJob failures keep their HTTP status', () => {
+describe("triggerJob failures keep their HTTP status and carry the body's code (DD#96)", () => {
   it.each([
-    [new JobNotFoundError('nope'), 404, 'Job not found: nope'],
-    [new MaxConcurrencyError(), 409, 'Max concurrency'],
-    [new Error('database is locked'), 500, 'database is locked'],
-  ] as const)('%s -> %i', async (thrown, status, message) => {
+    [
+      new JobNotFoundError('nope'),
+      404,
+      'RUNNER_JOB_NOT_FOUND',
+      'Not Found',
+      'Job not found: nope',
+    ],
+    [
+      new MaxConcurrencyError(),
+      409,
+      'RUNNER_MAX_CONCURRENCY',
+      'Conflict',
+      'Max concurrency reached; retry when a running job finishes.',
+    ],
+    [
+      new Error('database is locked'),
+      500,
+      'RUNNER_TRIGGER_FAILED',
+      'Internal Server Error',
+      'The job could not be run; the cause is in the runner log and on the run, if it started.',
+    ],
+  ] as const)('%s -> %i %s', async (thrown, status, code, error, message) => {
     vi.mocked(scheduler.triggerJobMock).mockRejectedValueOnce(thrown);
     const err = await runner
       .triggerJob({ id: 'nope' })
       .catch((e: unknown) => e);
     expect(err).toBeInstanceOf(RunnerError);
-    expect(err).toMatchObject({ status, code: `http_${String(status)}` });
-    expect((err as RunnerError).body?.error).toContain(message);
-    expect((err as RunnerError).responseText).toBe(
-      JSON.stringify({ error: thrown.message }),
-    );
+    const body = { statusCode: status, code, error, message };
+    expect(err).toMatchObject({ status, code, message, body });
+    expect((err as RunnerError).responseText).toBe(JSON.stringify(body));
   });
 });
 

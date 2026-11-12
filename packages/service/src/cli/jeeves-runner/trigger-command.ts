@@ -1,12 +1,11 @@
 /**
- * The CLI `trigger` command on the SDK (DD#92): run one job through `POST /jobs/:id/run` and report the result or the failure with the 0.14.0-0 messages and exit codes. The job id is URL-encoded; the call waits up to 30 minutes. Network I/O only.
+ * The CLI `trigger` command on the SDK (DD#92, DD#96): run one job through `POST /jobs/:id/run` and report the result, or the failure with the error body's message and the 0.14.0-0 exit codes. The job id is URL-encoded; the call waits up to 30 minutes. Network I/O only.
  *
  * @module cli/jeeves-runner/trigger-command
  */
 
 import {
   createRunnerClient,
-  errorBodyText,
   type FetchLike,
   isRunnerError,
   TRIGGER_TIMEOUT_MS,
@@ -38,8 +37,9 @@ export interface TriggerOptions {
  * Trigger a job and report the outcome.
  *
  * - 2xx: the response body, pretty-printed, on stdout; exit 0.
- * - Non-2xx (404 unknown job, 409 at `maxConcurrency`, 500 other; #118):
- *   `Trigger failed (HTTP <status>): <body as received>`; exit 1.
+ * - Non-2xx (404 `RUNNER_JOB_NOT_FOUND`, 409 `RUNNER_MAX_CONCURRENCY`, 500
+ *   `RUNNER_TRIGGER_FAILED`; #118, DD#96):
+ *   `Trigger failed (HTTP <status>): <the body's message>`; exit 1.
  * - Unreachable runner: `Runner not reachable at <url>. Is it running?`; exit 1.
  * - Timeout or a 2xx that is not a run result:
  *   `Trigger failed: <reason>`; exit 1.
@@ -63,7 +63,7 @@ export async function triggerCommand(options: TriggerOptions): Promise<number> {
   } catch (error) {
     if (isRunnerError(error) && error.status >= 300) {
       output.error(
-        `Trigger failed (HTTP ${String(error.status)}): ${errorBodyText(error)}`,
+        `Trigger failed (HTTP ${String(error.status)}): ${error.message}`,
       );
     } else if (
       isRunnerError(error) &&

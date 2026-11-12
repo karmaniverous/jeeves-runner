@@ -5,7 +5,14 @@
  * `registerRoutes` stays synchronous: the catalog routes go in a child
  * plugin, so a registration error surfaces from `ready()`/`listen()`.
  * Responses are validated `strict`ly: a body that does not match its schema
- * is logged and answered 500 (DD#87 item c).
+ * is logged and answered 500 `JEEVES_RESPONSE_VALIDATION` (DD#87 item c).
+ *
+ * Errors (DD#96): jeeves' catalog scope answers every error on catalog
+ * routes, and `registerErrorHandlers` gives the other routes
+ * (`/openapi.json`, unknown routes) the same rule: a `defineError` error
+ * (`api/errors.ts`) or a Fastify 4xx is sent as Fastify's standard body,
+ * anything else is a logged, masked 500. Fastify runs with the service's
+ * pino logger, so jeeves logs through it (no `logger` option needed).
  *
  * @module routes
  */
@@ -20,6 +27,7 @@ import {
 } from '@karmaniverous/jeeves';
 import {
   registerCatalogRoutes,
+  registerErrorHandlers,
   registerOpenApiRoute,
   standardHandlers,
 } from '@karmaniverous/jeeves/fastify';
@@ -32,7 +40,6 @@ import type { FastifyInstance } from 'fastify';
 
 import type { Scheduler } from '../scheduler/scheduler.js';
 import type { RunnerConfig } from '../schemas/config.js';
-import { fastifyDefaultErrorHandler } from './error-handler.js';
 import type { RunnerHandlers } from './handler-utils.js';
 import { createInspectHandlers } from './inspect-handlers.js';
 import { createJobHandlers } from './job-handlers.js';
@@ -112,7 +119,7 @@ export function createRunnerHandlers(deps: RouteDeps): RunnerHandlers {
  */
 export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
   const handlers = createRunnerHandlers(deps);
-  app.setErrorHandler(fastifyDefaultErrorHandler);
+  registerErrorHandlers(app);
   void app.register(async (child) => {
     await registerCatalogRoutes(child, RUNNER_CATALOG, handlers, {
       responseValidation: 'strict',

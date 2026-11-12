@@ -306,13 +306,18 @@ describe('trigger command', () => {
     });
   }, 15000);
 
-  it('exits non-zero and reports the status when the runner refuses (#118)', async () => {
+  it("exits non-zero and reports the status and the body's message when the runner refuses (#118, DD#96)", async () => {
     await expect(
-      triggerAgainst(409, { error: 'Max concurrency reached' }),
+      triggerAgainst(409, {
+        statusCode: 409,
+        code: 'RUNNER_MAX_CONCURRENCY',
+        error: 'Conflict',
+        message: 'Max concurrency reached; retry when a running job finishes.',
+      }),
     ).rejects.toMatchObject({
       code: 1,
       stderr: expect.stringContaining(
-        'Trigger failed (HTTP 409): {"error":"Max concurrency reached"}',
+        'Trigger failed (HTTP 409): Max concurrency reached; retry when a running job finishes.',
       ) as unknown,
     });
   }, 15000);

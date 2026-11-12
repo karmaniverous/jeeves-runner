@@ -1,5 +1,5 @@
 /**
- * The `trigger` command in-process (DD#92): messages and exit codes for success, each failure kind, the URL-encoded id and the 30-minute timeout. The spawned-CLI tests in `index.test.ts` cover the wiring.
+ * The `trigger` command in-process (DD#92, DD#96): messages and exit codes for success, each failure kind (an error response prints its body's message), the URL-encoded id and the 30-minute timeout. The spawned-CLI tests in `index.test.ts` cover the wiring.
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -60,15 +60,45 @@ describe('triggerCommand', () => {
     );
   });
 
+  /** Fastify's standard error body. */
+  const standard = (
+    statusCode: number,
+    code: string,
+    error: string,
+    message: string,
+  ) => JSON.stringify({ statusCode, code, error, message });
+
   it.each([
-    [404, '{"error":"Job not found: x"}'],
-    [409, '{"error":"Max concurrency reached"}'],
-    [500, '{"statusCode":500,"error":"Internal Server Error","message":"m"}'],
-    [502, 'Bad Gateway'],
-    [503, ''],
+    [
+      404,
+      standard(404, 'RUNNER_JOB_NOT_FOUND', 'Not Found', 'Job not found: x'),
+      'Job not found: x',
+    ],
+    [
+      409,
+      standard(
+        409,
+        'RUNNER_MAX_CONCURRENCY',
+        'Conflict',
+        'Max concurrency reached; retry when a running job finishes.',
+      ),
+      'Max concurrency reached; retry when a running job finishes.',
+    ],
+    [
+      500,
+      standard(500, 'RUNNER_TRIGGER_FAILED', 'Internal Server Error', 'm'),
+      'm',
+    ],
+    [
+      500,
+      '{"statusCode":500,"error":"Internal Server Error","message":"The server could not complete the request."}',
+      'The server could not complete the request.',
+    ],
+    [502, 'Bad Gateway', 'Bad Gateway'],
+    [503, '', 'HTTP 503'],
   ])(
-    'reports HTTP %i with the body as received and exits 1',
-    async (status, body) => {
+    "reports HTTP %i with the body's message and exits 1",
+    async (status, body, message) => {
       const { out, output } = capture();
       const code = await triggerCommand({
         url: URL_,
@@ -78,19 +108,19 @@ describe('triggerCommand', () => {
       });
       expect(code).toBe(1);
       expect(out.error).toEqual([
-        `Trigger failed (HTTP ${String(status)}): ${body}`,
+        `Trigger failed (HTTP ${String(status)}): ${message}`,
       ]);
     },
   );
 
-  it('reports a bodiless non-2xx (304) with its empty body', async () => {
+  it('reports a bodiless non-2xx (304) by its status', async () => {
     const { out, output } = capture();
     const fetch = vi.fn(() =>
       Promise.resolve(new Response(null, { status: 304 })),
     );
     const code = await triggerCommand({ url: URL_, id: 'x', output, fetch });
     expect(code).toBe(1);
-    expect(out.error).toEqual(['Trigger failed (HTTP 304): ']);
+    expect(out.error).toEqual(['Trigger failed (HTTP 304): HTTP 304']);
   });
 
   it('reports a non-JSON 2xx as an invalid response', async () => {

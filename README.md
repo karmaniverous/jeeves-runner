@@ -164,7 +164,7 @@ The runner exposes a REST API. Default bind address: `0.0.0.0` (all interfaces),
 | `GET` | `/state/:namespace/:key` | Read collection items (`?limit=N`, `?order=asc` or `desc`, `?path=` JSONPath) |
 | `GET` | `/openapi.json` | OpenAPI 3.1 document of the API (no auth) |
 
-Every route comes from the runner's endpoint catalog (`RUNNER_CATALOG` in `@karmaniverous/jeeves-runner-core`), which validates requests and responses. A request that fails validation gets `400 { error: 'Request validation failed', issues: [...] }`. `POST /jobs/:id/run` answers `404` for an unknown job, `409` at `maxConcurrency` and `500` for other failures. From TypeScript, call the API with [`@karmaniverous/jeeves-runner-sdk`](packages/sdk):
+Every route comes from the runner's endpoint catalog (`RUNNER_CATALOG` in `@karmaniverous/jeeves-runner-core`), which validates requests and responses. Every error has Fastify's standard body, `{ statusCode, code?, error, message }`: a request that fails validation gets `400` with code `FST_ERR_VALIDATION`, and the runner's own errors carry `RUNNER_*` codes (`POST /jobs/:id/run` answers `404 RUNNER_JOB_NOT_FOUND`, `409 RUNNER_MAX_CONCURRENCY` or `500 RUNNER_TRIGGER_FAILED`; a duplicate job id `409 RUNNER_JOB_EXISTS`). An unexpected failure is a `500` with no `code`. Codes and the changes from 0.14.0-0 are in the [API reference](packages/service/guides/api-reference.md#errors). From TypeScript, call the API with [`@karmaniverous/jeeves-runner-sdk`](packages/sdk):
 
 ```typescript
 import { createRunnerClient } from '@karmaniverous/jeeves-runner-sdk';

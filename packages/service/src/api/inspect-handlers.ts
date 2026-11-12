@@ -1,11 +1,12 @@
 /**
- * Catalog handlers for queue and state inspection (spec 4B.2 entries 14-19). SQL unchanged from 0.14.0-0; `limit`, `order` and `path` arrive validated by the catalog. Reads SQLite only.
+ * Catalog handlers for queue and state inspection (spec 4B.2 entries 14-19). SQL unchanged from 0.14.0-0; `limit`, `order` and `path` arrive validated by the catalog; a non-JSON payload and a bad JSONPath throw the runner's 400s (DD#96). Reads SQLite only.
  *
  * @module api/inspect-handlers
  */
 
 import type { DatabaseSync } from 'node:sqlite';
 
+import { InvalidQueuePayload } from './errors.js';
 import { fromSync, withJsonPath } from './handler-utils.js';
 
 /** Dependencies of the inspection handlers. */
@@ -34,6 +35,21 @@ export function ageOf(oldest: string | null): number | null {
   if (!oldest) return null;
   const age = Date.now() - new Date(oldest).getTime();
   return Number.isFinite(age) ? age : null;
+}
+
+/**
+ * A stored queue payload, parsed.
+ *
+ * @param payload - The `payload` column (JSON text).
+ * @returns The parsed value.
+ * @throws `RUNNER_INVALID_QUEUE_PAYLOAD` when it is not JSON.
+ */
+export function parsePayload(payload: string): unknown {
+  try {
+    return JSON.parse(payload) as unknown;
+  } catch {
+    throw new InvalidQueuePayload();
+  }
 }
 
 /**
@@ -100,8 +116,7 @@ export function createInspectHandlers(deps: InspectHandlerDeps) {
         body: {
           items: items.map((item) => ({
             id: item.id,
-            // Throws on a non-JSON payload: a 500, as before.
-            payload: JSON.parse(item.payload) as unknown,
+            payload: parsePayload(item.payload),
             priority: item.priority,
             createdAt: item.created_at,
           })),

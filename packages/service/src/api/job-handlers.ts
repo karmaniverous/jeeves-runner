@@ -1,5 +1,5 @@
 /**
- * Catalog handlers for the job mutations: create, update, delete, enable, disable and script update. The catalog validates bodies first (DD#87); the schedule check and 404s stay here, so their bodies are unchanged. Writes SQLite and asks the scheduler to reconcile.
+ * Catalog handlers for the job mutations: create, update, delete, enable, disable and script update. The catalog validates bodies first (DD#87); the schedule check, the duplicate id and unknown jobs throw the runner's `defineError` errors (DD#96). Writes SQLite and asks the scheduler to reconcile.
  *
  * @module api/job-handlers
  */
@@ -11,7 +11,8 @@ import type { UpdateJob } from '@karmaniverous/jeeves-runner-core';
 import { toSqlInput } from '../lib/sql-input.js';
 import { validateSchedule } from '../scheduler/schedule-utils.js';
 import type { Scheduler } from '../scheduler/scheduler.js';
-import { fromSync, JOB_NOT_FOUND, OK } from './handler-utils.js';
+import { capArg, InvalidSchedule, JobExists, jobNotFound } from './errors.js';
+import { fromSync, OK } from './handler-utils.js';
 
 /** Dependencies of the job handlers. */
 export interface JobHandlerDeps {
@@ -54,17 +55,33 @@ const FIELD_MAP: readonly FieldMapping[] = [
   { input: 'args', column: 'args', transform: jsonOrNull },
 ];
 
+/** SQLite's extended result code for a PRIMARY KEY violation. */
+export const SQLITE_CONSTRAINT_PRIMARYKEY = 1555;
+
 /**
- * A 400 for an invalid schedule, or undefined when it is valid.
+ * Throw `RUNNER_INVALID_SCHEDULE` unless the schedule is valid.
  *
  * @param schedule - Cron or RRStack expression.
- * @returns The error result, if any.
+ * @throws `RUNNER_INVALID_SCHEDULE` with the check's message (capped).
  */
-function scheduleError(schedule: string) {
+function checkSchedule(schedule: string): void {
   const validation = validateSchedule(schedule);
-  return validation.valid
-    ? undefined
-    : ({ status: 400, body: { error: validation.error } } as const);
+  if (!validation.valid) throw new InvalidSchedule(capArg(validation.error));
+}
+
+/**
+ * Whether a thrown value is SQLite's PRIMARY KEY violation (`node:sqlite`
+ * sets `errcode` to the extended result code).
+ *
+ * @param err - What `run()` threw.
+ * @returns `true` for a duplicate primary key.
+ */
+export function isPrimaryKeyViolation(err: unknown): boolean {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    (err as { errcode?: unknown }).errcode === SQLITE_CONSTRAINT_PRIMARYKEY
+  );
 }
 
 /**
@@ -76,45 +93,50 @@ function scheduleError(schedule: string) {
 export function createJobHandlers(deps: JobHandlerDeps) {
   const { db, scheduler } = deps;
 
-  /** Set `enabled` on a job: OK, or 404 when no such job. */
+  /** Set `enabled` on a job: OK, or `RUNNER_JOB_NOT_FOUND`. */
   const toggle = (id: string, enabled: number) => {
     const result = db
       .prepare('UPDATE jobs SET enabled = ? WHERE id = ?')
       .run(enabled, id);
-    if (result.changes === 0) return JOB_NOT_FOUND;
+    if (result.changes === 0) throw jobNotFound(id);
     scheduler.reconcileNow();
     return OK;
   };
 
   return fromSync({
     createJob: ({ body: data }) => {
-      const invalid = scheduleError(data.schedule);
-      if (invalid) return invalid;
+      checkSchedule(data.schedule);
 
       const timeoutMs = data.timeout_seconds
         ? data.timeout_seconds * 1000
         : null;
-      db.prepare(
+      const insert = db.prepare(
         `INSERT INTO jobs (id, name, schedule, script, source_type, type, timeout_ms,
          overlap_policy, enabled, description, on_failure, on_success, output_channel, env, args)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      ).run(
-        data.id,
-        data.name,
-        data.schedule,
-        data.script,
-        data.source_type,
-        data.type,
-        timeoutMs,
-        data.overlap_policy,
-        data.enabled ? 1 : 0,
-        data.description ?? null,
-        data.on_failure ?? null,
-        data.on_success ?? null,
-        data.output_channel ?? null,
-        jsonOrNull(data.env),
-        jsonOrNull(data.args),
       );
+      try {
+        insert.run(
+          data.id,
+          data.name,
+          data.schedule,
+          data.script,
+          data.source_type,
+          data.type,
+          timeoutMs,
+          data.overlap_policy,
+          data.enabled ? 1 : 0,
+          data.description ?? null,
+          data.on_failure ?? null,
+          data.on_success ?? null,
+          data.output_channel ?? null,
+          jsonOrNull(data.env),
+          jsonOrNull(data.args),
+        );
+      } catch (err) {
+        if (isPrimaryKeyViolation(err)) throw new JobExists(capArg(data.id));
+        throw err;
+      }
 
       scheduler.reconcileNow();
       return { status: 201, body: { ok: true, id: data.id } } as const;
@@ -124,12 +146,9 @@ export function createJobHandlers(deps: JobHandlerDeps) {
       const existing = db
         .prepare('SELECT id FROM jobs WHERE id = ?')
         .get(params.id);
-      if (!existing) return JOB_NOT_FOUND;
+      if (!existing) throw jobNotFound(params.id);
 
-      if (data.schedule) {
-        const invalid = scheduleError(data.schedule);
-        if (invalid) return invalid;
-      }
+      if (data.schedule) checkSchedule(data.schedule);
 
       const sets: string[] = [];
       const values: SQLInputValue[] = [];
@@ -156,7 +175,7 @@ export function createJobHandlers(deps: JobHandlerDeps) {
     deleteJob: ({ params }) => {
       db.prepare('DELETE FROM runs WHERE job_id = ?').run(params.id);
       const result = db.prepare('DELETE FROM jobs WHERE id = ?').run(params.id);
-      if (result.changes === 0) return JOB_NOT_FOUND;
+      if (result.changes === 0) throw jobNotFound(params.id);
       scheduler.reconcileNow();
       return OK;
     },
@@ -173,7 +192,7 @@ export function createJobHandlers(deps: JobHandlerDeps) {
         : db
             .prepare('UPDATE jobs SET script = ? WHERE id = ?')
             .run(data.script, params.id);
-      if (result.changes === 0) return JOB_NOT_FOUND;
+      if (result.changes === 0) throw jobNotFound(params.id);
       scheduler.reconcileNow();
       return OK;
     },

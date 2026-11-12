@@ -1,5 +1,5 @@
 /**
- * Catalog handlers for reading jobs and running them: list, detail, run history and manual trigger (DD#79, DD#80). SQL unchanged from 0.14.0-0; rows are sent as read and checked against the catalog's row schemas on the way out. Reads SQLite; `triggerJob` runs the job through the scheduler.
+ * Catalog handlers for reading jobs and running them: list, detail, run history and manual trigger (DD#79, DD#80, DD#96). SQL unchanged from 0.14.0-0; rows are sent as read and checked against the catalog's row schemas on the way out. Reads SQLite; `triggerJob` runs the job through the scheduler.
  *
  * @module api/run-handlers
  */
@@ -14,11 +14,8 @@ import type {
 
 import { JobNotFoundError, MaxConcurrencyError } from '../scheduler/errors.js';
 import type { Scheduler } from '../scheduler/scheduler.js';
-import {
-  fromSync,
-  JOB_NOT_FOUND,
-  type RunnerHandlers,
-} from './handler-utils.js';
+import { jobNotFound, MaxConcurrency, TriggerFailed } from './errors.js';
+import { fromSync, type RunnerHandlers } from './handler-utils.js';
 
 /** Dependencies of the job read and trigger handlers. */
 export interface RunHandlerDeps {
@@ -32,16 +29,20 @@ export interface RunHandlerDeps {
 const DEFAULT_RUNS_LIMIT = 50;
 
 /**
- * HTTP status for a failed trigger: 404 unknown job; 409 refused at
- * `maxConcurrency` (not recorded as a run); 500 otherwise (#118, DD#80).
+ * The caller's error for a failed trigger (#118, DD#80, DD#96):
+ * `RUNNER_JOB_NOT_FOUND` (404) for an unknown job, `RUNNER_MAX_CONCURRENCY`
+ * (409) when refused at `maxConcurrency` (not recorded as a run), and
+ * `RUNNER_TRIGGER_FAILED` (500, fixed message, the original as `cause` for
+ * the log) for anything else.
  *
  * @param err - What `triggerJob` rejected with.
- * @returns The status.
+ * @param id - The job id from the path.
+ * @returns The error to throw.
  */
-export function triggerErrorStatus(err: unknown): 404 | 409 | 500 {
-  if (err instanceof JobNotFoundError) return 404;
-  if (err instanceof MaxConcurrencyError) return 409;
-  return 500;
+export function triggerError(err: unknown, id: string): Error {
+  if (err instanceof JobNotFoundError) return jobNotFound(id);
+  if (err instanceof MaxConcurrencyError) return new MaxConcurrency();
+  return new TriggerFailed({ cause: err });
 }
 
 /**
@@ -72,7 +73,7 @@ export function createRunHandlers(
       const job = db
         .prepare('SELECT * FROM jobs WHERE id = ?')
         .get(params.id) as JobRow | undefined;
-      if (!job) return JOB_NOT_FOUND;
+      if (!job) throw jobNotFound(params.id);
       return { status: 200, body: { job } } as const;
     },
 
@@ -96,12 +97,7 @@ export function createRunHandlers(
         const result = await scheduler.triggerJob(params.id);
         return { status: 200, body: { result } } as const;
       } catch (err) {
-        return {
-          status: triggerErrorStatus(err),
-          body: {
-            error: err instanceof Error ? err.message : 'Unknown error',
-          },
-        } as const;
+        throw triggerError(err, params.id);
       }
     },
   };

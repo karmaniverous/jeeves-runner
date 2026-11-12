@@ -2,6 +2,7 @@
  * Catalog wiring of the service (DD#87, DD#88, DD#93): `GET /openapi.json` served without auth, strict response validation, row schemas that match the migrated tables column for column, and the job-age helper.
  */
 
+import { SERVER_ERROR_MESSAGE } from '@karmaniverous/jeeves/fastify';
 import {
   jobListRowSchema,
   jobRowSchema,
@@ -154,8 +155,10 @@ describe('strict response validation (DD#87 item c)', () => {
     const res = await app.inject({ method: 'GET', url: '/jobs/odd' });
     expect(res.statusCode).toBe(500);
     expect(JSON.parse(res.body)).toEqual({
-      code: 'internal_error',
-      error: 'Response validation failed',
+      statusCode: 500,
+      code: 'JEEVES_RESPONSE_VALIDATION',
+      error: 'Internal Server Error',
+      message: SERVER_ERROR_MESSAGE,
     });
   });
 });

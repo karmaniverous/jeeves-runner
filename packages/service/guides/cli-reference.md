@@ -231,7 +231,7 @@ Resolves the service URL with `getServiceUrl('runner')` from the config root, ca
 | Outcome | Output | Exit |
 | --- | --- | --- |
 | Job ran | the response body (`{ result: { status, exitCode, durationMs, ... } }`) on stdout | 0 |
-| Non-2xx (404 unknown job, 409 at `maxConcurrency`, 500 other) | `Trigger failed (HTTP <status>): <body as received>` | 1 |
+| Non-2xx (404 `RUNNER_JOB_NOT_FOUND`, 409 `RUNNER_MAX_CONCURRENCY`, 500 `RUNNER_TRIGGER_FAILED`) | `Trigger failed (HTTP <status>): <the error body's message>` (e.g. `Trigger failed (HTTP 409): Max concurrency reached; retry when a running job finishes.`) | 1 |
 | Runner not running or URL unusable | `Runner not reachable at <url>. Is it running?` | 1 |
 | Timeout, or a 2xx that is not a run result | `Trigger failed: <reason>` | 1 |
 
