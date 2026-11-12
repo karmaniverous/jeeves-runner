@@ -1880,14 +1880,27 @@
       "ErrorBody": {
         "type": "object",
         "properties": {
+          "statusCode": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "code": {
+            "type": "string"
+          },
           "error": {
+            "type": "string"
+          },
+          "message": {
             "type": "string"
           }
         },
         "required": [
-          "error"
+          "statusCode",
+          "error",
+          "message"
         ],
-        "additionalProperties": {}
+        "additionalProperties": false
       }
     }
   }

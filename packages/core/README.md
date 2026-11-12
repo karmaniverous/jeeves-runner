@@ -30,6 +30,17 @@ The bodies the routes send (job and run rows are SQLite rows: snake_case, `enabl
 | `jsonPathResultSchema` | `{ result, count }` from a `?path=` JSONPath query |
 | `okResponseSchema` | `{ ok: true }` |
 
+#### Errors
+
+Every non-2xx body is Fastify's standard error body, `{ statusCode, code?, error, message }` (`errorBodySchema` in `@karmaniverous/jeeves/catalog`). Branch on `code`.
+
+| Export | Description |
+| --- | --- |
+| `RUNNER_ERROR_CODES`, `RunnerErrorCode` | The runner's own codes: `RUNNER_INVALID_SCHEDULE`, `RUNNER_INVALID_JSONPATH`, `RUNNER_INVALID_QUEUE_PAYLOAD`, `RUNNER_JOB_NOT_FOUND`, `RUNNER_JOB_EXISTS`, `RUNNER_MAX_CONCURRENCY`, `RUNNER_TRIGGER_FAILED` |
+| `RUNNER_ERROR_STATUS` | The HTTP status each is sent with (400, 400, 400, 404, 409, 409, 500) |
+
+When each is sent, and the jeeves and Fastify codes, are in the service's [API reference](../service/guides/api-reference.md#errors).
+
 #### OpenAPI
 
 | Export | Description |

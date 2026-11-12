@@ -33,6 +33,13 @@ export {
   stateCollectionItemSchema,
 } from './catalog/rows.js';
 
+// Error codes and their statuses (DD#96)
+export {
+  RUNNER_ERROR_CODES,
+  RUNNER_ERROR_STATUS,
+  type RunnerErrorCode,
+} from './errors.js';
+
 // OpenAPI document generated from the catalog (DD#93)
 export { RUNNER_OPENAPI_DOCUMENT } from './openapi.js';
 
