@@ -2,6 +2,61 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.14.0-1] - 2026-11-12
+
+### 🚀 Features
+
+- *(core)* RUNNER_CATALOG with wire schemas; deprecate RUNNER_ENDPOINTS and contracts (#127)
+- *(service)* Serve every route from RUNNER_CATALOG with strict validation, GET /openapi.json (#127)
+- *(sdk)* New @karmaniverous/jeeves-runner-sdk client built on the catalog (#127)
+- *(service)* CLI trigger on the SDK with an encoded id and a 30-minute timeout (#127)
+- *(service)* [**breaking**] Fastify's standard error body with RUNNER_* codes (#136)
+
+Every error body is now Fastify's standard body. Branch on `code`. What HTTP clients see:
+
+| Case | 0.14.0-0 | 0.14.0-1 |
+| --- | --- | --- |
+| Unknown job id (detail, update, delete, enable, disable, script) | `404 { error: 'Job not found' }` | `404 RUNNER_JOB_NOT_FOUND`, `Job not found: <id>` |
+| Trigger, unknown job | `404 { error: 'Job not found: <id>' }` | `404 RUNNER_JOB_NOT_FOUND` |
+| Trigger at maxConcurrency | `409 { error: 'Max concurrency reached' }` | `409 RUNNER_MAX_CONCURRENCY` |
+| Trigger, any other failure | `500 { error: '<the error text>' }` | `500 RUNNER_TRIGGER_FAILED`, fixed message |
+| Invalid schedule | `400 { error: '<message>' }` | `400 RUNNER_INVALID_SCHEDULE`, same message |
+| Duplicate job id | `500 ERR_SQLITE_ERROR` | `409 RUNNER_JOB_EXISTS` |
+| Non-JSON queue payload | `500`, parser text | `400 RUNNER_INVALID_QUEUE_PAYLOAD` |
+| Invalid state JSONPath | `500`, parser text | `400 RUNNER_INVALID_JSONPATH` |
+| Invalid config JSONPath | `400 { error }` | `400 JEEVES_CONFIG_QUERY_INVALID` |
+| Invalid config patch | `400 { error, issues }` | `400 JEEVES_CONFIG_INVALID` |
+| Malformed request | `400 { error }`, a 500, or silently read | `400 FST_ERR_VALIDATION` |
+| Any other unexpected error | `500`, its own message and code | `500`, generic message, no code |
+| CLI trigger failure line | `Trigger failed (HTTP <s>): <body>` | `Trigger failed (HTTP <s>): <message>` |
+
+
+
+### 🐛 Bug Fixes
+
+- Address review - REAL-valued row columns, typed JR_RESULT, more wire scenarios, OpenAPI rebuild on bump (#127)
+- Address review of the error contract (#136)
+
+### 💼 Other
+
+- Updated dependencies
+- Updated core
+- Updated sdk
+
+### 📚 Documentation
+
+- Catalog, OpenAPI, SDK and trigger behaviour across READMEs, guides and the skill (#127)
+
+### 🧪 Testing
+
+- Record the 0.14.0-0 wire baseline for every route and outcome (#127)
+- *(openclaw)* Record the 0.12.0-0 tool baseline (#127)
+- Close coverage gaps; share the error-body wording via errorBodyText (#127)
+
+### ⚙️ Miscellaneous Tasks
+
+- Take @karmaniverous/jeeves 0.9.2 (exact) and fix stale script-helper docs (#127)
+- Take @karmaniverous/jeeves 0.11.0 (exact) in every package (#136)
 ## [0.14.0-0] - 2026-11-09
 
 ### 🐛 Bug Fixes
@@ -31,6 +86,7 @@ All notable changes to this project will be documented in this file.
 ### ⚙️ Miscellaneous Tasks
 
 - Require Node >=24.22.2 in every package, CI on Node 24 only (#132)
+- Release @karmaniverous/jeeves-runner v0.14.0-0
 ## [0.13.0] - 2026-10-14
 
 ### 🐛 Bug Fixes
@@ -709,6 +765,18 @@ Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
 
 - Restructure as npm workspaces monorepo
 - [**breaking**] Remove cursor backward-compat aliases, rename to state API
+
+getCursor/setCursor/deleteCursor removed from RunnerClient and StateOps interfaces. Use getState/setState/deleteState instead.
+
+- Remove cursor aliases from state-ops.ts and client.ts
+- Rename cursorCleanupIntervalMs → stateCleanupIntervalMs in config schema
+- Rename cleanExpiredCursors → cleanExpiredState in maintenance
+- Update all test descriptions and assertions
+- Remove redundant backward-compat test suite (was testing cursor→state aliases)
+- Delete stale .rollup.cache
+- 106 tests passing (6 removed with redundant compat suite)
+
+
 - Change default port from 3100 to 1937
 - Add service install/uninstall CLI command (Linux/Windows/macOS)
 - Add validate, init, and config-show CLI commands
