@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.0-1] - 2026-11-12
+
+### 💼 Other
+
+- Updated core
 ## [0.1.0-0] - 2026-11-12
 
 ### 🚀 Features
@@ -25,3 +30,4 @@ All notable changes to this project will be documented in this file.
 ### ⚙️ Miscellaneous Tasks
 
 - Take @karmaniverous/jeeves 0.11.0 (exact) in every package (#136)
+- Release @karmaniverous/jeeves-runner-sdk v0.1.0-0
