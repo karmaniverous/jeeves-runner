@@ -39,7 +39,8 @@ export interface TriggerOptions {
  * - 2xx: the response body, pretty-printed, on stdout; exit 0.
  * - Non-2xx (404 `RUNNER_JOB_NOT_FOUND`, 409 `RUNNER_MAX_CONCURRENCY`, 500
  *   `RUNNER_TRIGGER_FAILED`; #118, DD#96):
- *   `Trigger failed (HTTP <status>): <the body's message>`; exit 1.
+ *   `Trigger failed (HTTP <status>): <the body's message>` (just
+ *   `Trigger failed (HTTP <status>)` when the body has none); exit 1.
  * - Unreachable runner: `Runner not reachable at <url>. Is it running?`; exit 1.
  * - Timeout or a 2xx that is not a run result:
  *   `Trigger failed: <reason>`; exit 1.
@@ -62,9 +63,9 @@ export async function triggerCommand(options: TriggerOptions): Promise<number> {
     return 0;
   } catch (error) {
     if (isRunnerError(error) && error.status >= 300) {
-      output.error(
-        `Trigger failed (HTTP ${String(error.status)}): ${error.message}`,
-      );
+      const status = `HTTP ${String(error.status)}`;
+      const detail = error.message === status ? '' : `: ${error.message}`;
+      output.error(`Trigger failed (${status})${detail}`);
     } else if (
       isRunnerError(error) &&
       (error.code === 'timeout' ||

@@ -4,6 +4,7 @@
  */
 
 import type { ErrorBody } from '@karmaniverous/jeeves/catalog';
+import type { RunnerErrorCode } from '@karmaniverous/jeeves-runner-core';
 
 /**
  * Codes the SDK assigns itself (lower case, so they never collide with a
@@ -26,10 +27,18 @@ export type RunnerClientErrorCode =
   | 'timeout'
   | 'network_error';
 
+/**
+ * What {@link RunnerError.code} holds: a runner code, a client code,
+ * `http_<status>`, or any other server code (`JEEVES_*`, `FST_ERR_*`); the
+ * named ones autocomplete.
+ */
+export type RunnerErrorCodeValue =
+  RunnerErrorCode | RunnerClientErrorCode | `http_${number}` | (string & {});
+
 /** Constructor fields of a {@link RunnerError}. */
 export interface RunnerErrorInit {
   /** The server's code, `http_<status>` or a {@link RunnerClientErrorCode}. */
-  code: string;
+  code: RunnerErrorCodeValue;
   /** Human-readable message (a response's: the body's `message`). */
   message: string;
   /** HTTP status when a response arrived, else 0. */
@@ -56,7 +65,7 @@ export class RunnerError extends Error {
    * `JEEVES_*`, `FST_ERR_*`), else `http_<status>`, or a
    * {@link RunnerClientErrorCode} when no usable response arrived.
    */
-  readonly code: string;
+  readonly code: RunnerErrorCodeValue;
   /** HTTP status when a response arrived, else 0. */
   readonly status: number;
   /**

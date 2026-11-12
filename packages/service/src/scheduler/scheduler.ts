@@ -175,7 +175,16 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
       } catch (err) {
         // The run row exists: finish it with the error, so the run keeps its
         // own cause (a manual trigger's caller gets RUNNER_TRIGGER_FAILED).
-        runRepository.finishRun(runId, thrownResult(err, startedAt));
+        // Not alerted, as before (DD#96). A failure to record must not hide
+        // the original error.
+        try {
+          runRepository.finishRun(runId, thrownResult(err, startedAt));
+        } catch (recordErr) {
+          logger.error(
+            { jobId: id, runId, err: recordErr },
+            'Failed to record the error run',
+          );
+        }
         throw err;
       }
 

@@ -95,7 +95,6 @@ describe('triggerCommand', () => {
       'The server could not complete the request.',
     ],
     [502, 'Bad Gateway', 'Bad Gateway'],
-    [503, '', 'HTTP 503'],
   ])(
     "reports HTTP %i with the body's message and exits 1",
     async (status, body, message) => {
@@ -113,14 +112,26 @@ describe('triggerCommand', () => {
     },
   );
 
-  it('reports a bodiless non-2xx (304) by its status', async () => {
+  it('reports a bodiless non-2xx (304) by its status alone', async () => {
     const { out, output } = capture();
     const fetch = vi.fn(() =>
       Promise.resolve(new Response(null, { status: 304 })),
     );
     const code = await triggerCommand({ url: URL_, id: 'x', output, fetch });
     expect(code).toBe(1);
-    expect(out.error).toEqual(['Trigger failed (HTTP 304): HTTP 304']);
+    expect(out.error).toEqual(['Trigger failed (HTTP 304)']);
+  });
+
+  it('reports an empty-bodied 503 by its status alone', async () => {
+    const { out, output } = capture();
+    const code = await triggerCommand({
+      url: URL_,
+      id: 'x',
+      output,
+      fetch: reply(503, ''),
+    });
+    expect(code).toBe(1);
+    expect(out.error).toEqual(['Trigger failed (HTTP 503)']);
   });
 
   it('reports a non-JSON 2xx as an invalid response', async () => {

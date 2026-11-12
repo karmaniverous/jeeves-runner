@@ -19,6 +19,7 @@ export {
   isRunnerError,
   type RunnerClientErrorCode,
   RunnerError,
+  type RunnerErrorCodeValue,
   type RunnerErrorInit,
 } from './RunnerError.js';
 

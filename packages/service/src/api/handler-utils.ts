@@ -66,7 +66,7 @@ export function withJsonPath<B extends object>(
     result = JSONPath({ path, json: body, wrap: true }) as unknown[];
   } catch (err) {
     throw new InvalidJsonPath(
-      capArg(err instanceof Error ? err.message : 'query failed'),
+      capArg(err instanceof Error ? err.message : String(err)),
     );
   }
   return { result, count: result.length };

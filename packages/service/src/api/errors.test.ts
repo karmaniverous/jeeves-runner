@@ -2,6 +2,7 @@
  * The runner error contract through the real routes (DD#96, #136): every `RUNNER_*` code answers with its exact body and core's status, library errors a caller should see are mapped, anything else is a masked 500 with no code (catalog and non-catalog routes alike), and a trigger failure's cause is logged, never sent.
  */
 
+import { STATUS_CODES } from 'node:http';
 import { Writable } from 'node:stream';
 
 import {
@@ -56,14 +57,6 @@ afterEach(async () => {
   testDb.cleanup();
 });
 
-/** Status text by status. */
-const TEXT: Readonly<Record<number, string>> = {
-  400: 'Bad Request',
-  404: 'Not Found',
-  409: 'Conflict',
-  500: 'Internal Server Error',
-};
-
 /**
  * The exact body a runner error is sent with.
  *
@@ -73,7 +66,7 @@ const TEXT: Readonly<Record<number, string>> = {
  */
 const body = (code: keyof typeof RUNNER_ERROR_STATUS, message: string) => {
   const statusCode = RUNNER_ERROR_STATUS[code];
-  return { statusCode, code, error: TEXT[statusCode], message };
+  return { statusCode, code, error: STATUS_CODES[statusCode], message };
 };
 
 /** A masked 500: no code, jeeves' generic message. */
@@ -150,6 +143,16 @@ describe('capArg', () => {
     const capped = capArg('x'.repeat(MESSAGE_ARG_MAX + 1));
     expect(capped).toHaveLength(MESSAGE_ARG_MAX);
     expect(capped).toBe(`${'x'.repeat(MESSAGE_ARG_MAX - 1)}…`);
+  });
+
+  it('counts and cuts by code points, never splitting a surrogate pair', () => {
+    const emoji = '\u{1F600}';
+    expect(capArg(emoji.repeat(MESSAGE_ARG_MAX))).toBe(
+      emoji.repeat(MESSAGE_ARG_MAX),
+    );
+    expect(capArg(emoji.repeat(MESSAGE_ARG_MAX + 1))).toBe(
+      `${emoji.repeat(MESSAGE_ARG_MAX - 1)}…`,
+    );
   });
 });
 

@@ -1,5 +1,5 @@
 /**
- * A run whose execution throws (instead of returning a result) is finished as an `error` run with the thrown message, so a manual trigger answered `RUNNER_TRIGGER_FAILED` (DD#96) leaves its cause on the run; the throw still reaches the caller and the slot is freed.
+ * A run whose execution throws (instead of returning a result) is finished as an `error` run with the thrown message, so a manual trigger answered `RUNNER_TRIGGER_FAILED` (DD#96) leaves its cause on the run; the throw still reaches the caller, the slot is freed, and (as before) no alert is sent. A failure to record the run never hides the original error.
  */
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -69,6 +69,25 @@ describe('a run whose execution throws', () => {
     expect(runsOf('j')).toEqual([
       { status: 'error', error: 'spawn EACCES', exit_code: null, finished: 1 },
     ]);
+  });
+});
+
+describe('a run whose error cannot be recorded', () => {
+  it('still rejects with the original error, logs the failure and frees the slot', async () => {
+    addJob('j', 'script');
+    testDb.db.exec(
+      "CREATE TRIGGER no_finish BEFORE UPDATE ON runs BEGIN SELECT RAISE(ABORT, 'database is locked'); END;",
+    );
+    const mocks = createSchedulerMocks();
+    mocks.executorMock.mockRejectedValueOnce(new Error('spawn EACCES'));
+    const scheduler = createTestScheduler(testDb.db, mocks);
+
+    await expect(scheduler.triggerJob('j')).rejects.toThrow('spawn EACCES');
+    expect(mocks.logger.error).toHaveBeenCalledWith(
+      expect.objectContaining({ jobId: 'j' }),
+      'Failed to record the error run',
+    );
+    expect(scheduler.getRunningJobs()).toEqual([]);
   });
 });
 

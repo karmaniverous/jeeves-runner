@@ -11,15 +11,17 @@ export const MESSAGE_ARG_MAX = 300;
 
 /**
  * Cap a caller-supplied `%s` argument at {@link MESSAGE_ARG_MAX} characters
- * (an ellipsis marks a cut). Pure.
+ * (code points, so a surrogate pair is never split; an ellipsis marks a
+ * cut). Pure.
  *
  * @param value - The argument.
  * @returns It, at most {@link MESSAGE_ARG_MAX} characters long.
  */
 export function capArg(value: string): string {
-  return value.length <= MESSAGE_ARG_MAX
+  const chars = Array.from(value);
+  return chars.length <= MESSAGE_ARG_MAX
     ? value
-    : `${value.slice(0, MESSAGE_ARG_MAX - 1)}…`;
+    : `${chars.slice(0, MESSAGE_ARG_MAX - 1).join('')}…`;
 }
 
 /** A schedule the schedule check rejects; the message is the check's. */

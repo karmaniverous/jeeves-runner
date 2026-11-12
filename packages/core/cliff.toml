@@ -19,13 +19,13 @@ body = """
         - {% if commit.scope %}*({{ commit.scope }})* {% endif %}\
             {% if commit.breaking %}[**breaking**] {% endif %}\
             {{ commit.message | upper_first }}\
+            {% if commit.remote.pr_number %} \
+                ([#{{ commit.remote.pr_number }}](https://github.com/karmaniverous/jeeves-runner/pull/{{ commit.remote.pr_number }}))\
+            {% endif %}\
             {% if commit.breaking and commit.breaking_description and commit.breaking_description != commit.message %}
 
 {{ commit.breaking_description }}
 
-            {% endif %}\
-            {% if commit.remote.pr_number %} \
-                ([#{{ commit.remote.pr_number }}](https://github.com/karmaniverous/jeeves-runner/pull/{{ commit.remote.pr_number }}))\
             {% endif %}\
     {% endfor %}
 {% endfor %}

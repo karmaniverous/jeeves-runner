@@ -4,6 +4,7 @@
  */
 
 import { readFileSync } from 'node:fs';
+import { STATUS_CODES } from 'node:http';
 
 import { RUNNER_ERROR_STATUS } from '@karmaniverous/jeeves-runner-core';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -41,14 +42,6 @@ const changed = names.filter(
 /** A parsed error body. */
 type Body = Record<string, unknown>;
 
-/** HTTP status text of the statuses the departures use. */
-const STATUS_TEXT: Readonly<Record<number, string>> = {
-  400: 'Bad Request',
-  404: 'Not Found',
-  409: 'Conflict',
-  500: 'Internal Server Error',
-};
-
 /**
  * Assert a record is Fastify's standard error body with this status and
  * code: exactly `statusCode`, `code`, `error`, `message`, in that order.
@@ -70,7 +63,7 @@ function expectStandardBody(
   expect(body).toMatchObject({
     statusCode: status,
     code,
-    error: STATUS_TEXT[status],
+    error: STATUS_CODES[status],
   });
   expect(typeof body.message).toBe('string');
   return body;
