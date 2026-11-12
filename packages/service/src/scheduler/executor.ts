@@ -92,11 +92,14 @@ function parseResultLines(stdout: string): {
     if (match) {
       try {
         const data = JSON.parse(match[1]) as {
-          tokens?: number;
-          meta?: string;
+          tokens?: unknown;
+          meta?: unknown;
         };
-        if (data.tokens !== undefined) tokens = data.tokens;
-        if (data.meta !== undefined) resultMeta = data.meta;
+        // Keep only well-typed values, as the run result declares them
+        // (other values are ignored, like unparseable lines).
+        if (typeof data.tokens === 'number' && Number.isFinite(data.tokens))
+          tokens = data.tokens;
+        if (typeof data.meta === 'string') resultMeta = data.meta;
       } catch {
         // Ignore parse errors
       }

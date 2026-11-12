@@ -321,7 +321,26 @@ On sessions after bootstrap is complete:
 | `GET` | `/queues/:name/peek` | Non-claiming read of pending items |
 | `GET` | `/state` | List all state namespaces |
 | `GET` | `/state/:namespace` | Read scalar state (optional `?path=` JSONPath) |
-| `GET` | `/state/:namespace/:key` | Read collection items |
+| `GET` | `/state/:namespace/:key` | Read collection items (`?limit=N` default 100, `?order=asc` or `desc`, `?path=` JSONPath) |
+| `GET` | `/openapi.json` | OpenAPI 3.1 document of every route above (no auth) |
+
+Every route is declared in the runner's endpoint catalog (`RUNNER_CATALOG` in `@karmaniverous/jeeves-runner-core`), which validates requests and responses. A request that fails validation (missing or malformed body field, a `limit` that is not a positive integer, an `order` other than `asc`/`desc`) gets `400` with code `FST_ERR_VALIDATION`.
+
+**Errors.** Every non-2xx body is `{ statusCode, code?, error, message }`; branch on `code`, never on `message`. A failing tool's text is `Error: HTTP <status>: <that body>`, so it shows both. The runner's codes:
+
+| `code` | Status | Meaning |
+| --- | --- | --- |
+| `RUNNER_INVALID_SCHEDULE` | 400 | create/update with a schedule that is not valid cron or RRStack; the message says why |
+| `RUNNER_INVALID_JSONPATH` | 400 | a state query `path` that is not valid JSONPath |
+| `RUNNER_INVALID_QUEUE_PAYLOAD` | 400 | a pending queue item's stored payload is not JSON |
+| `RUNNER_JOB_NOT_FOUND` | 404 | no job with that id |
+| `RUNNER_JOB_EXISTS` | 409 | `runner_create_job` with an id that already exists: update it instead |
+| `RUNNER_MAX_CONCURRENCY` | 409 | trigger refused at `maxConcurrency` (not recorded as a run); retry later |
+| `RUNNER_TRIGGER_FAILED` | 500 | trigger failed otherwise; the message is fixed, so read `runner_runs` for the run's own error, or the runner log |
+
+A `500` with **no** `code` is an unexpected failure (cause in the runner log). jeeves' `JEEVES_CONFIG_*` codes come from `runner_config` / `runner_config_apply`.
+
+TypeScript code should call the API through `@karmaniverous/jeeves-runner-sdk` (`createRunnerClient({ baseUrl })`): typed methods named after the catalog entries, input validated before sending, every failure a `RunnerError` carrying the body's `code` and `message` and the HTTP status. The plugin's tools and the CLI's `trigger` use it.
 
 ## Tools
 
@@ -353,7 +372,7 @@ List all jobs with enabled state, schedule, last run status, and last run time.
 
 #### `runner_trigger`
 
-Manually trigger a job by ID. Blocks until the job completes and returns the run result (status, duration, exit code).
+Manually trigger a job by ID. Blocks until the job completes and returns the run result (status, duration, exit code). The tool waits up to 30 minutes; a longer job keeps running to its own timeout. Failures come back as `Error: HTTP 404: ...` (unknown job), `Error: HTTP 409: ...` (runner at `maxConcurrency`; try later) or `Error: HTTP 500: ...`.
 
 - `jobId` (string, required)
 
@@ -362,7 +381,7 @@ Manually trigger a job by ID. Blocks until the job completes and returns the run
 Get recent run history for a job.
 
 - `jobId` (string, required)
-- `limit` (number, optional) — Max results, default 50
+- `limit` (positive integer, optional) — Max results, default 50
 
 #### `runner_job_detail`
 
@@ -443,7 +462,7 @@ Get queue depth, claimed count, failed count, and oldest item age.
 Non-claiming read of pending queue items (does not consume them).
 
 - `queueName` (string, required)
-- `limit` (number, optional) — Max items, default 10
+- `limit` (positive integer, optional) — Max items, default 10
 
 #### `runner_list_namespaces`
 
@@ -462,6 +481,9 @@ Read collection items for a state key within a namespace.
 
 - `namespace` (string, required)
 - `key` (string, required)
+- `limit` (positive integer, optional) - Max items, default 100
+- `order` (`asc` or `desc`, optional) - Sort by last update, default `desc`
+- `path` (string, optional) - JSONPath over the result
 
 ## RRStack Scheduling
 
@@ -612,19 +634,22 @@ Every script uses the `runScript()` wrapper from core for lifecycle management:
 import { runScript } from '@karmaniverous/jeeves';
 import { getRunnerClient } from '@karmaniverous/jeeves-runner';
 
-await runScript(import.meta, async () => {
+runScript('my-domain/my-script', () => {
   const client = getRunnerClient();
+  try {
+    // Use state API
+    client.setState('my-namespace', 'lastRun', new Date().toISOString());
 
-  // Use state API
-  await client.setState('my-namespace', 'lastRun', new Date().toISOString());
-
-  // Use queue API
-  await client.enqueue('my-queue', { url: 'https://example.com' });
+    // Use queue API
+    client.enqueue('my-queue', { url: 'https://example.com' });
+  } finally {
+    client.close();
+  }
 });
 ```
 
 - `runScript()` handles error reporting and exit codes (imported from `@karmaniverous/jeeves`, not the runner package).
-- `getRunnerClient()` returns an HTTP client pointed at the running runner API (imported from `@karmaniverous/jeeves-runner`, not core).
+- `getRunnerClient()` returns a synchronous SQLite client on the runner database (`JR_DB_PATH`, set by the executor) for state and queue operations (imported from `@karmaniverous/jeeves-runner`, not core). To call the HTTP API instead, use `@karmaniverous/jeeves-runner-sdk`.
 - State and queue APIs are available for cross-job coordination.
 - Script utilities (`runScript`, `fsUtils`, `shell`, `googleAuth`, `slackWorkspace`) are hoisted to `@karmaniverous/jeeves` core — import them from there.
 

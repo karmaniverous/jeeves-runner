@@ -13,7 +13,8 @@
  *   `getComponentConfigDir`); the other actions query or drive the OS
  *   service manager by service name.
  *
- * The 16 custom runner tools are registered via `registerApiTool` and are
+ * The 16 custom runner tools are registered via `registerRunnerTool` (one
+ * `@karmaniverous/jeeves-runner-sdk` call each) and are
  * HTTP only, so they are never gated.
  *
  * @module toolGating

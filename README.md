@@ -6,11 +6,12 @@ Graph-aware job execution engine with SQLite state. Part of the [Jeeves platform
 
 ## Monorepo Structure
 
-This repository is a monorepo containing three packages:
+This repository is a monorepo containing four packages:
 
 | Package | npm | Description |
 | --- | --- | --- |
-| [`packages/core`](packages/core) | [`@karmaniverous/jeeves-runner-core`](https://www.npmjs.com/package/@karmaniverous/jeeves-runner-core) | Shared config schema, contracts and types |
+| [`packages/core`](packages/core) | [`@karmaniverous/jeeves-runner-core`](https://www.npmjs.com/package/@karmaniverous/jeeves-runner-core) | Endpoint catalog (`RUNNER_CATALOG`), OpenAPI document, config schema and types |
+| [`packages/sdk`](packages/sdk) | [`@karmaniverous/jeeves-runner-sdk`](https://www.npmjs.com/package/@karmaniverous/jeeves-runner-sdk) | Typed client for the HTTP API |
 | [`packages/service`](packages/service) | [`@karmaniverous/jeeves-runner`](https://www.npmjs.com/package/@karmaniverous/jeeves-runner) | Job execution engine |
 | [`packages/openclaw`](packages/openclaw) | [`@karmaniverous/jeeves-runner-openclaw`](https://www.npmjs.com/package/@karmaniverous/jeeves-runner-openclaw) | OpenClaw plugin |
 
@@ -160,7 +161,17 @@ The runner exposes a REST API. Default bind address: `0.0.0.0` (all interfaces),
 | `GET` | `/queues/:name/peek` | Non-claiming read of pending items |
 | `GET` | `/state` | List all state namespaces |
 | `GET` | `/state/:namespace` | Read scalar state (optional `?path=` JSONPath) |
-| `GET` | `/state/:namespace/:key` | Read collection items |
+| `GET` | `/state/:namespace/:key` | Read collection items (`?limit=N`, `?order=asc` or `desc`, `?path=` JSONPath) |
+| `GET` | `/openapi.json` | OpenAPI 3.1 document of the API (no auth) |
+
+Every route comes from the runner's endpoint catalog (`RUNNER_CATALOG` in `@karmaniverous/jeeves-runner-core`), which validates requests and responses. Every error has Fastify's standard body, `{ statusCode, code?, error, message }`: a request that fails validation gets `400` with code `FST_ERR_VALIDATION`, and the runner's own errors carry `RUNNER_*` codes (`POST /jobs/:id/run` answers `404 RUNNER_JOB_NOT_FOUND`, `409 RUNNER_MAX_CONCURRENCY` or `500 RUNNER_TRIGGER_FAILED`; a duplicate job id `409 RUNNER_JOB_EXISTS`). An unexpected failure is a `500` with no `code`. Codes and the changes from 0.14.0-0 are in the [API reference](packages/service/guides/api-reference.md#errors). From TypeScript, call the API with [`@karmaniverous/jeeves-runner-sdk`](packages/sdk):
+
+```typescript
+import { createRunnerClient } from '@karmaniverous/jeeves-runner-sdk';
+
+const runner = createRunnerClient({ baseUrl: 'http://127.0.0.1:1937' });
+const { result } = await runner.triggerJob({ id: 'poll-email' });
+```
 
 ### Example response
 
@@ -294,35 +305,33 @@ The runner parses this and stores the data in the `runs` table.
 
 ### Client library
 
-Job scripts use the `runScript()` wrapper and `getRunnerClient()` for lifecycle management and API access:
+Job scripts combine two packages: the runner exports `getRunnerClient()` (the SQLite state and queue API; reads `JR_DB_PATH`, which the executor sets) and the session dispatch helpers; the platform core, `@karmaniverous/jeeves`, exports `runScript()` and the general script utilities.
 
 ```typescript
-import { getRunnerClient, runScript } from '@karmaniverous/jeeves-runner';
+import { runScript } from '@karmaniverous/jeeves';
+import { getRunnerClient } from '@karmaniverous/jeeves-runner';
 
-await runScript(import.meta, async () => {
-  const client = getRunnerClient(); // HTTP client pointed at the running runner
-
-  // Use state API
-  await client.setState('my-namespace', 'lastRun', new Date().toISOString());
-
-  // Use queue API
-  await client.enqueue('my-queue', { url: 'https://example.com' });
+runScript('my-domain/my-script', () => {
+  const client = getRunnerClient();
+  try {
+    client.setState('my-namespace', 'lastRun', new Date().toISOString());
+    client.enqueue('my-queue', { url: 'https://example.com' });
+  } finally {
+    client.close();
+  }
 });
 ```
 
-The package exports a full suite of script helper utilities. See the [Script Helper Utilities Guide](packages/service/guides/script-helpers.md) for detailed API documentation and examples.
+See the [Script Helper Utilities Guide](packages/service/guides/script-helpers.md) for both sets of helpers.
 
-**Highlights:**
-
-| Module | Exports | Purpose |
+| Package | Exports | Purpose |
 | --- | --- | --- |
-| `run-script` | `runScript` | Crash-handling entry point wrapper |
-| `runner-client` | `getRunnerClient` | SQLite client factory (state + queue API) |
-| `fs-utils` | `readJson`, `writeJsonAtomic`, `appendJsonl`, `sleepMs`, `uuid`, ... | Filesystem, time, process, CLI utilities |
-| `shell` | `run`, `runWithRetry` | Synchronous command execution with retry |
-| `google-auth` | `createGoogleAuth` | OAuth refresh + service account impersonation |
-| `spawn-worker` | `dispatchSession`, `runDispatcher` | OpenClaw Gateway LLM session dispatch |
-| `slack-workspace` | `getChannelWorkspace`, `saveSlackWorkspaceCache` | Slack channel → workspace resolution |
+| `@karmaniverous/jeeves-runner` | `getRunnerClient` | SQLite client factory (state + queue API) |
+| `@karmaniverous/jeeves-runner` | `dispatchSession`, `runDispatcher` | OpenClaw Gateway LLM session dispatch |
+| `@karmaniverous/jeeves` | `runScript` | Crash-handling entry point wrapper |
+| `@karmaniverous/jeeves` | `readJson`, `writeJsonAtomic`, `appendJsonl`, `sleepMs`, `uuid`, ... | Filesystem, time, process, environment utilities |
+| `@karmaniverous/jeeves` | `run`, `runWithRetry` | Synchronous command execution with retry |
+| `@karmaniverous/jeeves` | `createGoogleAuth` | OAuth refresh + service account impersonation |
 
 ## Job Lifecycle
 
@@ -473,7 +482,7 @@ npm run typecheck   # TypeScript (noEmit)
 
 ## Releasing
 
-Each package is released on its own with `npm run release` from its directory, in dependency order: **core first** (`packages/core`), then `packages/service`, then `packages/openclaw`. The service and plugin depend on `@karmaniverous/jeeves-runner-core` by range, and their `release-it` `before:init` hook runs `scripts/check-core-range.mjs`, which stops the release before any bump if that range does not admit the workspace core version. When core gets a new minor, raise the dependents' range (e.g. `^0.6.0`) after core is published, then release them.
+Each package is released on its own with `npm run release` from its directory, in dependency order: **core first** (`packages/core`), then `packages/sdk`, then `packages/service`, then `packages/openclaw`. The SDK, service and plugin depend on `@karmaniverous/jeeves-runner-core` by range, and the service and plugin also depend on `@karmaniverous/jeeves-runner-sdk` by range. Their `release-it` `before:init` hooks run `scripts/check-core-range.mjs` once per range (`--core ../sdk/package.json` for the SDK range), which stops the release before any bump if a range does not admit the workspace version. When core or the SDK gets a new version the range does not admit, raise the dependents' range (e.g. `^0.6.0`) after it is published, then release them.
 
 ## License
 

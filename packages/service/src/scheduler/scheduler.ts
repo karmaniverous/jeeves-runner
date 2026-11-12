@@ -55,6 +55,27 @@ export interface Scheduler {
 // JobRow is imported from cron-registry
 
 /**
+ * The result recorded for a run whose execution threw instead of returning a
+ * result: status `error` with the thrown error's message.
+ *
+ * @param err - What execution threw.
+ * @param startedAt - `Date.now()` when execution started.
+ * @returns The result to finish the run with.
+ */
+export function thrownResult(err: unknown, startedAt: number): ExecutionResult {
+  return {
+    status: 'error',
+    exitCode: null,
+    durationMs: Date.now() - startedAt,
+    tokens: null,
+    resultMeta: null,
+    stdoutTail: '',
+    stderrTail: '',
+    error: err instanceof Error ? err.message : String(err),
+  };
+}
+
+/**
  * Create the job scheduler. Manages cron schedules, job execution, overlap policies, and notifications.
  */
 export function createScheduler(deps: SchedulerDeps): Scheduler {
@@ -121,34 +142,50 @@ export function createScheduler(deps: SchedulerDeps): Scheduler {
     logger.info({ jobId: id, runId, trigger, type }, 'Starting job');
 
     try {
+      const startedAt = Date.now();
       let result: ExecutionResult;
-
-      // Route based on job type
-      if (type === 'session') {
-        if (!gatewayClient) {
-          throw new Error(
-            'Session job requires Gateway client (gatewayUrl/gatewayApiKey not configured)',
+      try {
+        // Route based on job type
+        if (type === 'session') {
+          if (!gatewayClient) {
+            throw new Error(
+              'Session job requires Gateway client (gatewayUrl/gatewayApiKey not configured)',
+            );
+          }
+          result = await executeSession({
+            script,
+            jobId: id,
+            timeoutMs: timeout_ms ?? undefined,
+            gatewayClient,
+          });
+        } else {
+          // Default to script executor
+          result = await executor({
+            script,
+            dbPath: config.dbPath,
+            jobId: id,
+            runId,
+            timeoutMs: timeout_ms ?? undefined,
+            sourceType: source_type ?? 'path',
+            runners: config.runners,
+            jobEnv,
+            jobArgs,
+          });
+        }
+      } catch (err) {
+        // The run row exists: finish it with the error, so the run keeps its
+        // own cause (a manual trigger's caller gets RUNNER_TRIGGER_FAILED).
+        // Not alerted, as before (DD#96). A failure to record must not hide
+        // the original error.
+        try {
+          runRepository.finishRun(runId, thrownResult(err, startedAt));
+        } catch (recordErr) {
+          logger.error(
+            { jobId: id, runId, err: recordErr },
+            'Failed to record the error run',
           );
         }
-        result = await executeSession({
-          script,
-          jobId: id,
-          timeoutMs: timeout_ms ?? undefined,
-          gatewayClient,
-        });
-      } else {
-        // Default to script executor
-        result = await executor({
-          script,
-          dbPath: config.dbPath,
-          jobId: id,
-          runId,
-          timeoutMs: timeout_ms ?? undefined,
-          sourceType: source_type ?? 'path',
-          runners: config.runners,
-          jobEnv,
-          jobArgs,
-        });
+        throw err;
       }
 
       runRepository.finishRun(runId, result);

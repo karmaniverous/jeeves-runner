@@ -1,0 +1,850 @@
+{
+  "definitions": [
+    {
+      "name": "runner_jobs",
+      "description": "List all jobs with last run status",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "runner_trigger",
+      "description": "Trigger manual run",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string",
+            "description": "The job ID."
+          }
+        },
+        "required": ["jobId"]
+      }
+    },
+    {
+      "name": "runner_runs",
+      "description": "Run history (limit param)",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string",
+            "description": "The job ID."
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum number of runs to return (default 50)."
+          }
+        },
+        "required": ["jobId"]
+      }
+    },
+    {
+      "name": "runner_job_detail",
+      "description": "Single job detail",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string",
+            "description": "The job ID."
+          }
+        },
+        "required": ["jobId"]
+      }
+    },
+    {
+      "name": "runner_enable",
+      "description": "Enable a job",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string",
+            "description": "The job ID."
+          }
+        },
+        "required": ["jobId"]
+      }
+    },
+    {
+      "name": "runner_disable",
+      "description": "Disable a job",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string",
+            "description": "The job ID."
+          }
+        },
+        "required": ["jobId"]
+      }
+    },
+    {
+      "name": "runner_create_job",
+      "description": "Create a new job",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique job identifier."
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable job name."
+          },
+          "schedule": {
+            "type": "string",
+            "description": "Cron or rrstack schedule expression."
+          },
+          "script": {
+            "type": "string",
+            "description": "Script path (source_type=path) or inline script content."
+          },
+          "source_type": {
+            "type": "string",
+            "description": "Script source: \"path\" (default) or \"inline\"."
+          },
+          "type": {
+            "type": "string",
+            "description": "Job type: \"script\" (default) or \"session\"."
+          },
+          "timeout_seconds": {
+            "type": "number",
+            "description": "Kill the job after this many seconds."
+          },
+          "overlap_policy": {
+            "type": "string",
+            "description": "\"skip\" (default) or \"allow\" concurrent runs."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the job is enabled."
+          },
+          "description": {
+            "type": "string",
+            "description": "Job description."
+          },
+          "on_failure": {
+            "type": "string",
+            "description": "Slack channel ID for failure alerts."
+          },
+          "on_success": {
+            "type": "string",
+            "description": "Slack channel ID for success alerts."
+          },
+          "output_channel": {
+            "type": "string",
+            "description": "Slack channel ID for stdout relay."
+          },
+          "env": {
+            "type": "object",
+            "description": "Environment variables for script-type jobs. Record<string, string> spread into spawn env alongside JR_* vars. Ignored for session jobs."
+          },
+          "args": {
+            "type": "array",
+            "description": "Arguments for script-type jobs. String array appended after the script path in spawn. Ignored for session jobs.",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["id", "name", "schedule", "script"]
+      }
+    },
+    {
+      "name": "runner_update_job",
+      "description": "Partial update of job config; omitted fields stay unchanged. Schedule changes on jeeves-scripts launcher jobs revert on the next sync-jobs (the manifest schedule is authoritative); change those in jeeves-scripts.json instead.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string",
+            "description": "The job ID."
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-readable job name."
+          },
+          "schedule": {
+            "type": "string",
+            "description": "Cron or rrstack schedule expression."
+          },
+          "script": {
+            "type": "string",
+            "description": "Script path (source_type=path) or inline script content."
+          },
+          "source_type": {
+            "type": "string",
+            "description": "Script source: \"path\" (default) or \"inline\"."
+          },
+          "type": {
+            "type": "string",
+            "description": "Job type: \"script\" (default) or \"session\"."
+          },
+          "timeout_seconds": {
+            "type": "number",
+            "description": "Kill the job after this many seconds."
+          },
+          "overlap_policy": {
+            "type": "string",
+            "description": "\"skip\" (default) or \"allow\" concurrent runs."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the job is enabled."
+          },
+          "description": {
+            "type": "string",
+            "description": "Job description."
+          },
+          "on_failure": {
+            "type": "string",
+            "description": "Slack channel ID for failure alerts."
+          },
+          "on_success": {
+            "type": "string",
+            "description": "Slack channel ID for success alerts."
+          },
+          "output_channel": {
+            "type": "string",
+            "description": "Slack channel ID for stdout relay."
+          },
+          "env": {
+            "type": "object",
+            "description": "Environment variables for script-type jobs. Record<string, string> spread into spawn env alongside JR_* vars. Ignored for session jobs."
+          },
+          "args": {
+            "type": "array",
+            "description": "Arguments for script-type jobs. String array appended after the script path in spawn. Ignored for session jobs.",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["jobId"]
+      }
+    },
+    {
+      "name": "runner_delete_job",
+      "description": "Remove a job and its runs",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string",
+            "description": "The job ID."
+          }
+        },
+        "required": ["jobId"]
+      }
+    },
+    {
+      "name": "runner_update_script",
+      "description": "Update job script (path or inline)",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "jobId": {
+            "type": "string",
+            "description": "The job ID."
+          },
+          "script": {
+            "type": "string",
+            "description": "New script path or inline content."
+          },
+          "source_type": {
+            "type": "string",
+            "description": "Script source: \"path\" or \"inline\"."
+          }
+        },
+        "required": ["jobId", "script"]
+      }
+    },
+    {
+      "name": "runner_list_queues",
+      "description": "List all queue names",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "runner_queue_status",
+      "description": "Queue depth, claimed, failed, oldest age",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "queueName": {
+            "type": "string",
+            "description": "Queue name to inspect."
+          }
+        },
+        "required": ["queueName"]
+      }
+    },
+    {
+      "name": "runner_queue_peek",
+      "description": "Peek at pending items (optional limit)",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "queueName": {
+            "type": "string",
+            "description": "Queue name to peek."
+          },
+          "limit": {
+            "type": "number",
+            "description": "Maximum items to return (default 10)."
+          }
+        },
+        "required": ["queueName"]
+      }
+    },
+    {
+      "name": "runner_list_namespaces",
+      "description": "List all state namespaces",
+      "parameters": {
+        "type": "object",
+        "properties": {}
+      }
+    },
+    {
+      "name": "runner_query_state",
+      "description": "Scalar state (optional JSONPath)",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "description": "State namespace to query."
+          },
+          "path": {
+            "type": "string",
+            "description": "Optional JSONPath expression to filter results."
+          }
+        },
+        "required": ["namespace"]
+      }
+    },
+    {
+      "name": "runner_query_collection",
+      "description": "Collection items (optional JSONPath, limit, order)",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "namespace": {
+            "type": "string",
+            "description": "State namespace."
+          },
+          "key": {
+            "type": "string",
+            "description": "Collection key within the namespace."
+          }
+        },
+        "required": ["namespace", "key"]
+      }
+    }
+  ],
+  "records": {
+    "jobs": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/jobs",
+          "method": "GET"
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"jobs\": [\n    {\n      \"id\": \"a\",\n      \"name\": \"A\",\n      \"schedule\": \"0 * * * *\",\n      \"script\": \"/s.js\",\n      \"type\": \"script\",\n      \"description\": null,\n      \"enabled\": 1,\n      \"timeout_ms\": null,\n      \"overlap_policy\": \"skip\",\n      \"on_failure\": null,\n      \"on_success\": null,\n      \"created_at\": \"2026-01-01 00:00:00\",\n      \"updated_at\": \"2026-01-01 00:00:00\",\n      \"source_type\": \"path\",\n      \"output_channel\": null,\n      \"env\": null,\n      \"args\": null,\n      \"last_status\": \"ok\",\n      \"last_run\": null\n    }\n  ]\n}"
+          }
+        ]
+      }
+    },
+    "trigger": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/jobs/a%2Fb/run",
+          "method": "POST",
+          "body": {}
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"result\": {\n    \"status\": \"ok\",\n    \"exitCode\": 0,\n    \"durationMs\": 5,\n    \"tokens\": null,\n    \"resultMeta\": null,\n    \"stdoutTail\": \"out\",\n    \"stderrTail\": \"\",\n    \"error\": null\n  }\n}"
+          }
+        ]
+      }
+    },
+    "trigger 404": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/jobs/nope/run",
+          "method": "POST",
+          "body": {}
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Error: HTTP 404: {\"error\":\"Job not found: nope\"}"
+          }
+        ],
+        "isError": true
+      }
+    },
+    "trigger 409": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/jobs/a/run",
+          "method": "POST",
+          "body": {}
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Error: HTTP 409: {\"error\":\"Max concurrency reached\"}"
+          }
+        ],
+        "isError": true
+      }
+    },
+    "trigger 500 Fastify default body": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/jobs/a/run",
+          "method": "POST",
+          "body": {}
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Error: HTTP 500: {\"statusCode\":500,\"code\":\"ERR_X\",\"error\":\"Internal Server Error\",\"message\":\"boom\"}"
+          }
+        ],
+        "isError": true
+      }
+    },
+    "trigger 502 non-JSON body": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/jobs/a/run",
+          "method": "POST",
+          "body": {}
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Error: HTTP 502: Bad gateway"
+          }
+        ],
+        "isError": true
+      }
+    },
+    "trigger refused": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/jobs/a/run",
+          "method": "POST",
+          "body": {}
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Service not reachable at http://localhost:1937.\nEither start the service, or if it runs on a different port,\nset plugins.entries.jeeves-runner-openclaw.config.apiUrl in openclaw.json."
+          }
+        ],
+        "isError": true
+      }
+    },
+    "trigger timeout": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/jobs/a/run",
+          "method": "POST",
+          "body": {}
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Error: The operation was aborted due to timeout"
+          }
+        ],
+        "isError": true
+      }
+    },
+    "jobs non-JSON 2xx": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/jobs",
+          "method": "GET"
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Error: Unexpected token 'o', \"not json\" is not valid JSON"
+          }
+        ],
+        "isError": true
+      }
+    },
+    "runs": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/jobs/a/runs?limit=5",
+          "method": "GET"
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"runs\": []\n}"
+          }
+        ]
+      }
+    },
+    "runs no limit": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/jobs/a/runs",
+          "method": "GET"
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"runs\": []\n}"
+          }
+        ]
+      }
+    },
+    "job detail": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/jobs/a",
+          "method": "GET"
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"job\": {\n    \"id\": \"a\",\n    \"name\": \"A\",\n    \"schedule\": \"0 * * * *\",\n    \"script\": \"/s.js\",\n    \"type\": \"script\",\n    \"description\": null,\n    \"enabled\": 1,\n    \"timeout_ms\": null,\n    \"overlap_policy\": \"skip\",\n    \"on_failure\": null,\n    \"on_success\": null,\n    \"created_at\": \"2026-01-01 00:00:00\",\n    \"updated_at\": \"2026-01-01 00:00:00\",\n    \"source_type\": \"path\",\n    \"output_channel\": null,\n    \"env\": null,\n    \"args\": null\n  }\n}"
+          }
+        ]
+      }
+    },
+    "job detail 404": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/jobs/nope",
+          "method": "GET"
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Error: HTTP 404: {\"error\":\"Job not found\"}"
+          }
+        ],
+        "isError": true
+      }
+    },
+    "enable": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/jobs/a/enable",
+          "method": "PATCH",
+          "body": {}
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"ok\": true\n}"
+          }
+        ]
+      }
+    },
+    "disable": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/jobs/a/disable",
+          "method": "PATCH",
+          "body": {}
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"ok\": true\n}"
+          }
+        ]
+      }
+    },
+    "create job": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/jobs",
+          "method": "POST",
+          "body": {
+            "id": "n",
+            "name": "N",
+            "schedule": "* * * * *",
+            "script": "/n.js",
+            "source_type": "inline",
+            "timeout_seconds": 30,
+            "enabled": false,
+            "env": {
+              "A": "1"
+            },
+            "args": ["--x"]
+          }
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"ok\": true,\n  \"id\": \"n\"\n}"
+          }
+        ]
+      }
+    },
+    "create job bad schedule": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/jobs",
+          "method": "POST",
+          "body": {
+            "id": "n",
+            "name": "N",
+            "schedule": "nope",
+            "script": "/n.js"
+          }
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Error: HTTP 400: {\"error\":\"Invalid schedule\"}"
+          }
+        ],
+        "isError": true
+      }
+    },
+    "update job": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/jobs/a",
+          "method": "PATCH",
+          "body": {
+            "name": "Renamed",
+            "on_success": "C1"
+          }
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"ok\": true\n}"
+          }
+        ]
+      }
+    },
+    "delete job": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/jobs/a",
+          "method": "DELETE"
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"ok\": true\n}"
+          }
+        ]
+      }
+    },
+    "update script": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/jobs/a/script",
+          "method": "PUT",
+          "body": {
+            "script": "x",
+            "source_type": "inline"
+          }
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"ok\": true\n}"
+          }
+        ]
+      }
+    },
+    "update script path only": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/jobs/a/script",
+          "method": "PUT",
+          "body": {
+            "script": "/y.js"
+          }
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"ok\": true\n}"
+          }
+        ]
+      }
+    },
+    "list queues": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/queues",
+          "method": "GET"
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"queues\": [\n    \"q\"\n  ]\n}"
+          }
+        ]
+      }
+    },
+    "queue status": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/queues/q%2F1/status",
+          "method": "GET"
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"depth\": 1,\n  \"claimedCount\": 0,\n  \"failedCount\": 0,\n  \"oldestAge\": 5\n}"
+          }
+        ]
+      }
+    },
+    "queue peek": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/queues/q/peek?limit=2",
+          "method": "GET"
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"items\": [\n    {\n      \"id\": 1,\n      \"payload\": {\n        \"n\": 1\n      },\n      \"priority\": 0,\n      \"createdAt\": \"x\"\n    }\n  ]\n}"
+          }
+        ]
+      }
+    },
+    "list namespaces": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/state",
+          "method": "GET"
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"namespaces\": [\n    \"ns\"\n  ]\n}"
+          }
+        ]
+      }
+    },
+    "query state": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/state/ns",
+          "method": "GET"
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"cursor\": \"1\",\n  \"gone\": null\n}"
+          }
+        ]
+      }
+    },
+    "query state path": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/state/n%20s?path=%24.cursor",
+          "method": "GET"
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"result\": [\n    \"1\"\n  ],\n  \"count\": 1\n}"
+          }
+        ]
+      }
+    },
+    "query collection": {
+      "requests": [
+        {
+          "url": "http://localhost:1937/state/ns/k",
+          "method": "GET"
+        }
+      ],
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "{\n  \"value\": null,\n  \"items\": [\n    {\n      \"itemKey\": \"i\",\n      \"value\": \"v\",\n      \"updatedAt\": \"x\"\n    }\n  ],\n  \"count\": 1\n}"
+          }
+        ]
+      }
+    }
+  }
+}

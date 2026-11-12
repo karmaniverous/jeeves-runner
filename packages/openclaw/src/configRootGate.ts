@@ -8,6 +8,11 @@
  * core `init()` exactly once when it first resolves, and makes guarded tool
  * calls that read `configRoot` return a clear error until then.
  *
+ * The workspace passed to `init()` comes from jeeves `resolveWorkspacePath`:
+ * `agents.defaults.workspace`, else OpenClaw's default workspace
+ * (`<state dir>/workspace`); since jeeves 0.9.0 (#138) it is never the
+ * plugin root.
+ *
  * @module configRootGate
  */
 

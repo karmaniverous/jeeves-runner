@@ -53,7 +53,8 @@ const config: RollupOptions = {
     commonjs(),
     json(),
     typescriptPlugin({
-      tsconfig: './tsconfig.json',
+      // Sources only: tests and scripts/ are type-checked by tsconfig.json.
+      tsconfig: './tsconfig.build.json',
       outputToFilesystem: false,
       noEmit: false,
       declaration: true,

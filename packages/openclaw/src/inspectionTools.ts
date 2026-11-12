@@ -6,124 +6,34 @@
 
 import type { PluginApi } from '@karmaniverous/jeeves';
 
-import { catalogTool, registerApiTool } from './toolHelpers.js';
+import {
+  type BaseUrl,
+  registerRunnerTools,
+  type RunnerToolConfig,
+} from './toolHelpers.js';
 
-/** URL-encode a path segment for safe interpolation. */
-function enc(value: unknown): string {
-  return encodeURIComponent(String(value));
-}
+/** `:name` exposed as `queueName`, as in 0.12.0-0. */
+const QUEUE_ALIAS = { name: 'queueName' } as const;
 
-/** Register queue and state inspection tools. */
-export function registerInspectionTools(api: PluginApi, baseUrl: string): void {
-  const tools = [
-    catalogTool(
-      'listQueues',
-      'runner_list_queues',
-      {
-        type: 'object',
-        properties: {},
-      },
-      () => ['/queues'],
-    ),
+/** Queue and state tools. */
+const INSPECTION_TOOLS: readonly RunnerToolConfig[] = [
+  { name: 'runner_list_queues', entry: 'listQueues' },
+  { name: 'runner_queue_status', entry: 'queueStatus', aliases: QUEUE_ALIAS },
+  { name: 'runner_queue_peek', entry: 'queuePeek', aliases: QUEUE_ALIAS },
+  { name: 'runner_list_namespaces', entry: 'listNamespaces' },
+  { name: 'runner_query_state', entry: 'queryState' },
+  { name: 'runner_query_collection', entry: 'queryCollection' },
+];
 
-    catalogTool(
-      'queueStatus',
-      'runner_queue_status',
-      {
-        type: 'object',
-        properties: {
-          queueName: {
-            type: 'string',
-            description: 'Queue name to inspect.',
-          },
-        },
-        required: ['queueName'],
-      },
-      (params) => [`/queues/${enc(params.queueName)}/status`],
-    ),
-
-    catalogTool(
-      'queuePeek',
-      'runner_queue_peek',
-      {
-        type: 'object',
-        properties: {
-          queueName: {
-            type: 'string',
-            description: 'Queue name to peek.',
-          },
-          limit: {
-            type: 'number',
-            description: 'Maximum items to return (default 10).',
-          },
-        },
-        required: ['queueName'],
-      },
-      (params) => {
-        const query =
-          params.limit !== undefined
-            ? `?limit=${String(Number(params.limit))}`
-            : '';
-        return [`/queues/${enc(params.queueName)}/peek${query}`];
-      },
-    ),
-
-    catalogTool(
-      'listNamespaces',
-      'runner_list_namespaces',
-      {
-        type: 'object',
-        properties: {},
-      },
-      () => ['/state'],
-    ),
-
-    catalogTool(
-      'queryState',
-      'runner_query_state',
-      {
-        type: 'object',
-        properties: {
-          namespace: {
-            type: 'string',
-            description: 'State namespace to query.',
-          },
-          path: {
-            type: 'string',
-            description: 'Optional JSONPath expression to filter results.',
-          },
-        },
-        required: ['namespace'],
-      },
-      (params) => {
-        const query =
-          params.path !== undefined ? `?path=${enc(params.path)}` : '';
-        return [`/state/${enc(params.namespace)}${query}`];
-      },
-    ),
-
-    catalogTool(
-      'queryCollection',
-      'runner_query_collection',
-      {
-        type: 'object',
-        properties: {
-          namespace: {
-            type: 'string',
-            description: 'State namespace.',
-          },
-          key: {
-            type: 'string',
-            description: 'Collection key within the namespace.',
-          },
-        },
-        required: ['namespace', 'key'],
-      },
-      (params) => [`/state/${enc(params.namespace)}/${enc(params.key)}`],
-    ),
-  ];
-
-  for (const tool of tools) {
-    registerApiTool(api, baseUrl, tool);
-  }
+/**
+ * Register queue and state inspection tools.
+ *
+ * @param api - Plugin API.
+ * @param baseUrl - Runner URL, or a getter resolved on every call.
+ */
+export function registerInspectionTools(
+  api: PluginApi,
+  baseUrl: BaseUrl,
+): void {
+  registerRunnerTools(api, baseUrl, INSPECTION_TOOLS);
 }

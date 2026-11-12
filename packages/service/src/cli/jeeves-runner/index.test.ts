@@ -206,11 +206,26 @@ const execAsync = promisify(exec);
 describe('trigger command', () => {
   vi.setConfig({ testTimeout: 15000 });
 
+  /** A run result as `POST /jobs/:id/run` sends it. */
+  const RUN_RESULT = {
+    result: {
+      status: 'ok',
+      exitCode: 0,
+      durationMs: 5,
+      tokens: null,
+      resultMeta: null,
+      stdoutTail: 'triggered',
+      stderrTail: '',
+      error: null,
+    },
+  };
+
   /** Run `trigger` against a mock runner answering with `status` and `body` (sent verbatim if a string). */
   async function triggerAgainst(
     status: number,
     body: unknown,
     via: 'flag' | 'env' = 'flag',
+    id = 'my-job',
   ): Promise<{ method: string; path: string; stdout: string }> {
     let receivedPath = '';
     let receivedMethod = '';
@@ -244,8 +259,8 @@ describe('trigger command', () => {
       // No jeeves-runner/config.json here: trigger needs none (DD#81).
       const { stdout } = await execAsync(
         via === 'flag'
-          ? `${CLI} trigger --id my-job --config-root "${configRoot}"`
-          : `${CLI} trigger --id my-job`,
+          ? `${CLI} trigger --id "${id}" --config-root "${configRoot}"`
+          : `${CLI} trigger --id "${id}"`,
         {
           encoding: 'utf-8',
           timeout: 10000,
@@ -263,28 +278,46 @@ describe('trigger command', () => {
   }
 
   it('should POST to /jobs/:id/run on the resolved service URL', async () => {
-    const { method, path, stdout } = await triggerAgainst(200, {
-      status: 'triggered',
-    });
+    const { method, path, stdout } = await triggerAgainst(200, RUN_RESULT);
 
     expect(method).toBe('POST');
     expect(path).toBe('/jobs/my-job/run');
-    expect(stdout).toContain('triggered');
+    expect(JSON.parse(stdout)).toEqual(RUN_RESULT);
   }, 15000);
 
   it('resolves configRoot from JEEVES_CONFIG_ROOT when the flag is absent (#122)', async () => {
-    const { path } = await triggerAgainst(200, { status: 'triggered' }, 'env');
+    const { path } = await triggerAgainst(200, RUN_RESULT, 'env');
 
     expect(path).toBe('/jobs/my-job/run');
   }, 15000);
 
-  it('exits non-zero and reports the status when the runner refuses (#118)', async () => {
+  it('URL-encodes the job id (DD#92)', async () => {
+    const { path } = await triggerAgainst(200, RUN_RESULT, 'flag', 'team/a b');
+
+    expect(path).toBe('/jobs/team%2Fa%20b/run');
+  }, 15000);
+
+  it('reports a non-JSON 2xx as an invalid response, not "not reachable"', async () => {
+    await expect(triggerAgainst(200, 'not json')).rejects.toMatchObject({
+      code: 1,
+      stderr: expect.stringContaining(
+        'Trigger failed: triggerJob returned a response that is not JSON',
+      ) as unknown,
+    });
+  }, 15000);
+
+  it("exits non-zero and reports the status and the body's message when the runner refuses (#118, DD#96)", async () => {
     await expect(
-      triggerAgainst(409, { error: 'Max concurrency reached' }),
+      triggerAgainst(409, {
+        statusCode: 409,
+        code: 'RUNNER_MAX_CONCURRENCY',
+        error: 'Conflict',
+        message: 'Max concurrency reached; retry when a running job finishes.',
+      }),
     ).rejects.toMatchObject({
       code: 1,
       stderr: expect.stringContaining(
-        'Trigger failed (HTTP 409): {"error":"Max concurrency reached"}',
+        'Trigger failed (HTTP 409): Max concurrency reached; retry when a running job finishes.',
       ) as unknown,
     });
   }, 15000);

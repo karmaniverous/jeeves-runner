@@ -110,19 +110,52 @@ describe('check-core-range CLI', () => {
 });
 
 describe('release-it wiring', () => {
-  for (const dir of ['service', 'openclaw']) {
-    it(`runs the guard first in ${dir}'s before:init hook`, () => {
+  const CORE_GUARD = 'node ../../scripts/check-core-range.mjs';
+  const SDK_GUARD =
+    'node ../../scripts/check-core-range.mjs --core ../sdk/package.json';
+  const expected = {
+    sdk: [CORE_GUARD],
+    service: [CORE_GUARD, SDK_GUARD],
+    openclaw: [CORE_GUARD, SDK_GUARD],
+  };
+  for (const [dir, hooks] of Object.entries(expected)) {
+    it(`runs the range guards first in ${dir}'s before:init hook`, () => {
       const pkg = JSON.parse(
         fs.readFileSync(
           new URL(`../packages/${dir}/package.json`, import.meta.url),
           'utf8',
         ),
       );
-      assert.deepEqual(pkg['release-it'].hooks['before:init'], [
-        'node ../../scripts/check-core-range.mjs',
-      ]);
+      assert.deepEqual(pkg['release-it'].hooks['before:init'], hooks);
     });
   }
+
+  it('guards the SDK range with --core pointing at the SDK manifest', () => {
+    const sdk = manifest('sdk-core', {
+      name: '@karmaniverous/jeeves-runner-sdk',
+      version: '0.2.0-0',
+    });
+    const stale = manifest('sdk-dependent', {
+      name: 'dependent',
+      dependencies: { '@karmaniverous/jeeves-runner-sdk': '^0.1.0-0' },
+    });
+    const fresh = manifest('sdk-dependent-fresh', {
+      name: 'dependent',
+      dependencies: { '@karmaniverous/jeeves-runner-sdk': '^0.2.0-0' },
+    });
+    const run = (pkgPath) =>
+      spawnSync(
+        process.execPath,
+        [script, '--core', sdk, '--package', pkgPath],
+        {
+          encoding: 'utf8',
+        },
+      );
+    assert.equal(run(fresh).status, 0);
+    const failed = run(stale);
+    assert.equal(failed.status, 1);
+    assert.match(failed.stderr, /jeeves-runner-sdk \^0\.1\.0-0/u);
+  });
 });
 
 describe('checkCoreRange', () => {

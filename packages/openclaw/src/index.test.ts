@@ -72,13 +72,13 @@ describe('plugin register', () => {
   });
 
   it.each([
-    ['runner_status', {}],
-    ['runner_config', {}],
-    ['runner_config_apply', { config: { a: 1 } }],
-    ['runner_jobs', {}],
-  ])('runs HTTP-only %s without configRoot', async (name, params) => {
+    ['runner_status', {}, { ok: true }],
+    ['runner_config', {}, { ok: true }],
+    ['runner_config_apply', { config: { a: 1 } }, { ok: true }],
+    ['runner_jobs', {}, { jobs: [] }],
+  ])('runs HTTP-only %s without configRoot', async (name, params, reply) => {
     const fetchMock = vi.fn(() =>
-      Promise.resolve(Response.json({ ok: true }, { status: 200 })),
+      Promise.resolve(Response.json(reply, { status: 200 })),
     );
     vi.stubGlobal('fetch', fetchMock);
     const { api, tools } = harness();
@@ -91,11 +91,14 @@ describe('plugin register', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  describe('standard tools honor apiUrl', () => {
+  describe('tools honor apiUrl', () => {
     function stubFetch() {
-      const fetchMock = vi.fn((_url: string | URL | Request) =>
-        Promise.resolve(Response.json({ ok: true }, { status: 200 })),
-      );
+      const fetchMock = vi.fn((url: string | URL | Request) => {
+        const href = url instanceof Request ? url.url : url.toString();
+        return Promise.resolve(
+          Response.json(href.endsWith('/jobs') ? { jobs: [] } : { ok: true }),
+        );
+      });
       vi.stubGlobal('fetch', fetchMock);
       return fetchMock;
     }
@@ -109,17 +112,23 @@ describe('plugin register', () => {
       vi.stubEnv('JEEVES_RUNNER_URL', '');
     });
 
-    it('calls the configured apiUrl, resolved per call', async () => {
-      const fetchMock = stubFetch();
-      const config: Record<string, unknown> = {};
-      const { api, tools } = harness(config);
-      register(api);
-      config.apiUrl = 'http://runner.example:4321';
+    it.each(['runner_status', 'runner_jobs'])(
+      '%s calls the configured apiUrl, resolved per call',
+      async (name) => {
+        const fetchMock = stubFetch();
+        const config: Record<string, unknown> = {};
+        const { api, tools } = harness(config);
+        register(api);
+        config.apiUrl = 'http://runner.example:4321';
 
-      await tools.get('runner_status')!.execute('t1', {});
+        const result = await tools.get(name)!.execute('t1', {});
 
-      expect(calledUrl(fetchMock)).toMatch(/^http:\/\/runner\.example:4321\//);
-    });
+        expect(result.isError).toBeFalsy();
+        expect(calledUrl(fetchMock)).toMatch(
+          /^http:\/\/runner\.example:4321\//,
+        );
+      },
+    );
 
     it('falls back to the default runner port when apiUrl is unset', async () => {
       const fetchMock = stubFetch();

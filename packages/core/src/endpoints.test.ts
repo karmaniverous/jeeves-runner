@@ -1,52 +1,88 @@
+/**
+ * @module endpoints.test
+ * The deprecated endpoint list (DD#86): still exported from the package entry, tagged `@deprecated`, still working, and held equal to `RUNNER_CATALOG` by name, method and path. Accessed through namespace casts because direct references fail `no-deprecated`.
+ */
+
+import { readFileSync } from 'node:fs';
+
 import { describe, expect, it } from 'vitest';
 
-import { getEndpoint, RUNNER_ENDPOINTS } from './endpoints.js';
+import { RUNNER_CATALOG } from './catalog.js';
+import { ENDPOINT_DESCRIPTIONS } from './descriptions.js';
+import * as endpoints from './endpoints.js';
+import * as root from './index.js';
 
-describe('RUNNER_ENDPOINTS', () => {
-  it('should have 19 endpoints', () => {
-    expect(RUNNER_ENDPOINTS).toHaveLength(19);
+interface LegacyEndpoint {
+  name: string;
+  method: string;
+  path: string;
+  description: string;
+}
+
+const legacy = endpoints as unknown as {
+  RUNNER_ENDPOINTS: readonly LegacyEndpoint[];
+  getEndpoint: (name: string) => LegacyEndpoint;
+};
+
+const source = readFileSync(new URL('./endpoints.ts', import.meta.url), 'utf8');
+
+describe('RUNNER_ENDPOINTS (deprecated)', () => {
+  it('matches RUNNER_CATALOG by name, method and path', () => {
+    const shape = (e: LegacyEndpoint) => ({
+      name: e.name,
+      method: e.method,
+      path: e.path,
+    });
+    const byName = (a: { name: string }, b: { name: string }) =>
+      a.name.localeCompare(b.name);
+    expect(legacy.RUNNER_ENDPOINTS.map(shape).sort(byName)).toEqual(
+      RUNNER_CATALOG.entries.map(shape).sort(byName),
+    );
   });
 
-  it('should have unique names', () => {
-    const names = RUNNER_ENDPOINTS.map((e) => e.name);
-    expect(new Set(names).size).toBe(names.length);
-  });
-
-  it('should have non-empty descriptions', () => {
-    for (const ep of RUNNER_ENDPOINTS) {
-      expect(ep.description.length).toBeGreaterThan(0);
+  it('describes every runner endpoint as its catalog entry does', () => {
+    for (const [name, description] of Object.entries(ENDPOINT_DESCRIPTIONS)) {
+      expect(legacy.getEndpoint(name).description).toBe(description);
+      expect(RUNNER_CATALOG.byName(name as never).description).toBe(
+        description,
+      );
     }
   });
 
-  it('should have paths starting with /', () => {
-    for (const ep of RUNNER_ENDPOINTS) {
-      expect(ep.path.startsWith('/')).toBe(true);
-    }
-  });
-});
-
-describe('getEndpoint', () => {
-  it('should return the correct endpoint by name', () => {
-    const ep = getEndpoint('status');
-    expect(ep.method).toBe('GET');
-    expect(ep.path).toBe('/status');
+  it('getEndpoint finds by name and throws for an unknown name', () => {
+    expect(legacy.getEndpoint('deleteJob')).toMatchObject({
+      method: 'DELETE',
+      path: '/jobs/:id',
+    });
+    expect(() => legacy.getEndpoint('nonexistent')).toThrow(
+      'Unknown endpoint: nonexistent',
+    );
   });
 
-  it('should return createJob endpoint', () => {
-    const ep = getEndpoint('createJob');
-    expect(ep.method).toBe('POST');
-    expect(ep.path).toBe('/jobs');
+  it('is exported from the package entry', () => {
+    const entry = root as Record<string, unknown>;
+    expect(entry.RUNNER_ENDPOINTS).toBe(legacy.RUNNER_ENDPOINTS);
+    expect(entry.getEndpoint).toBe(legacy.getEndpoint);
   });
 
-  it('should return deleteJob endpoint', () => {
-    const ep = getEndpoint('deleteJob');
-    expect(ep.method).toBe('DELETE');
-    expect(ep.path).toBe('/jobs/:id');
+  it.each([
+    'export type HttpMethod',
+    'export type EndpointDescriptor',
+    'export const RUNNER_ENDPOINTS',
+    'export type EndpointName',
+    'export type Endpoint<',
+    'export function getEndpoint',
+  ])('tags `%s` @deprecated', (declaration) => {
+    const at = source.indexOf(declaration);
+    expect(at).toBeGreaterThan(0);
+    const doc = source.slice(source.lastIndexOf('/**', at), at);
+    expect(doc).toMatch(/@deprecated Use `(RUNNER_CATALOG|Runner)/);
   });
 
-  it('should throw for unknown endpoint', () => {
-    expect(() =>
-      getEndpoint('nonexistent' as Parameters<typeof getEndpoint>[0]),
-    ).toThrow('Unknown endpoint: nonexistent');
+  it('exports nothing but the deprecated aliases', () => {
+    expect(Object.keys(endpoints).sort()).toEqual([
+      'RUNNER_ENDPOINTS',
+      'getEndpoint',
+    ]);
   });
 });

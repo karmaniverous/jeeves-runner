@@ -9,89 +9,50 @@
  */
 
 import type { PluginApi } from '@karmaniverous/jeeves';
+import { TRIGGER_TIMEOUT_MS } from '@karmaniverous/jeeves-runner-sdk';
 
 import { registerInspectionTools } from './inspectionTools.js';
 import { registerManagementTools } from './managementTools.js';
 import {
-  catalogTool,
-  JOB_ID_PARAM,
-  jobPath,
-  registerApiTool,
+  type BaseUrl,
+  JOB_ID_ALIAS,
+  registerRunnerTools,
+  type RunnerToolConfig,
 } from './toolHelpers.js';
 
 /**
- * Client timeout for `runner_trigger`. `POST /jobs/:id/run` answers only
- * when the job finishes, so the 2-minute fetch default would abort long
- * jobs client-side while they keep running. 30 minutes covers the
- * longest registered jobs; the job itself keeps its own timeout.
+ * Client timeout for `runner_trigger` (the SDK's `triggerJob` default, 30
+ * minutes, DD#79). `POST /jobs/:id/run` answers only when the job finishes;
+ * the job itself keeps its own timeout.
  */
-export const TRIGGER_TIMEOUT_MS = 30 * 60_000;
+export { TRIGGER_TIMEOUT_MS };
 
-/** Register the 16 custom runner_* tools (excludes runner_status). */
+/** Job listing, trigger, runs, detail, enable and disable tools. */
+const CORE_TOOLS: readonly RunnerToolConfig[] = [
+  { name: 'runner_jobs', entry: 'listJobs' },
+  {
+    name: 'runner_trigger',
+    entry: 'triggerJob',
+    aliases: JOB_ID_ALIAS,
+    timeoutMs: TRIGGER_TIMEOUT_MS,
+  },
+  { name: 'runner_runs', entry: 'jobRuns', aliases: JOB_ID_ALIAS },
+  { name: 'runner_job_detail', entry: 'jobDetail', aliases: JOB_ID_ALIAS },
+  { name: 'runner_enable', entry: 'enableJob', aliases: JOB_ID_ALIAS },
+  { name: 'runner_disable', entry: 'disableJob', aliases: JOB_ID_ALIAS },
+];
+
+/**
+ * Register the 16 custom runner_* tools (excludes runner_status).
+ *
+ * @param api - Plugin API.
+ * @param baseUrl - Runner URL, or a getter resolved on every call.
+ */
 export function registerRunnerCustomTools(
   api: PluginApi,
-  baseUrl: string,
+  baseUrl: BaseUrl,
 ): void {
-  const coreTools = [
-    catalogTool(
-      'listJobs',
-      'runner_jobs',
-      {
-        type: 'object',
-        properties: {},
-      },
-      () => ['/jobs'],
-    ),
-
-    {
-      ...catalogTool('triggerJob', 'runner_trigger', JOB_ID_PARAM, (params) => [
-        jobPath(params, '/run'),
-        {},
-      ]),
-      timeoutMs: TRIGGER_TIMEOUT_MS,
-    },
-
-    catalogTool(
-      'jobRuns',
-      'runner_runs',
-      {
-        ...JOB_ID_PARAM,
-        properties: {
-          ...JOB_ID_PARAM.properties,
-          limit: {
-            type: 'number',
-            description: 'Maximum number of runs to return (default 50).',
-          },
-        },
-      },
-      (params) => {
-        const query =
-          params.limit !== undefined
-            ? `?limit=${String(Number(params.limit))}`
-            : '';
-        return [jobPath(params, `/runs${query}`)];
-      },
-    ),
-
-    catalogTool('jobDetail', 'runner_job_detail', JOB_ID_PARAM, (params) => [
-      jobPath(params),
-    ]),
-
-    catalogTool('enableJob', 'runner_enable', JOB_ID_PARAM, (params) => [
-      jobPath(params, '/enable'),
-      {},
-    ]),
-
-    catalogTool('disableJob', 'runner_disable', JOB_ID_PARAM, (params) => [
-      jobPath(params, '/disable'),
-      {},
-    ]),
-  ];
-
-  for (const tool of coreTools) {
-    registerApiTool(api, baseUrl, tool);
-  }
-
+  registerRunnerTools(api, baseUrl, CORE_TOOLS);
   registerManagementTools(api, baseUrl);
   registerInspectionTools(api, baseUrl);
 }

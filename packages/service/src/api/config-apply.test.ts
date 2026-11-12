@@ -79,7 +79,7 @@ describe('POST /config/apply config path', () => {
     expect(readdirSync(configDir)).toEqual(['config.json']);
   });
 
-  it('returns 500 ENOENT without an explicit path when the derived dir is missing', async () => {
+  it('returns 500 JEEVES_CONFIG_WRITE_FAILED without an explicit path when the derived dir is missing', async () => {
     harness = await createRouteTestHarness();
 
     const response = await harness.app.inject({
@@ -88,9 +88,15 @@ describe('POST /config/apply config path', () => {
       payload: { patch: { port: 4242 } },
     });
 
-    // Pins the pre-fix failure this regression guards against.
+    // Pins the pre-fix failure this regression guards against; since jeeves
+    // 0.11.0 the OS error goes to the log, not the body (DD#96).
     expect(response.statusCode).toBe(500);
-    expect(response.body).toContain('ENOENT');
+    expect(JSON.parse(response.body)).toEqual({
+      statusCode: 500,
+      code: 'JEEVES_CONFIG_WRITE_FAILED',
+      error: 'Internal Server Error',
+      message: 'The config file could not be written.',
+    });
   });
 
   it('falls back to the derived path when no explicit path is given', async () => {

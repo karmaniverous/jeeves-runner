@@ -4,8 +4,11 @@
  * @module configRootGate.test
  */
 
+import { join } from 'node:path';
+
 import {
   getConfigRoot,
+  getWorkspacePath,
   type PluginApi,
   resetInit,
   type ToolDescriptor,
@@ -86,5 +89,37 @@ describe('createConfigRootGate', () => {
     expect(gate.ensure()).toBe('/a');
     expect(gate.ensure()).toBe('/a');
     expect(getConfigRoot()).toBe('/a');
+  });
+
+  // jeeves #138 (0.9.0): with agents.defaults.workspace unset, the workspace
+  // is OpenClaw's default (<state dir>/workspace), never the plugin root.
+  it("initializes core with OpenClaw's default workspace when none is configured", () => {
+    const stateDir = join('/state', 'openclaw');
+    vi.stubEnv('OPENCLAW_STATE_DIR', stateDir);
+    const api: PluginApi = {
+      config: {
+        plugins: { entries: { [PLUGIN_ID]: { config: { configRoot: '/a' } } } },
+      },
+      resolvePath: (input: string) => join('/plugin-root', input),
+      registerTool() {},
+    };
+
+    createConfigRootGate(api);
+
+    expect(getWorkspacePath()).toBe(join(stateDir, 'workspace'));
+  });
+
+  it('initializes core with the configured agents.defaults.workspace', () => {
+    const api: PluginApi = {
+      config: {
+        agents: { defaults: { workspace: '/configured/workspace' } },
+        plugins: { entries: { [PLUGIN_ID]: { config: { configRoot: '/a' } } } },
+      },
+      registerTool() {},
+    };
+
+    createConfigRootGate(api);
+
+    expect(getWorkspacePath()).toBe('/configured/workspace');
   });
 });

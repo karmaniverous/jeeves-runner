@@ -136,20 +136,51 @@ describe('API routes', () => {
   });
 
   it.each([
-    ['404 for a missing job', new JobNotFoundError('nonexistent'), 404],
-    ['409 when refused at maxConcurrency', new MaxConcurrencyError(), 409],
-    ['500 for any other failure', new Error('gateway unavailable'), 500],
-  ])('POST /jobs/:id/run returns %s (#118)', async (_label, error, status) => {
-    scheduler.triggerJob = vi.fn(() => Promise.reject(error));
+    [
+      '404 RUNNER_JOB_NOT_FOUND for a missing job',
+      new JobNotFoundError('nonexistent'),
+      {
+        statusCode: 404,
+        code: 'RUNNER_JOB_NOT_FOUND',
+        error: 'Not Found',
+        message: 'Job not found: nonexistent',
+      },
+    ],
+    [
+      '409 RUNNER_MAX_CONCURRENCY when refused at maxConcurrency',
+      new MaxConcurrencyError(),
+      {
+        statusCode: 409,
+        code: 'RUNNER_MAX_CONCURRENCY',
+        error: 'Conflict',
+        message: 'Max concurrency reached; retry when a running job finishes.',
+      },
+    ],
+    [
+      '500 RUNNER_TRIGGER_FAILED, without the cause, for any other failure',
+      new Error('gateway unavailable at http://10.0.0.1:18789'),
+      {
+        statusCode: 500,
+        code: 'RUNNER_TRIGGER_FAILED',
+        error: 'Internal Server Error',
+        message:
+          'The job could not be run; the cause is in the runner log and on the run, if it started.',
+      },
+    ],
+  ])(
+    'POST /jobs/:id/run returns %s (#118, DD#96)',
+    async (_label, error, body) => {
+      scheduler.triggerJob = vi.fn(() => Promise.reject(error));
 
-    const response = await app.inject({
-      method: 'POST',
-      url: '/jobs/nonexistent/run',
-    });
+      const response = await app.inject({
+        method: 'POST',
+        url: '/jobs/nonexistent/run',
+      });
 
-    expect(response.statusCode).toBe(status);
-    expect(JSON.parse(response.body)).toEqual({ error: error.message });
-  });
+      expect(response.statusCode).toBe(body.statusCode);
+      expect(JSON.parse(response.body)).toEqual(body);
+    },
+  );
 
   it('GET /config should return full config', async () => {
     const response = await app.inject({

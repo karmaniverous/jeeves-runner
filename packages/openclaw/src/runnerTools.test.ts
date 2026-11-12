@@ -74,7 +74,18 @@ describe('registerRunnerCustomTools', () => {
   });
 
   it('runner_trigger calls POST /jobs/:id/run', async () => {
-    const mockResult = { result: { status: 'ok', duration_ms: 1234 } };
+    const mockResult = {
+      result: {
+        status: 'ok',
+        exitCode: 0,
+        durationMs: 1234,
+        tokens: null,
+        resultMeta: null,
+        stdoutTail: '',
+        stderrTail: '',
+        error: null,
+      },
+    };
 
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
       new Response(JSON.stringify(mockResult), { status: 200 }),
@@ -124,7 +135,7 @@ describe('registerRunnerCustomTools', () => {
     expect(calledUrl).toBe(
       'http://localhost:1937/jobs/poll-email/runs?limit=5',
     );
-    // jeeves 0.7.0 fetchJson adds its default timeout signal (#119).
+    // The SDK's catalog client adds a per-call timeout signal.
     expect(init?.signal).toBeInstanceOf(AbortSignal);
   });
 
@@ -191,8 +202,33 @@ describe('registerRunnerCustomTools', () => {
     expect(result.isError).toBeUndefined();
     const [calledUrl, init] = vi.mocked(fetch).mock.calls[0];
     expect(calledUrl).toBe('http://localhost:1937/state/poll-email');
-    // jeeves 0.7.0 fetchJson adds its default timeout signal (#119).
+    // The SDK's catalog client adds a per-call timeout signal.
     expect(init?.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it('refuses a call missing a required parameter without sending it', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+
+    const result = await api.tools.get('runner_trigger')!('test', {});
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toMatch(
+      /^Error: Invalid input for "triggerJob"/,
+    );
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('reports a 2xx body that does not match the entry schema as an error', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
+      new Response(JSON.stringify({ jobs: 'nope' }), { status: 200 }),
+    );
+
+    const result = await api.tools.get('runner_jobs')!('test', {});
+
+    expect(result.isError).toBe(true);
+    expect(result.content[0].text).toBe(
+      'Error: listJobs response did not match the expected shape',
+    );
   });
 
   it('returns connection error when service unreachable', async () => {
