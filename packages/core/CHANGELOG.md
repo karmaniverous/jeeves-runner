@@ -30,6 +30,7 @@ All notable changes to this project will be documented in this file.
 
 - Take @karmaniverous/jeeves 0.9.2 (exact) and fix stale script-helper docs (#127)
 - Take @karmaniverous/jeeves 0.11.0 (exact) in every package (#136)
+- Release @karmaniverous/jeeves-runner-core v0.6.0-1
 ## [0.6.0-0] - 2026-11-09
 
 ### ⚙️ Miscellaneous Tasks

@@ -1,6 +1,6 @@
 {
   "name": "@karmaniverous/jeeves-runner-core",
-  "version": "0.6.0-1",
+  "version": "0.6.0",
   "author": "Jason Williscroft",
   "description": "Endpoint catalog, OpenAPI document, configuration schema and types for jeeves-runner packages.",
   "license": "BSD-3-Clause",
